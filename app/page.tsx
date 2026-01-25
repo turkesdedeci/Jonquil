@@ -20,8 +20,8 @@ import {
   User,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button.tsx";
-import { Card } from "@/components/ui/card.tsx";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const BRAND = {
   name: "JONQUIL",
@@ -348,7 +348,7 @@ function CollectionDropdown({
   onGo,
 }: {
   open: boolean;
-  anchorRef: React.RefObject<HTMLButtonElement>;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
   onGo: (r: Route) => void;
 }) {
@@ -356,17 +356,21 @@ function CollectionDropdown({
 
   useEffect(() => {
     if (!open) return;
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
+
     const onDown = (e: MouseEvent) => {
       const a = anchorRef.current;
       const p = panelRef.current;
       if (!a || !p) return;
+
       const t = e.target as Node;
       if (a.contains(t) || p.contains(t)) return;
       onClose();
     };
+
     window.addEventListener("keydown", onKey);
     window.addEventListener("mousedown", onDown);
     return () => {
@@ -402,6 +406,7 @@ function CollectionDropdown({
               </div>
               <ChevronRight className="h-4 w-4 opacity-60" />
             </button>
+
             <button
               type="button"
               onClick={() => {
