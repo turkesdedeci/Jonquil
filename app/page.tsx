@@ -540,6 +540,39 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
     []
   );
 
+{/* HAKKIMIZDA */}
+<section className="mx-auto max-w-3xl px-4 py-28">
+  <div
+    className="mb-6 h-1 w-6 rounded-full"
+    style={{ background: BRAND.accent }}
+  />
+
+  <h2 className="text-3xl font-semibold tracking-tight text-neutral-900">
+    Hakkımızda
+  </h2>
+
+  <div className="mt-12 space-y-10 text-[15px] leading-7 text-neutral-600">
+    <p>
+      Jonquil, gündelik ritüellerin etrafında şekillenen porselen ve tasarım
+      objeleri üretir. Her parça; sofrada, yaşam alanında ve zamanla kurulan
+      ilişkide kalıcı olmayı hedefler. Markanın çıkış noktası, objenin yalnızca
+      işlevini değil, kullanıldığı anı da düşünmektir.
+    </p>
+
+    <p>
+      Koleksiyonlarımız; güçlü desenler, dengeli renk kullanımı ve net
+      formlar üzerinden ilerler. Dekoratif olmaktan çok yaşayan, trendlerden
+      çok zamansız bir dil benimser.
+    </p>
+
+    <p>
+      Jonquil’de lüks, gösterişli olmaktan değil, tutarlılıktan doğar.
+      Çünkü iyi tasarım, zamana karşı değil, zamanla birlikte yaşar.
+    </p>
+  </div>
+</section>
+
+
   const heroSlides = useMemo(() => [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3], []);
 
   return (
