@@ -97,24 +97,143 @@ function StatCard({
   );
 }
 
-export default function AboutPage() {
-  const values = useMemo(
-    () => [
-      {
-        title: "Az ama tam",
-        desc: "Her parça seçki mantığıyla; gereksiz kalabalık yok, net bir duruş var.",
-      },
-      {
-        title: "Zanaat & sabır",
-        desc: "Renk, form ve yüzey; aceleye gelmeyen bir üretim ritmi.",
-      },
-      {
-        title: "Gündelik lüks",
-        desc: "Gösteriş değil; dokununca anlaşılan kalite ve dinginlik.",
-      },
-    ],
-    []
+export default function AboutPage({ onGo }: { onGo: (r: Route) => void }) {
+  const principles = [
+    { k: "Zamansız dil", v: "Trend yerine form, oran ve ölçü." },
+    { k: "Sakin lüks", v: "Gösteriş değil; tutarlılık." },
+    { k: "Detay disiplini", v: "Yüzey, baskı, altın ve renk dengesi." },
+    { k: "Gündelik ritüel", v: "Kullanım anını tasarlayan obje." },
+  ];
+
+  const values = [
+    { t: "Tasarım", d: "Net formlar, dengeli renk, sahne kuran parçalar." },
+    { t: "Üretim", d: "Porselen karakteri korunur; yüzeyde kontrol." },
+    { t: "Koleksiyon", d: "Tek tek güçlü, birlikte bütüncül." },
+  ];
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-14 md:py-20">
+      {/* Header */}
+      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div>
+          <div className="mb-2 h-1 w-6 rounded-full" style={{ background: BRAND.accent }} />
+          <h1 className="text-4xl font-semibold tracking-tight text-neutral-900">Hakkımızda</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-600">
+            Jonquil, gündelik ritüellerin etrafında şekillenen porselen ve tasarım objeleri üretir.
+            Her parça; sofrada, yaşam alanında ve zamanla kurulan ilişkide kalıcı olmayı hedefler.
+          </p>
+          <div className="mt-5 h-px w-28" style={{ background: "var(--hairlineAccent)" }} />
+        </div>
+
+        <Button variant="outline" className="h-11 rounded-full border-black/15" onClick={() => onGo({ name: "home" })}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Ana sayfa
+        </Button>
+      </div>
+
+      {/* Body */}
+      <div className="mt-10 grid gap-6 md:grid-cols-12 md:items-start">
+        {/* Left: Copy */}
+        <div className="md:col-span-7">
+          <div
+            className="rounded-[32px] border bg-[var(--surface)] p-8 shadow-[0_18px_60px_rgba(0,0,0,0.06)] md:p-10"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <div className="max-w-[64ch] text-[15px] leading-7 text-neutral-700">
+              <p>
+                Markanın çıkış noktası, objenin yalnızca işlevini değil, kullanıldığı anı da düşünmektir.
+                Sakin bir sabah, uzun bir sofra, paylaşılan bir an… Jonquil ürünleri bu sahnelerin doğal bir parçası
+                olarak tasarlanır.
+              </p>
+
+              <div className="my-8 h-px w-full" style={{ background: "var(--border)" }} />
+
+              <p>
+                Koleksiyonlarımız; güçlü desenler, dengeli renk kullanımı ve net formlar üzerinden ilerler. Dekoratif
+                olmaktan çok yaşayan, trendlerden çok zamansız bir dil benimser. Her ürün; ölçüsü, oranı ve yüzeyiyle
+                bilinçli bir tasarım kararının sonucudur.
+              </p>
+
+              <div className="my-8 h-px w-full" style={{ background: "var(--border)" }} />
+
+              <p>
+                Üretim sürecinde kalite, tutarlılık ve detay önceliklidir. Porselenin karakteri korunur; altın detaylar,
+                renkler ve yüzeyler göze batmadan var olur. Jonquil’de lüks, gösterişli olmaktan değil, tutarlılıktan
+                doğar. Çünkü iyi tasarım, zamana karşı değil, zamanla birlikte yaşar.
+              </p>
+            </div>
+          </div>
+
+          {/* Values */}
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {values.map((v) => (
+              <div
+                key={v.t}
+                className="rounded-3xl border bg-[var(--surface)] p-6 shadow-[0_16px_50px_rgba(0,0,0,0.05)]"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <div className="text-sm font-semibold text-neutral-900">{v.t}</div>
+                <div className="mt-2 text-sm leading-6 text-neutral-600">{v.d}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Principles */}
+        <div className="md:col-span-5">
+          <div className="sticky top-24">
+            <div
+              className="overflow-hidden rounded-[32px] border bg-[var(--surface)] shadow-[0_18px_60px_rgba(0,0,0,0.06)]"
+              style={{ borderColor: "var(--border)" }}
+            >
+              <div className="p-7">
+                <div className="text-xs font-semibold tracking-[0.26em] text-neutral-500">YAKLAŞIM</div>
+                <div className="mt-2 text-xl font-semibold tracking-tight text-neutral-900">
+                  Sessiz bir tasarım disiplini.
+                </div>
+                <div className="mt-3 text-sm leading-6 text-neutral-600">
+                  Büyük cümleler yerine net kararlar: oran, yüzey, renk, ritim.
+                </div>
+
+                <div className="mt-6 grid gap-3">
+                  {principles.map((p) => (
+                    <div
+                      key={p.k}
+                      className="flex items-start justify-between gap-4 rounded-2xl border bg-[var(--paper)]/60 px-4 py-3"
+                      style={{ borderColor: "var(--hairline)" }}
+                    >
+                      <div>
+                        <div className="text-sm font-semibold text-neutral-900">{p.k}</div>
+                        <div className="mt-1 text-xs leading-5 text-neutral-600">{p.v}</div>
+                      </div>
+                      <div className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: BRAND.accent }} />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 rounded-2xl border bg-white p-4" style={{ borderColor: "var(--border)" }}>
+                  <div className="text-sm font-semibold text-neutral-900">Koleksiyonları gör</div>
+                  <div className="mt-1 text-xs text-neutral-600">Aslan ve Ottoman — katalog yapısı hazır.</div>
+                  <Button
+                    className="mt-4 h-11 w-full rounded-full text-white"
+                    style={{ background: BRAND.accent }}
+                    onClick={() => onGo({ name: "collections" })}
+                  >
+                    Koleksiyonlara git <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 px-2 text-xs text-neutral-500">
+              Not: Ürün görselleri eklendiğinde bu sayfa otomatik “premium” hissi verir; istersen metin aralarına küçük
+              “quote” satırı da koyarım.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
+}
 
   return (
     <PageShell>

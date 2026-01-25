@@ -53,6 +53,7 @@ const ASSETS = {
 
 type Route =
   | { name: "home" }
+  | { name: "about" }
   | { name: "collections" }
   | { name: "collection"; slug: "aslan" | "ottoman" }
   | { name: "product"; slug: "aslan" | "ottoman"; id: string };
@@ -66,8 +67,8 @@ function setHash(route: Route) {
     window.location.hash = "#";
     return;
   }
-    if (route.name === "collections") {
-    window.location.hash = `#/koleksiyonlar`;
+  if (route.name === "about") {
+    window.location.hash = "#/hakkimizda";
     return;
   }
   if (route.name === "collection") {
@@ -83,6 +84,8 @@ function parseHash(): Route {
 
   if (parts.length === 0) return { name: "home" };
     if (parts[0] === "koleksiyonlar") return { name: "collections" };
+    if (parts[0] === "hakkimizda") return { name: "about" };
+
 
 
   if (parts[0] === "koleksiyon" && (parts[1] === "aslan" || parts[1] === "ottoman")) {
@@ -341,6 +344,47 @@ function HeroSlider({ images, className }: { images: string[]; className?: strin
   );
 }
 
+function AboutPage({ onGo }: { onGo: (r: Route) => void }) {
+  return (
+    <section className="mx-auto max-w-3xl px-4 py-28">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <div className="mb-6 h-1 w-6 rounded-full" style={{ background: BRAND.accent }} />
+          <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">Hakkımızda</h1>
+        </div>
+
+        <Button variant="outline" className="rounded-full border-black/15" onClick={() => onGo({ name: "home" })}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Ana sayfa
+        </Button>
+      </div>
+
+      <div className="mt-12 space-y-10 text-[15px] leading-7 text-neutral-600">
+        <p>
+          Jonquil, gündelik ritüellerin etrafında şekillenen porselen ve tasarım objeleri üretir.
+          Her parça; sofrada, yaşam alanında ve zamanla kurulan ilişkide kalıcı olmayı hedefler.
+          Markanın çıkış noktası, objenin yalnızca işlevini değil, kullanıldığı anı da düşünmektir.
+          Sakin bir sabah, uzun bir sofra, paylaşılan bir an… Jonquil ürünleri bu sahnelerin doğal bir parçası olarak tasarlanır.
+        </p>
+
+        <p>
+          Koleksiyonlarımız; güçlü desenler, dengeli renk kullanımı ve net formlar üzerinden ilerler.
+          Dekoratif olmaktan çok yaşayan, trendlerden çok zamansız bir dil benimser.
+          Her ürün; ölçüsü, oranı ve yüzeyiyle bilinçli bir tasarım kararının sonucudur.
+        </p>
+
+        <p>
+          Üretim sürecinde kalite, tutarlılık ve detay önceliklidir.
+          Porselenin karakteri korunur; altın detaylar, renkler ve yüzeyler göze batmadan var olur.
+          Jonquil’de lüks, gösterişli olmaktan değil, tutarlılıktan doğar.
+          Çünkü iyi tasarım, zamana karşı değil, zamanla birlikte yaşar.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+
+
 function CollectionDropdown({
   open,
   anchorRef,
@@ -540,37 +584,6 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
     []
   );
 
-{/* HAKKIMIZDA */}
-<section className="mx-auto max-w-3xl px-4 py-28">
-  <div
-    className="mb-6 h-1 w-6 rounded-full"
-    style={{ background: BRAND.accent }}
-  />
-
-  <h2 className="text-3xl font-semibold tracking-tight text-neutral-900">
-    Hakkımızda
-  </h2>
-
-  <div className="mt-12 space-y-10 text-[15px] leading-7 text-neutral-600">
-    <p>
-      Jonquil, gündelik ritüellerin etrafında şekillenen porselen ve tasarım
-      objeleri üretir. Her parça; sofrada, yaşam alanında ve zamanla kurulan
-      ilişkide kalıcı olmayı hedefler. Markanın çıkış noktası, objenin yalnızca
-      işlevini değil, kullanıldığı anı da düşünmektir.
-    </p>
-
-    <p>
-      Koleksiyonlarımız; güçlü desenler, dengeli renk kullanımı ve net
-      formlar üzerinden ilerler. Dekoratif olmaktan çok yaşayan, trendlerden
-      çok zamansız bir dil benimser.
-    </p>
-
-    <p>
-      Jonquil’de lüks, gösterişli olmaktan değil, tutarlılıktan doğar.
-      Çünkü iyi tasarım, zamana karşı değil, zamanla birlikte yaşar.
-    </p>
-  </div>
-</section>
 
 
   const heroSlides = useMemo(() => [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3], []);
@@ -1568,20 +1581,27 @@ export default function JonquilHomepage() {
               />
             </div>
 
-            {[
-              { label: "Hakkında", href: "#" },
-              { label: "İletişim", href: "#" },
-            ].map((t) => (
-              <a
-                key={t.label}
-                href={t.href}
-                onClick={(e) => e.preventDefault()}
-                className="rounded-full px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-black/5"
-              >
-                {t.label}
-              </a>
-            ))}
+            <button
+              type="button"
+              onClick={() => go({ name: "about" })}
+              className="rounded-full px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-black/5"
+            >
+              Hakkında
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                // Şimdilik home’a gönderelim ya da contact route ekleriz
+                // go({ name: "contact" });
+                setHash({ name: "home" });
+              }}
+              className="rounded-full px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-black/5"
+            >
+              İletişim
+            </button>
           </nav>
+
 
           <div className="flex items-center gap-2">
             <Button variant="ghost" className="rounded-full" aria-label="Ara">
@@ -1616,6 +1636,7 @@ export default function JonquilHomepage() {
 
       {route.name === "home" ? <Home onGo={go} /> : null}
       {route.name === "collections" ? <CollectionsPage onGo={go} products={allProducts} /> : null}
+      {route.name === "about" ? <AboutPage onGo={go} /> : null}
 
 
       {route.name === "collection" ? (
