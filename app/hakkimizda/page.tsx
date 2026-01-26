@@ -130,6 +130,17 @@ export default function AboutPage({ onGo }: { onGo: (r: Route) => void }) {
         </Button>
       </div>
 
+{/* Top visual */}
+<div className="mt-10 overflow-hidden rounded-[32px] border bg-[var(--surface)] shadow-[0_18px_60px_rgba(0,0,0,0.06)]"
+     style={{ borderColor: "var(--border)" }}>
+  <img
+    src={ABOUT_IMAGE}
+    alt="Jonquil atölye ve tasarım süreci"
+    referrerPolicy="no-referrer"
+    className="h-[300px] w-full object-cover md:h-[340px]"
+  />
+</div>
+
       {/* Body */}
       <div className="mt-10 grid gap-6 md:grid-cols-12 md:items-start">
         {/* Left: Copy */}

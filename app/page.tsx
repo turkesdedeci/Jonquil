@@ -178,11 +178,22 @@ function MobileNav({
   onClose: () => void;
   onGo: (r: Route) => void;
 }) {
-  const items = [
+  const navItems = [
     { label: "Koleksiyonlar", type: "collections" as const },
     { label: "Hakkında", type: "link" as const },
     { label: "İletişim", type: "link" as const },
   ];
+
+  {navItems.map((t) => (
+    <button
+      key={t.label}
+      type="button"
+      onClick={t.onClick}
+      className="rounded-full px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-black/5"
+    >
+      {t.label}
+    </button>
+  ))}
 
   return (
     <div
@@ -214,7 +225,7 @@ function MobileNav({
 
         <div className="p-5">
           <div className="grid gap-2 text-sm">
-            {items.map((it) => (
+            {navItems.map((it) => (
               <React.Fragment key={it.label}>
                 {it.type === "collections" ? (
                   <div
@@ -1589,17 +1600,13 @@ export default function JonquilHomepage() {
               Hakkında
             </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                // Şimdilik home’a gönderelim ya da contact route ekleriz
-                // go({ name: "contact" });
-                setHash({ name: "home" });
-              }}
+            <a
+              href="#"
+              onClick={(e) => e.preventDefault()}
               className="rounded-full px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-black/5"
             >
               İletişim
-            </button>
+            </a>
           </nav>
 
 
