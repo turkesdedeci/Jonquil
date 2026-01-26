@@ -63,19 +63,31 @@ function cx(...classes: Array<string | false | null | undefined>) {
 }
 
 function setHash(route: Route) {
-  if (route.name === "home") {
-    window.location.hash = "#";
-    return;
+  switch (route.name) {
+    case "home":
+      window.location.hash = "#";
+      return;
+
+    case "about":
+      window.location.hash = "#/hakkimizda";
+      return;
+
+    case "collections":
+      window.location.hash = "#/koleksiyonlar";
+      return;
+
+    case "collection":
+      window.location.hash = `#/koleksiyon/${route.slug}`;
+      return;
+
+    case "product":
+      window.location.hash = `#/urun/${route.slug}/${route.id}`;
+      return;
+
+    default:
+      window.location.hash = "#";
+      return;
   }
-  if (route.name === "about") {
-    window.location.hash = "#/hakkimizda";
-    return;
-  }
-  if (route.name === "collection") {
-    window.location.hash = `#/koleksiyon/${route.slug}`;
-    return;
-  }
-  window.location.hash = `#/urun/${route.slug}/${route.id}`;
 }
 
 function parseHash(): Route {
@@ -178,17 +190,24 @@ function MobileNav({
   onClose: () => void;
   onGo: (r: Route) => void;
 }) {
-  const navItems = [
-    { label: "Koleksiyonlar", type: "collections" as const },
-    { label: "Hakkında", type: "link" as const },
-    { label: "İletişim", type: "link" as const },
-  ];
+  type NavItem = {
+  label: string;
+  type: "collections" | "link";
+  href?: string;
+  onClick?: () => void;
+};
 
-  {navItems.map((t) => (
+const items: NavItem[] = [
+  { label: "Koleksiyonlar", type: "collections" },
+  { label: "Hakkında", type: "link", onClick: () => onGo({ name: "about" }) },
+  { label: "İletişim", type: "link", href: "#" },
+];
+
+  {items.map((t) => (
     <button
       key={t.label}
       type="button"
-      onClick={t.onClick}
+      onClick={() => t.onClick?.()}
       className="rounded-full px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-black/5"
     >
       {t.label}
@@ -225,7 +244,7 @@ function MobileNav({
 
         <div className="p-5">
           <div className="grid gap-2 text-sm">
-            {navItems.map((it) => (
+            {items.map((it) => (
               <React.Fragment key={it.label}>
                 {it.type === "collections" ? (
                   <div
