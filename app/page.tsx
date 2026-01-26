@@ -705,12 +705,12 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="grid gap-8 md:grid-cols-12 md:items-stretch">
+        <div className="grid gap-8 md:grid-cols-12 md:items-end">
           <div className="md:col-span-6">
             <div className="mb-2 h-1 w-6 rounded-full" style={{ background: BRAND.accent }} />
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight">Satın almayı kolaylaştırıyoruz.</h2>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight">Bize ulaşın</h2>
             <p className="mt-4 text-sm leading-6 text-neutral-600">
-              Instagram’daki en sık soru belli: “Bunu nasıl satın alabilirim?” Bu site, o soruyu 1–2 adımda yanıtlamak için tasarlandı.
+              Satın alma, hediye seçimi veya satış noktaları hakkında kısa bir yönlendirme için buradayız.
             </p>
 
             <div className="mt-8 grid gap-4">
@@ -719,10 +719,10 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
                 style={{ borderColor: "var(--border)" }}
               >
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold">Online satın al</div>
-                  <span className="text-xs text-neutral-500">Önerilen</span>
+                  <div className="text-sm font-semibold">Online mağaza</div>
                 </div>
-                <p className="mt-2 text-sm text-neutral-600">Tüm katalog, stok görünürlüğü, güvenli ödeme, kargo.</p>
+                <p className="mt-2 text-sm text-neutral-600">
+                   Ürünleri inceleyin, stok durumunu görün, güvenli ödeme ile sipariş verin.</p>
                 <div className="mt-4 flex flex-wrap items-center gap-4">
                   <Button className="rounded-full text-white" style={{ background: BRAND.accent }}>
                     Mağazaya git <ArrowRight className="ml-2 h-4 w-4" />
@@ -758,7 +758,7 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
                     <div className="flex items-start gap-3">
                       <Phone className="mt-0.5 h-4 w-4 text-neutral-700" />
                       <div>
-                        <div className="text-sm font-semibold text-neutral-900">Destekle sipariş</div>
+                        <div className="text-sm font-semibold text-neutral-900">Bizi arayın</div>
                         <div className="mt-0.5 text-xs text-neutral-600">Hediye, toplu sipariş veya seçim desteği.</div>
                       </div>
                     </div>
