@@ -270,9 +270,12 @@ function MobileNav({
                   <div className="text-[10px] font-light tracking-wide text-[#999]">{BRAND.tagline}</div>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="rounded-full" onClick={onClose}>
+              <button
+                onClick={onClose}
+                className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-[#e8e6e3]"
+              >
                 <X className="h-5 w-5" />
-              </Button>
+              </button>
             </div>
 
             <nav className="p-6">
@@ -306,15 +309,12 @@ function MobileNav({
               </div>
 
               <div className="mt-8 space-y-3">
-                <Button className="w-full rounded-full bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] py-6 text-sm font-medium tracking-wide text-white hover:opacity-90">
+                <button className="w-full rounded-full bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] px-8 py-6 text-sm font-medium tracking-wide text-white transition-opacity hover:opacity-90">
                   Hesabım
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full rounded-full border-[#e8e6e3] py-6 text-sm font-medium tracking-wide"
-                >
+                </button>
+                <button className="w-full rounded-full border border-[#e8e6e3] px-8 py-6 text-sm font-medium tracking-wide transition-colors hover:bg-[#faf8f5]">
                   Sepetim
-                </Button>
+                </button>
               </div>
             </nav>
           </motion.div>
@@ -611,13 +611,12 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
             <p className="mb-10 text-lg font-light text-white/80">
               Jonquil ile sofranız bir galeri haline gelir
             </p>
-            <Button
+            <button
               onClick={() => onGo({ name: "about" })}
-              variant="outline"
-              className="rounded-full border-2 border-white px-8 py-6 text-sm font-semibold tracking-wide text-white hover:bg-white hover:text-[#0f3f44]"
+              className="rounded-full border-2 border-white bg-transparent px-8 py-6 text-sm font-semibold tracking-wide text-white transition-all hover:bg-white hover:text-[#0f3f44]"
             >
               Hikayemizi Keşfedin
-            </Button>
+            </button>
           </motion.div>
         </div>
       </section>
@@ -643,9 +642,9 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
                 placeholder="E-posta adresiniz"
                 className="flex-1 rounded-full border border-[#e8e6e3] bg-[#faf8f5] px-6 py-4 text-sm outline-none focus:border-[#0f3f44] focus:ring-2 focus:ring-[#0f3f44]/20"
               />
-              <Button className="rounded-full bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] px-8 py-4 text-sm font-semibold tracking-wide text-white hover:opacity-90">
+              <button className="rounded-full bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] px-8 py-4 text-sm font-semibold tracking-wide text-white transition-opacity hover:opacity-90">
                 Abone Ol
-              </Button>
+              </button>
             </div>
             <p className="mt-4 text-xs text-[#999]">
               Abonelikten istediğiniz zaman çıkabilirsiniz.
@@ -874,10 +873,10 @@ function ProductPage({ product, onGo }: { product: any; onGo: (r: Route) => void
                   +
                 </button>
               </div>
-              <Button className="flex-1 rounded-full bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] py-6 text-sm font-semibold tracking-wide text-white hover:opacity-90">
-                <ShoppingBag className="mr-2 h-5 w-5" />
+              <button className="flex-1 rounded-full bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] px-8 py-6 text-sm font-semibold tracking-wide text-white transition-opacity hover:opacity-90">
+                <ShoppingBag className="mr-2 inline-block h-5 w-5" />
                 Sepete Ekle
-              </Button>
+              </button>
             </div>
 
             <div className="space-y-3">
@@ -1270,39 +1269,32 @@ export default function JonquilHomepage() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full hover:bg-[#faf8f5]"
+            <button
+              className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-[#faf8f5]"
               aria-label="Ara"
             >
               <Search className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden rounded-full hover:bg-[#faf8f5] sm:inline-flex"
+            </button>
+            <button
+              className="hidden h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-[#faf8f5] sm:flex"
               aria-label="Hesabım"
             >
               <User className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="outline"
-              className="hidden rounded-full border-[#e8e6e3] hover:bg-[#faf8f5] sm:inline-flex"
+            </button>
+            <button
+              className="hidden items-center gap-2 rounded-full border border-[#e8e6e3] px-4 py-2 text-sm transition-colors hover:bg-[#faf8f5] sm:inline-flex"
               aria-label="Sepet"
             >
-              <ShoppingBag className="mr-2 h-5 w-5" />
+              <ShoppingBag className="h-5 w-5" />
               Sepet
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full border-[#e8e6e3] hover:bg-[#faf8f5] md:hidden"
+            </button>
+            <button
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e8e6e3] transition-colors hover:bg-[#faf8f5] md:hidden"
               onClick={() => setMenuOpen(true)}
               aria-label="Menü"
             >
               <Menu className="h-5 w-5" />
-            </Button>
+            </button>
           </div>
         </div>
       </header>
