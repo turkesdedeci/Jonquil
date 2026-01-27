@@ -332,7 +332,7 @@ function CollectionDropdown({
   onGo,
 }: {
   open: boolean;
-  anchorRef: React.RefObject<HTMLButtonElement>;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
   onGo: (r: Route) => void;
 }) {
@@ -345,7 +345,7 @@ function CollectionDropdown({
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target as Node) &&
-        anchorRef.current &&
+        anchorRef?.current &&
         !anchorRef.current.contains(e.target as Node)
       ) {
         onClose();
@@ -356,7 +356,6 @@ function CollectionDropdown({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open, onClose, anchorRef]);
 
-  if (!open) return null;
 
   return (
     <motion.div
@@ -1109,7 +1108,7 @@ export default function JonquilHomepage() {
   const { route, go } = useRoute();
   const [menuOpen, setMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
-  const collectionsBtnRef = useRef<HTMLButtonElement>(null);
+  const collectionsBtnRef = useRef<HTMLButtonElement | null>(null);
 
   // Product data
   const allProducts = useMemo(
@@ -1266,6 +1265,7 @@ export default function JonquilHomepage() {
               İletişim
             </a>
           </nav>
+
 
           {/* Actions */}
           <div className="flex items-center gap-2">
