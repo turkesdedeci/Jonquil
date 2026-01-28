@@ -3800,7 +3800,7 @@ export default function JonquilHomepage() {
 
               <CollectionDropdown
                 open={collectionsOpen}
-                anchorRef={collectionsBtnRef}
+                anchorRef={collectionsBtnRef as React.RefObject<HTMLButtonElement>}
                 onClose={() => setCollectionsOpen(false)}
                 onGo={(r) => {
                   go(r);
@@ -3827,7 +3827,7 @@ export default function JonquilHomepage() {
 
               <ProductsDropdown
                 open={productsOpen}
-                anchorRef={productsBtnRef}
+                anchorRef={collectionsBtnRef as React.RefObject<HTMLButtonElement>}
                 onClose={() => setProductsOpen(false)}
                 onGo={(r) => {
                   go(r);
