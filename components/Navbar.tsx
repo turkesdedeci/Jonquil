@@ -80,7 +80,7 @@ function CollectionDropdown({
   onGo,
 }: {
   open: boolean;
-  anchorRef: React.RefObject<HTMLButtonElement>;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
   onGo: (r: any) => void;
 }) {
@@ -132,7 +132,7 @@ function ProductsDropdown({
   onGo,
 }: {
   open: boolean;
-  anchorRef: React.RefObject<HTMLButtonElement>;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
   onGo: (r: any) => void;
 }) {
