@@ -66,6 +66,7 @@ export default function Footer({ onGo }: { onGo: (r: any) => void }) {
           <div>
             <h3 className="mb-4 text-sm font-semibold tracking-wide text-[#1a1a1a]">Yardım</h3>
             <ul className="space-y-3 text-sm text-[#666]">
+              <li><a href="/siparis-takip" className="hover:text-[#0f3f44]">Sipariş Takip</a></li>
               <li><a href="/teslimat-iade" className="hover:text-[#0f3f44]">Teslimat ve İade</a></li>
               <li><a href="/iletisim" className="hover:text-[#0f3f44]">Sıkça Sorulan Sorular</a></li>
               <li>

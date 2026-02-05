@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useUser } from '@/hooks/useClerkUser';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   Package,
   Truck,
@@ -13,12 +14,16 @@ import {
   Clock,
   ShoppingBag,
   TrendingUp,
-  Users,
   RefreshCw,
-  ChevronDown,
   Search,
-  Home
+  Home,
+  Eye,
+  X,
+  Download,
+  Layers,
+  ExternalLink
 } from 'lucide-react';
+import { allProducts } from '@/data/products';
 
 // Admin email listesi
 const ADMIN_EMAILS = ['turkesdedeci@icloud.com'];
@@ -28,12 +33,21 @@ interface Order {
   order_number: string;
   user_id: string;
   user_email?: string;
+  customer_first_name?: string;
+  customer_last_name?: string;
+  customer_phone?: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  payment_status?: string;
   total_amount: number;
+  shipping_cost?: number;
   created_at: string;
   updated_at: string;
   items?: OrderItem[];
-  shipping_address?: any;
+  shipping_address?: string;
+  shipping_city?: string;
+  shipping_district?: string;
+  tracking_number?: string;
+  tracking_url?: string;
 }
 
 interface OrderItem {
@@ -56,15 +70,23 @@ const statusConfig = {
 
 const statusOrder: Order['status'][] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
+type Tab = 'orders' | 'products';
+
 export default function AdminPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<Tab>('orders');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [trackingModal, setTrackingModal] = useState<Order | null>(null);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [trackingUrl, setTrackingUrl] = useState('');
+  const [productSearch, setProductSearch] = useState('');
+  const [productFilter, setProductFilter] = useState('all');
 
   // Admin kontrolü
   const isAdmin = user?.emailAddresses?.some(
@@ -111,6 +133,58 @@ export default function AdminPage() {
     } finally {
       setUpdating(null);
     }
+  };
+
+  const updateTracking = async () => {
+    if (!trackingModal) return;
+    setUpdating(trackingModal.id);
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: trackingModal.id,
+          tracking_number: trackingNumber,
+          tracking_url: trackingUrl,
+          status: 'shipped'
+        }),
+      });
+
+      if (res.ok) {
+        setOrders(orders.map(order =>
+          order.id === trackingModal.id
+            ? { ...order, tracking_number: trackingNumber, tracking_url: trackingUrl, status: 'shipped' }
+            : order
+        ));
+        setTrackingModal(null);
+        setTrackingNumber('');
+        setTrackingUrl('');
+      }
+    } catch (error) {
+      console.error('Kargo bilgisi güncellenirken hata:', error);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const exportOrders = () => {
+    const csv = [
+      ['Sipariş No', 'Tarih', 'Müşteri', 'Email', 'Durum', 'Toplam'].join(','),
+      ...filteredOrders.map(o => [
+        o.order_number,
+        new Date(o.created_at).toLocaleDateString('tr-TR'),
+        `${o.customer_first_name || ''} ${o.customer_last_name || ''}`.trim(),
+        o.user_email || '',
+        statusConfig[o.status].label,
+        o.total_amount
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `siparisler-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
   };
 
   // Yükleniyor
@@ -176,9 +250,20 @@ export default function AdminPage() {
     .filter(order =>
       searchTerm === '' ||
       order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user_email?.toLowerCase().includes(searchTerm.toLowerCase())
+      order.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      `${order.customer_first_name} ${order.customer_last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  // Ürün filtreleme
+  const filteredProducts = allProducts
+    .filter(p => productFilter === 'all' || p.collection === productFilter)
+    .filter(p =>
+      productSearch === '' ||
+      p.title.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.subtitle?.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.code?.toLowerCase().includes(productSearch.toLowerCase())
+    );
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('tr-TR', {
@@ -203,14 +288,6 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={loadOrders}
-              disabled={loading}
-              className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Yenile
-            </button>
-            <button
               onClick={() => router.push('/')}
               className="flex items-center gap-2 rounded-lg bg-[#0f3f44] px-4 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e]"
             >
@@ -219,223 +296,563 @@ export default function AdminPage() {
             </button>
           </div>
         </div>
+
+        {/* Tabs */}
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex gap-1 border-t border-gray-100">
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'orders'
+                  ? 'border-[#0f3f44] text-[#0f3f44]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <ShoppingBag className="h-4 w-4" />
+              Siparişler
+              {stats.pending > 0 && (
+                <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                  {stats.pending}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'products'
+                  ? 'border-[#0f3f44] text-[#0f3f44]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Layers className="h-4 w-4" />
+              Ürünler
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                {allProducts.length}
+              </span>
+            </button>
+          </div>
+        </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        {/* İstatistik Kartları */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Toplam Sipariş</p>
-                <p className="mt-1 text-3xl font-bold text-gray-900">{stats.total}</p>
+        {/* ORDERS TAB */}
+        {activeTab === 'orders' && (
+          <>
+            {/* İstatistik Kartları */}
+            <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl border border-gray-200 bg-white p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Toplam Sipariş</p>
+                    <p className="mt-1 text-3xl font-bold text-gray-900">{stats.total}</p>
+                  </div>
+                  <div className="rounded-full bg-blue-100 p-3">
+                    <ShoppingBag className="h-6 w-6 text-blue-600" />
+                  </div>
+                </div>
               </div>
-              <div className="rounded-full bg-blue-100 p-3">
-                <ShoppingBag className="h-6 w-6 text-blue-600" />
+
+              <div className="rounded-xl border border-gray-200 bg-white p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Bekleyen</p>
+                    <p className="mt-1 text-3xl font-bold text-yellow-600">{stats.pending}</p>
+                  </div>
+                  <div className="rounded-full bg-yellow-100 p-3">
+                    <Clock className="h-6 w-6 text-yellow-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-white p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Kargoda</p>
+                    <p className="mt-1 text-3xl font-bold text-purple-600">{stats.shipped}</p>
+                  </div>
+                  <div className="rounded-full bg-purple-100 p-3">
+                    <Truck className="h-6 w-6 text-purple-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-gray-200 bg-white p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Toplam Gelir</p>
+                    <p className="mt-1 text-2xl font-bold text-green-600">
+                      {stats.totalRevenue.toLocaleString('tr-TR')} ₺
+                    </p>
+                  </div>
+                  <div className="rounded-full bg-green-100 p-3">
+                    <TrendingUp className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Bekleyen</p>
-                <p className="mt-1 text-3xl font-bold text-yellow-600">{stats.pending}</p>
+            {/* Filtreler */}
+            <div className="mb-6 flex flex-wrap items-center gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Sipariş no, müşteri adı veya email ara..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-[#0f3f44] focus:outline-none"
+                />
               </div>
-              <div className="rounded-full bg-yellow-100 p-3">
-                <Clock className="h-6 w-6 text-yellow-600" />
+
+              <div className="flex gap-2">
+                <button
+                  onClick={loadOrders}
+                  disabled={loading}
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Yenile
+                </button>
+                <button
+                  onClick={exportOrders}
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <Download className="h-4 w-4" />
+                  Dışa Aktar
+                </button>
               </div>
             </div>
-          </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Kargoda</p>
-                <p className="mt-1 text-3xl font-bold text-purple-600">{stats.shipped}</p>
-              </div>
-              <div className="rounded-full bg-purple-100 p-3">
-                <Truck className="h-6 w-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Toplam Gelir</p>
-                <p className="mt-1 text-2xl font-bold text-green-600">
-                  {stats.totalRevenue.toLocaleString('tr-TR')} ₺
-                </p>
-              </div>
-              <div className="rounded-full bg-green-100 p-3">
-                <TrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filtreler */}
-        <div className="mb-6 flex flex-wrap items-center gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Sipariş no veya email ara..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-sm focus:border-[#0f3f44] focus:outline-none"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => setFilter('all')}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                filter === 'all'
-                  ? 'bg-[#0f3f44] text-white'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Tümü ({stats.total})
-            </button>
-            {Object.entries(statusConfig).map(([key, config]) => (
+            {/* Status Filters */}
+            <div className="mb-6 flex flex-wrap gap-2">
               <button
-                key={key}
-                onClick={() => setFilter(key)}
-                className={`hidden rounded-lg px-4 py-2 text-sm font-medium transition-colors sm:block ${
-                  filter === key
+                onClick={() => setFilter('all')}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  filter === 'all'
                     ? 'bg-[#0f3f44] text-white'
                     : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                {config.label}
+                Tümü ({stats.total})
               </button>
-            ))}
-          </div>
-        </div>
+              {Object.entries(statusConfig).map(([key, config]) => {
+                const count = orders.filter(o => o.status === key).length;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setFilter(key)}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                      filter === key
+                        ? 'bg-[#0f3f44] text-white'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {config.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
 
-        {/* Sipariş Listesi */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#0f3f44]" />
-          </div>
-        ) : filteredOrders.length === 0 ? (
-          <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
-            <Package className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-            <p className="text-gray-500">Sipariş bulunamadı</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredOrders.map((order) => {
-              const status = statusConfig[order.status];
-              const StatusIcon = status.icon;
-              const isExpanded = expandedOrder === order.id;
+            {/* Sipariş Listesi */}
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#0f3f44]" />
+              </div>
+            ) : filteredOrders.length === 0 ? (
+              <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
+                <Package className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+                <p className="text-gray-500">Sipariş bulunamadı</p>
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Sipariş</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Müşteri</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Durum</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Toplam</th>
+                        <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tarih</th>
+                        <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wider text-gray-500">İşlemler</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {filteredOrders.map((order) => {
+                        const status = statusConfig[order.status];
+                        const StatusIcon = status.icon;
 
-              return (
+                        return (
+                          <tr key={order.id} className="hover:bg-gray-50">
+                            <td className="whitespace-nowrap px-6 py-4">
+                              <span className="font-mono font-medium text-gray-900">{order.order_number}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div>
+                                <p className="font-medium text-gray-900">
+                                  {order.customer_first_name} {order.customer_last_name}
+                                </p>
+                                <p className="text-sm text-gray-500">{order.user_email}</p>
+                              </div>
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4">
+                              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${status.color}`}>
+                                <StatusIcon className="h-3.5 w-3.5" />
+                                {status.label}
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4">
+                              <span className="font-semibold text-gray-900">
+                                {order.total_amount.toLocaleString('tr-TR')} ₺
+                              </span>
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                              {formatDate(order.created_at)}
+                            </td>
+                            <td className="whitespace-nowrap px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => setSelectedOrder(order)}
+                                  className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                  title="Detayları Gör"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </button>
+                                {order.status === 'processing' && (
+                                  <button
+                                    onClick={() => {
+                                      setTrackingModal(order);
+                                      setTrackingNumber(order.tracking_number || '');
+                                      setTrackingUrl(order.tracking_url || '');
+                                    }}
+                                    className="rounded-lg p-2 text-purple-500 hover:bg-purple-50 hover:text-purple-700"
+                                    title="Kargo Bilgisi Ekle"
+                                  >
+                                    <Truck className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* PRODUCTS TAB */}
+        {activeTab === 'products' && (
+          <>
+            {/* Ürün Filtreler */}
+            <div className="mb-6 flex flex-wrap items-center gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Ürün adı veya kodu ara..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm focus:border-[#0f3f44] focus:outline-none"
+                />
+              </div>
+              <select
+                value={productFilter}
+                onChange={(e) => setProductFilter(e.target.value)}
+                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+              >
+                <option value="all">Tüm Koleksiyonlar</option>
+                <option value="aslan">Aslan Koleksiyonu</option>
+                <option value="ottoman">Ottoman Koleksiyonu</option>
+              </select>
+            </div>
+
+            {/* Ürün Stats */}
+            <div className="mb-6 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <p className="text-sm text-gray-500">Toplam Ürün</p>
+                <p className="text-2xl font-bold text-gray-900">{allProducts.length}</p>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <p className="text-sm text-gray-500">Aslan Koleksiyonu</p>
+                <p className="text-2xl font-bold text-[#0f3f44]">
+                  {allProducts.filter(p => p.collection === 'aslan').length}
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <p className="text-sm text-gray-500">Ottoman Koleksiyonu</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {allProducts.filter(p => p.collection === 'ottoman').length}
+                </p>
+              </div>
+            </div>
+
+            {/* Ürün Listesi */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredProducts.map((product) => (
                 <div
-                  key={order.id}
+                  key={product.id}
                   className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-md"
                 >
-                  {/* Sipariş Header */}
-                  <div className="p-6">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="mb-2 flex flex-wrap items-center gap-3">
-                          <span className="font-mono text-lg font-bold text-gray-900">
-                            {order.order_number}
-                          </span>
-                          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${status.color}`}>
-                            <StatusIcon className="h-3.5 w-3.5" />
-                            {status.label}
-                          </span>
-                        </div>
-                        <div className="space-y-1 text-sm text-gray-500">
-                          <p>{formatDate(order.created_at)}</p>
-                          {order.user_email && <p>Müşteri: {order.user_email}</p>}
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Toplam</p>
-                        <p className="text-2xl font-bold text-[#0f3f44]">
-                          {order.total_amount.toLocaleString('tr-TR')} ₺
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Durum Güncelleme */}
-                    <div className="mt-4 flex flex-wrap items-center gap-3">
-                      <span className="text-sm font-medium text-gray-700">Durumu Güncelle:</span>
-                      <div className="flex flex-wrap gap-2">
-                        {statusOrder.map((s) => {
-                          const config = statusConfig[s];
-                          const isCurrentStatus = order.status === s;
-                          return (
-                            <button
-                              key={s}
-                              onClick={() => !isCurrentStatus && updateOrderStatus(order.id, s)}
-                              disabled={isCurrentStatus || updating === order.id}
-                              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                                isCurrentStatus
-                                  ? config.color + ' ring-2 ring-offset-1 ring-gray-400'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              } disabled:cursor-not-allowed disabled:opacity-50`}
-                            >
-                              {updating === order.id ? '...' : config.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Detay Toggle */}
-                    <button
-                      onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
-                      className="mt-4 flex items-center gap-1 text-sm font-medium text-[#0f3f44] hover:underline"
-                    >
-                      {isExpanded ? 'Detayları Gizle' : 'Detayları Göster'}
-                      <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                    </button>
+                  <div className="relative aspect-square bg-gray-100">
+                    {product.images?.[0] && (
+                      <Image
+                        src={product.images[0].startsWith('/') ? product.images[0] : `/${product.images[0]}`}
+                        alt={product.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    )}
+                    <span className={`absolute left-3 top-3 rounded-full px-2 py-1 text-xs font-medium ${
+                      product.collection === 'aslan'
+                        ? 'bg-[#0f3f44] text-white'
+                        : 'bg-purple-600 text-white'
+                    }`}>
+                      {product.collection === 'aslan' ? 'Aslan' : 'Ottoman'}
+                    </span>
                   </div>
-
-                  {/* Sipariş Detayları */}
-                  {isExpanded && order.items && (
-                    <div className="border-t border-gray-100 bg-gray-50 p-6">
-                      <h4 className="mb-4 font-medium text-gray-900">Ürünler</h4>
-                      <div className="space-y-3">
-                        {order.items.map((item) => (
-                          <div key={item.id} className="flex items-center gap-4 rounded-lg bg-white p-3">
-                            {item.product_image && (
-                              <img
-                                src={item.product_image}
-                                alt={item.product_title}
-                                className="h-16 w-16 rounded-lg object-cover"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">{item.product_title}</p>
-                              {item.product_subtitle && (
-                                <p className="text-sm text-gray-500">{item.product_subtitle}</p>
-                              )}
-                              <p className="text-sm text-gray-500">
-                                {item.quantity} adet × {item.unit_price.toLocaleString('tr-TR')} ₺
-                              </p>
-                            </div>
-                            <p className="font-bold text-gray-900">
-                              {item.total_price.toLocaleString('tr-TR')} ₺
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="p-4">
+                    <p className="font-medium text-gray-900 line-clamp-1">{product.title}</p>
+                    <p className="mt-1 text-sm text-gray-500 line-clamp-1">{product.subtitle}</p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="font-bold text-[#0f3f44]">{product.price}</span>
+                      <span className="text-xs text-gray-400">{product.code}</span>
                     </div>
-                  )}
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                        {product.productType}
+                      </span>
+                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                        {product.size}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="rounded-xl border border-gray-200 bg-white p-12 text-center">
+                <Layers className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+                <p className="text-gray-500">Ürün bulunamadı</p>
+              </div>
+            )}
+          </>
         )}
       </main>
+
+      {/* Order Detail Modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+            <div className="sticky top-0 flex items-center justify-between border-b bg-white p-6">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">{selectedOrder.order_number}</h2>
+                <p className="text-sm text-gray-500">{formatDate(selectedOrder.created_at)}</p>
+              </div>
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Status */}
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-gray-500">Sipariş Durumu</h3>
+                <div className="flex flex-wrap gap-2">
+                  {statusOrder.map((s) => {
+                    const config = statusConfig[s];
+                    const isCurrentStatus = selectedOrder.status === s;
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          if (!isCurrentStatus) {
+                            updateOrderStatus(selectedOrder.id, s);
+                            setSelectedOrder({ ...selectedOrder, status: s });
+                          }
+                        }}
+                        disabled={isCurrentStatus || updating === selectedOrder.id}
+                        className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                          isCurrentStatus
+                            ? config.color + ' ring-2 ring-offset-1 ring-gray-400'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        } disabled:cursor-not-allowed`}
+                      >
+                        {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Customer Info */}
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-gray-500">Müşteri Bilgileri</h3>
+                <div className="rounded-lg bg-gray-50 p-4">
+                  <p className="font-medium text-gray-900">
+                    {selectedOrder.customer_first_name} {selectedOrder.customer_last_name}
+                  </p>
+                  <p className="text-sm text-gray-600">{selectedOrder.user_email}</p>
+                  {selectedOrder.customer_phone && (
+                    <p className="text-sm text-gray-600">{selectedOrder.customer_phone}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              {selectedOrder.shipping_address && (
+                <div>
+                  <h3 className="mb-3 text-sm font-medium text-gray-500">Teslimat Adresi</h3>
+                  <div className="rounded-lg bg-gray-50 p-4">
+                    <p className="text-gray-900">{selectedOrder.shipping_address}</p>
+                    <p className="text-gray-600">
+                      {selectedOrder.shipping_district && `${selectedOrder.shipping_district}, `}
+                      {selectedOrder.shipping_city}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Tracking Info */}
+              {selectedOrder.tracking_number && (
+                <div>
+                  <h3 className="mb-3 text-sm font-medium text-gray-500">Kargo Bilgileri</h3>
+                  <div className="rounded-lg bg-purple-50 p-4">
+                    <p className="font-medium text-purple-900">
+                      Takip No: {selectedOrder.tracking_number}
+                    </p>
+                    {selectedOrder.tracking_url && (
+                      <a
+                        href={selectedOrder.tracking_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-sm text-purple-700 hover:underline"
+                      >
+                        Kargo Takip <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Order Items */}
+              {selectedOrder.items && selectedOrder.items.length > 0 && (
+                <div>
+                  <h3 className="mb-3 text-sm font-medium text-gray-500">Ürünler</h3>
+                  <div className="space-y-3">
+                    {selectedOrder.items.map((item) => (
+                      <div key={item.id} className="flex items-center gap-4 rounded-lg bg-gray-50 p-3">
+                        {item.product_image && (
+                          <Image
+                            src={item.product_image}
+                            alt={item.product_title}
+                            width={64}
+                            height={64}
+                            className="h-16 w-16 rounded-lg object-cover"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{item.product_title}</p>
+                          {item.product_subtitle && (
+                            <p className="text-sm text-gray-500">{item.product_subtitle}</p>
+                          )}
+                          <p className="text-sm text-gray-500">
+                            {item.quantity} adet × {item.unit_price.toLocaleString('tr-TR')} ₺
+                          </p>
+                        </div>
+                        <p className="font-bold text-gray-900">
+                          {item.total_price.toLocaleString('tr-TR')} ₺
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Total */}
+              <div className="border-t pt-4">
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Toplam</span>
+                  <span className="text-[#0f3f44]">
+                    {selectedOrder.total_amount.toLocaleString('tr-TR')} ₺
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tracking Modal */}
+      {trackingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Kargo Bilgisi Ekle</h2>
+              <button
+                onClick={() => setTrackingModal(null)}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Kargo Takip Numarası
+                </label>
+                <input
+                  type="text"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  placeholder="Örn: 1234567890"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Kargo Takip Linki (Opsiyonel)
+                </label>
+                <input
+                  type="url"
+                  value={trackingUrl}
+                  onChange={(e) => setTrackingUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                />
+              </div>
+
+              <button
+                onClick={updateTracking}
+                disabled={!trackingNumber || updating === trackingModal.id}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f3f44] px-4 py-3 text-sm font-medium text-white hover:bg-[#0a2a2e] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {updating === trackingModal.id ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Kaydediliyor...
+                  </>
+                ) : (
+                  <>
+                    <Truck className="h-4 w-4" />
+                    Kaydet ve Kargoya Ver
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { SignedIn, SignedOut, SignInButton } from "@/hooks/useClerkUser";
 import { BRAND, ASSETS } from "@/constants/brand";
 import { useCart } from "@/contexts/CartContext";
 import { UserDropdown } from './UserDropdown';
+import SearchModal from './SearchModal';
 
 // Yardımcı Fonksiyon
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -230,9 +231,15 @@ export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCa
   const [menuOpen, setMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const collectionsBtnRef = useRef<HTMLButtonElement>(null);
   const productsBtnRef = useRef<HTMLButtonElement>(null);
   const { totalItems } = useCart();
+
+  // Handle product click from search
+  const handleSearchProductClick = (product: any) => {
+    go({ name: "product", slug: product.collection, id: product.id });
+  };
 
   return (
     <>
@@ -267,7 +274,10 @@ export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCa
           </nav>
 
           <div className="flex items-center gap-2">
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]"
+            >
               <Search className="h-5 w-5" />
             </button>
             
@@ -316,6 +326,11 @@ export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCa
         </div>
       </header>
       <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} onGo={go} />
+      <SearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onProductClick={handleSearchProductClick}
+      />
     </>
   );
 }
