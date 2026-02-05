@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from '@clerk/nextjs';
-import { trTR } from '@clerk/localizations';
+import { ClerkWrapper } from '@/components/ClerkWrapper';
 import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import "./globals.css";
@@ -16,16 +15,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider localization={trTR}>
-      <CartProvider>
-        <FavoritesProvider>
-          <html lang="tr">
-            <body className="antialiased font-sans">
+    <html lang="tr">
+      <body className="antialiased font-sans">
+        <ClerkWrapper>
+          <CartProvider>
+            <FavoritesProvider>
               {children}
-            </body>
-          </html>
-        </FavoritesProvider>
-      </CartProvider>
-    </ClerkProvider>
+            </FavoritesProvider>
+          </CartProvider>
+        </ClerkWrapper>
+      </body>
+    </html>
   );
 }

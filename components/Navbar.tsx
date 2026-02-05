@@ -5,7 +5,7 @@ import {
   Menu, Search, User, ShoppingBag, X,
   ChevronDown, ChevronRight, ArrowRight
 } from "lucide-react";
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton } from "@/hooks/useClerkUser";
 import { BRAND, ASSETS } from "@/constants/brand";
 import { useCart } from "@/contexts/CartContext";
 import { UserDropdown } from './UserDropdown';

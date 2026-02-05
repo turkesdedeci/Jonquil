@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/useClerkUser';
 import { useCart } from '@/contexts/CartContext';
 import { motion } from 'framer-motion';
 import { 

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '@/hooks/useClerkUser';
 
 interface FavoritesContextType {
   favorites: string[];

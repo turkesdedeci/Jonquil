@@ -21,7 +21,7 @@ import {
   X,
   Instagram,
   Mail,
-  SlidersHorizontal,
+  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -559,10 +559,14 @@ function AllProductsPage({
               {/* Mobile Filter Button */}
               <button
                 onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-                className="flex items-center gap-2 rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm font-medium text-[#1a1a1a] lg:hidden"
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all lg:hidden ${
+                  mobileFiltersOpen
+                    ? 'border-[#0f3f44] bg-[#0f3f44] text-white'
+                    : 'border-[#e8e6e3] bg-white text-[#1a1a1a]'
+                }`}
               >
-                <SlidersHorizontal className="h-4 w-4" />
-                Filtrele
+                <Filter className="h-4 w-4" />
+                {mobileFiltersOpen ? 'Kapat' : 'Filtrele'}
               </button>
 
               <select
