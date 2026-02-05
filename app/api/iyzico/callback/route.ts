@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { retrieveCheckoutFormResult } from '@/lib/iyzico';
+import { sendOrderEmails, type OrderEmailData } from '@/lib/resend';
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
@@ -9,6 +10,59 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
+
+// Helper function to send order emails
+async function sendOrderConfirmationEmails(orderId: string) {
+  if (!supabase) return;
+
+  try {
+    // Fetch order details
+    const { data: order } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (!order) {
+      console.error('Order not found for email:', orderId);
+      return;
+    }
+
+    // Fetch order items
+    const { data: orderItems } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', orderId);
+
+    // Prepare email data
+    const emailData: OrderEmailData = {
+      orderId: order.id,
+      customerName: `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim() || 'Müşteri',
+      customerEmail: order.customer_email,
+      customerPhone: order.customer_phone,
+      shippingAddress: {
+        address: order.shipping_address || '',
+        city: order.shipping_city || '',
+        district: order.shipping_district,
+        zipCode: order.shipping_zip_code,
+      },
+      items: (orderItems || []).map(item => ({
+        title: item.product_title || item.product_name || 'Ürün',
+        quantity: item.quantity || 1,
+        price: `${item.price || 0} TL`,
+      })),
+      subtotal: `${order.subtotal || order.total || 0} TL`,
+      shippingCost: `${order.shipping_cost || 0} TL`,
+      total: `${order.total || 0} TL`,
+    };
+
+    // Send emails
+    await sendOrderEmails(emailData);
+    console.log('Order confirmation emails sent for:', orderId);
+  } catch (error) {
+    console.error('Error sending order confirmation emails:', error);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +98,9 @@ export async function POST(request: NextRequest) {
               paid_at: new Date().toISOString(),
             })
             .eq('id', orderId);
+
+          // Send order confirmation emails (don't await to not block redirect)
+          sendOrderConfirmationEmails(orderId).catch(console.error);
         } catch (dbError) {
           console.error('Database update error:', dbError);
         }
@@ -107,6 +164,7 @@ export async function GET(request: NextRequest) {
     if (result.status === 'success' && result.paymentStatus === 'SUCCESS') {
       const orderId = result.conversationId;
       const paymentId = result.paymentId;
+      const paidPrice = result.paidPrice;
 
       // Update order if supabase is available
       if (supabase && orderId) {
@@ -116,8 +174,13 @@ export async function GET(request: NextRequest) {
             status: 'processing',
             payment_status: 'paid',
             payment_id: paymentId,
+            paid_amount: parseFloat(paidPrice),
+            paid_at: new Date().toISOString(),
           })
           .eq('id', orderId);
+
+        // Send order confirmation emails
+        sendOrderConfirmationEmails(orderId).catch(console.error);
       }
 
       const successUrl = new URL('/siparis-basarili', request.url);

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Mail, Phone, MapPin, Clock, Building2, FileText } from "lucide-react";
+import ContactForm from "@/components/ContactForm";
 
 export const metadata: Metadata = {
   title: "İletişim - JONQUIL STUDIO",
@@ -147,77 +148,7 @@ export default function IletisimPage() {
       {/* İletişim Formu */}
       <div className="mt-12">
         <h2 className="mb-6 text-lg font-semibold text-neutral-900">Bize Yazın</h2>
-
-        <form className="space-y-4 rounded-xl border border-[#e8e6e3] bg-white p-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <label htmlFor="name" className="mb-1 block text-sm font-medium text-neutral-700">
-                Adınız Soyadınız
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none transition-colors focus:border-[#0f3f44] focus:ring-1 focus:ring-[#0f3f44]"
-                placeholder="Adınız Soyadınız"
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="mb-1 block text-sm font-medium text-neutral-700">
-                E-posta Adresiniz
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none transition-colors focus:border-[#0f3f44] focus:ring-1 focus:ring-[#0f3f44]"
-                placeholder="ornek@email.com"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="subject" className="mb-1 block text-sm font-medium text-neutral-700">
-              Konu
-            </label>
-            <select
-              id="subject"
-              name="subject"
-              required
-              className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none transition-colors focus:border-[#0f3f44] focus:ring-1 focus:ring-[#0f3f44]"
-            >
-              <option value="">Konu seçiniz</option>
-              <option value="siparis">Sipariş Hakkında</option>
-              <option value="iade">İade/Değişim</option>
-              <option value="urun">Ürün Bilgisi</option>
-              <option value="oneri">Öneri/Şikayet</option>
-              <option value="diger">Diğer</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="message" className="mb-1 block text-sm font-medium text-neutral-700">
-              Mesajınız
-            </label>
-            <textarea
-              id="message"
-              name="message"
-              rows={5}
-              required
-              className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none transition-colors focus:border-[#0f3f44] focus:ring-1 focus:ring-[#0f3f44]"
-              placeholder="Mesajınızı buraya yazın..."
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-[#0f3f44] px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-[#0a2a2e]"
-          >
-            Gönder
-          </button>
-        </form>
+        <ContactForm />
       </div>
     </div>
   );
