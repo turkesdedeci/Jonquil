@@ -89,8 +89,8 @@ export default function ProductDetail({
           {/* LEFT: Image Gallery */}
           <div className="space-y-4">
             {/* Main Image */}
-            <motion.div 
-              className="relative aspect-square overflow-hidden rounded-3xl bg-[#faf8f5]"
+            <motion.div
+              className="relative aspect-[4/5] sm:aspect-square overflow-hidden rounded-3xl bg-[#faf8f5] max-h-[60vh] sm:max-h-none"
               layoutId={`product-${product.id}`}
             >
               <AnimatePresence mode="wait">
