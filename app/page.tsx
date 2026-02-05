@@ -440,6 +440,7 @@ function AllProductsPage({
   const [sortBy, setSortBy] = useState("recommended");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
+  const [showFilters, setShowFilters] = useState(true);
 
   const filterOptions = useMemo(() => {
     return {
@@ -553,20 +554,31 @@ function AllProductsPage({
               {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} arası gösteriliyor (toplam {filteredProducts.length} ürün)
             </div>
 
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm text-[#1a1a1a] outline-none focus:border-[#0f3f44]"
-            >
-              <option value="recommended">Önerilen</option>
-              <option value="price-low">Fiyat: Düşükten Yükseğe</option>
-              <option value="price-high">Fiyat: Yüksekten Düşüğe</option>
-            </select>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="text-sm font-medium text-[#0f3f44] hover:underline lg:hidden"
+              >
+                {showFilters ? "Filtreleri Gizle" : "Filtreleri Göster"}
+              </button>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm text-[#1a1a1a] outline-none focus:border-[#0f3f44]"
+              >
+                <option value="recommended">Önerilen</option>
+                <option value="price-low">Fiyat: Düşükten Yükseğe</option>
+                <option value="price-high">Fiyat: Yüksekten Düşüğe</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex gap-8">
+          <div className="flex flex-col gap-8 lg:flex-row">
             {/* Sidebar - Koleksiyon filtresi de var! */}
-            <aside className="hidden w-64 shrink-0 space-y-6 lg:block">
+            <aside className={cx(
+              "w-full space-y-6 lg:w-64 lg:shrink-0",
+              showFilters ? "block" : "hidden lg:block"
+            )}>
               <div className="sticky top-24">
                 {/* Collection Filter */}
                 <div>
@@ -703,6 +715,7 @@ function CategoryPage({
   const [sortBy, setSortBy] = useState("recommended");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 24;
+  const [showFilters, setShowFilters] = useState(true);
 
   // Get unique filter options from category products
   const filterOptions = useMemo(() => {
@@ -811,21 +824,31 @@ function CategoryPage({
             <div className="text-sm text-[#666]">
               {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} arası gösteriliyor (toplam {filteredProducts.length} ürün)
             </div>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm text-[#1a1a1a] outline-none focus:border-[#0f3f44]"
-            >
-              <option value="recommended">Önerilen</option>
-              <option value="price-low">Fiyat: Düşükten Yükseğe</option>
-              <option value="price-high">Fiyat: Yüksekten Düşüğe</option>
-            </select>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="text-sm font-medium text-[#0f3f44] hover:underline lg:hidden"
+              >
+                {showFilters ? "Filtreleri Gizle" : "Filtreleri Göster"}
+              </button>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm text-[#1a1a1a] outline-none focus:border-[#0f3f44]"
+              >
+                <option value="recommended">Önerilen</option>
+                <option value="price-low">Fiyat: Düşükten Yükseğe</option>
+                <option value="price-high">Fiyat: Yüksekten Düşüğe</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex gap-8">
+          <div className="flex flex-col gap-8 lg:flex-row">
             {/* Sidebar Filters */}
-            <aside className="hidden w-64 shrink-0 space-y-6 lg:block">
+            <aside className={cx(
+              "w-full space-y-6 lg:w-64 lg:shrink-0",
+              showFilters ? "block" : "hidden lg:block"
+            )}>
               <div className="sticky top-24 space-y-6">
                 {/* Price Range */}
                 <div>
