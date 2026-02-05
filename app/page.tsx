@@ -1809,6 +1809,11 @@ export default function JonquilHomepage() {
   const { route, go } = useRoute();
   const [cartOpen, setCartOpen] = useState(false);
 
+  // Scroll to top when route changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [route]);
+
   // Use all products directly (no grouping)
   const aslanProducts = useMemo(
     () => allProducts.filter((p) => p.collection === "aslan"),
