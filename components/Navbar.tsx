@@ -1,5 +1,6 @@
 // components/Navbar.tsx - TAM VE DÜZELTİLMİŞ VERSİYON
 import React, { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, Search, User, ShoppingBag, X,
@@ -44,9 +45,11 @@ function MobileNav({
             className="fixed right-0 top-0 z-50 h-full w-[85%] max-w-sm bg-white shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-[#e8e6e3] p-6">
-              <img 
-                src={ASSETS.logo} 
+              <Image
+                src={ASSETS.logo}
                 alt={BRAND.name}
+                width={120}
+                height={40}
                 className="h-10 w-auto object-contain"
               />
               <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full text-[#1a1a1a] hover:bg-[#e8e6e3]">
@@ -138,17 +141,19 @@ function CollectionDropdown({
         <motion.div ref={dropdownRef} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute left-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
           <div className="p-3">
             <button onClick={() => { onGo({ name: "collection", slug: "aslan" }); onClose(); }} className="flex w-full items-center gap-4 rounded-xl p-3 text-left hover:bg-[#faf8f5]">
-              <img src={ASSETS.aslanCover} className="h-16 w-16 rounded-lg object-cover" />
+              <div className="relative h-16 w-16 overflow-hidden rounded-lg">
+                <Image src={ASSETS.aslanCover} alt="Aslan" fill sizes="64px" className="object-cover" />
+              </div>
               <div>
-                  {/* DÜZELTME: text-[#1a1a1a] eklendi */}
                   <div className="text-sm font-semibold text-[#1a1a1a]">Aslan Koleksiyonu</div>
                   <div className="text-xs text-[#999]">Klasik tasarımlar</div>
               </div>
             </button>
             <button onClick={() => { onGo({ name: "collection", slug: "ottoman" }); onClose(); }} className="flex w-full items-center gap-4 rounded-xl p-3 text-left hover:bg-[#faf8f5]">
-              <img src={ASSETS.ottomanCover} className="h-16 w-16 rounded-lg object-cover" />
+              <div className="relative h-16 w-16 overflow-hidden rounded-lg">
+                <Image src={ASSETS.ottomanCover} alt="Ottoman" fill sizes="64px" className="object-cover" />
+              </div>
               <div>
-                  {/* DÜZELTME: text-[#1a1a1a] eklendi */}
                   <div className="text-sm font-semibold text-[#1a1a1a]">Ottoman Koleksiyonu</div>
                   <div className="text-xs text-[#999]">Renkli desenler</div>
               </div>
@@ -231,9 +236,11 @@ export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCa
       <header className="sticky top-0 z-40 border-b border-[#e8e6e3]/50 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-4">
           <button type="button" className="flex items-center" onClick={() => go({ name: "home" })}>
-            <img 
-              src={ASSETS.logo} 
+            <Image
+              src={ASSETS.logo}
               alt={BRAND.name}
+              width={144}
+              height={48}
               className="h-12 w-auto object-contain"
             />
           </button>

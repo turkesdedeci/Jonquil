@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function HakkimizdaPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-28">
@@ -17,11 +19,14 @@ export default function HakkimizdaPage() {
         </p>
 
         {/* --- DİREKT YOL İLE RESİM --- */}
-        <div className="my-12 overflow-hidden rounded-3xl shadow-sm bg-neutral-100">
-          <img 
-            src="images/products/GENEL FOTOLAR/✨ “Aslan Koleksiyonu ile yılbaşı sofralarınıza zamansız bir dokunuş katın. Koleksiyonun yeşil to.jpg" 
-            alt="Jonquil Atölye" 
-            className="w-full h-auto object-cover"
+        <div className="relative my-12 aspect-[16/9] overflow-hidden rounded-3xl shadow-sm bg-neutral-100">
+          <Image
+            src={`/images/products/GENEL FOTOLAR/✨ "Aslan Koleksiyonu ile yılbaşı sofralarınıza zamansız bir dokunuş katın. Koleksiyonun yeşil to.jpg`}
+            alt="Jonquil Atölye"
+            fill
+            sizes="(max-width: 768px) 100vw, 768px"
+            className="object-cover"
+            loading="lazy"
           />
         </div>
 

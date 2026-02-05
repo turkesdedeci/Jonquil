@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { Heart, Trash2, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -73,10 +74,13 @@ export function FavorilerimTab() {
               className="relative aspect-square cursor-pointer overflow-hidden bg-[#faf8f5]"
               onClick={() => window.location.hash = `#/urun/${product.slug || product.id}/${product.id}`}
             >
-              <img
+              <Image
                 src={product.images?.[0] || '/placeholder.jpg'}
                 alt={product.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
               />
 
               {/* Kaldır butonu */}

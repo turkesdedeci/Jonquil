@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { motion } from "framer-motion";
 import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { getColorSwatchStyle } from "@/utils/groupProducts";
 import { useCart } from "@/contexts/CartContext";
@@ -95,18 +96,20 @@ export default function ProductDetail({
               className="relative aspect-[4/5] sm:aspect-square overflow-hidden rounded-3xl bg-[#faf8f5] max-h-[60vh] sm:max-h-none"
               layoutId={`product-${product.id}`}
             >
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={`${selectedVariantIndex}-${activeImageIndex}`}
-                  src={images[activeImageIndex]}
+              {images.map((img: string, idx: number) => (
+                <Image
+                  key={`${selectedVariantIndex}-${idx}`}
+                  src={img}
                   alt={product.title}
-                  className="h-full w-full object-cover"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className={`object-cover transition-opacity duration-300 ${
+                    idx === activeImageIndex ? "opacity-100" : "opacity-0"
+                  }`}
+                  priority={idx === 0}
+                  loading={idx === 0 ? "eager" : "lazy"}
                 />
-              </AnimatePresence>
+              ))}
 
               {/* Image Navigation Arrows */}
               {images.length > 1 && (
@@ -147,7 +150,7 @@ export default function ProductDetail({
                         : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    <Image src={img} alt="" fill sizes="80px" className="object-cover" loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -398,10 +401,13 @@ export default function ProductDetail({
                   >
                     {/* Product Image */}
                     <div className="relative aspect-square overflow-hidden bg-[#faf8f5]">
-                      <img
+                      <Image
                         src={firstImage}
                         alt={relatedProduct.title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        fill
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
                       />
                       
                       {/* Material Badge */}

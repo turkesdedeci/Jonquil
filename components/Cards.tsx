@@ -1,7 +1,8 @@
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowRight, 
+import Image from "next/image";
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
@@ -51,8 +52,15 @@ export function CollectionCard({
       onClick={onClick}
       className="group relative cursor-pointer overflow-hidden rounded-3xl bg-white shadow-lg transition-all hover:shadow-2xl"
     >
-      <div className="aspect-[4/3] overflow-hidden">
-        <img src={image} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" alt={title} />
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <Image
+          src={image}
+          alt={title}
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover transition-transform duration-700 group-hover:scale-110"
+          loading="lazy"
+        />
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
@@ -98,18 +106,20 @@ export function ProductCard({
     >
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden bg-[#faf8f5]">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={currentImgIndex}
-            src={images[currentImgIndex] || "/placeholder.jpg"}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="h-full w-full object-cover"
+        {images.map((img: string, idx: number) => (
+          <Image
+            key={idx}
+            src={img || "/placeholder.jpg"}
             alt={product.title}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className={`object-cover transition-opacity duration-300 ${
+              idx === currentImgIndex ? "opacity-100" : "opacity-0"
+            }`}
+            loading={idx === 0 ? "eager" : "lazy"}
+            priority={idx === 0}
           />
-        </AnimatePresence>
+        ))}
 
         {/* Image Navigation Arrows (if multiple images) */}
         {images.length > 1 && (

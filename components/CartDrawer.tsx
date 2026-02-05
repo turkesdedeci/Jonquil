@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useCart } from '@/contexts/CartContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
@@ -68,11 +69,14 @@ export function CartDrawer({ open, onClose, onCheckout }: CartDrawerProps) {
                       className="flex gap-4 rounded-xl border border-[#e8e6e3] bg-[#faf8f5] p-4"
                     >
                       {/* Image */}
-                      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-white">
-                        <img
+                      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-white">
+                        <Image
                           src={item.image}
                           alt={item.title}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                          loading="lazy"
                         />
                       </div>
 
