@@ -1214,7 +1214,7 @@ function CollectionPage({
   const [sortBy, setSortBy] = useState("recommended");
   const [itemsPerPage, setItemsPerPage] = useState(24);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Get unique filter options
   const filterOptions = useMemo(() => {
@@ -1355,12 +1355,17 @@ function CollectionPage({
               {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} arası gösteriliyor (toplam {filteredProducts.length} ürün)
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="text-sm font-medium text-[#0f3f44] hover:underline md:hidden"
+                className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all md:hidden ${
+                  showFilters
+                    ? 'border-[#0f3f44] bg-[#0f3f44] text-white'
+                    : 'border-[#e8e6e3] bg-white text-[#1a1a1a]'
+                }`}
               >
-                {showFilters ? "Filtreleri Gizle" : "Filtreleri Göster"}
+                <Filter className="h-4 w-4" />
+                {showFilters ? "Kapat" : "Filtrele"}
               </button>
 
               <select
