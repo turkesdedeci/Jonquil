@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { getColorSwatchStyle } from "@/utils/groupProducts";
 import { useCart } from "@/contexts/CartContext";
