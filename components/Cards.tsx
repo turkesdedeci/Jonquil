@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
+import { useStock } from "@/contexts/StockContext";
 
 // Luxury badge component
 export function LuxuryBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
@@ -33,17 +34,17 @@ export function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; titl
   );
 }
 // Collection card
-export function CollectionCard({ 
-  image, 
-  badge, 
-  title, 
-  desc, 
-  onClick 
-}: { 
-  image: string; 
-  badge: string; 
-  title: string; 
-  desc: string; 
+export function CollectionCard({
+  image,
+  badge,
+  title,
+  desc,
+  onClick
+}: {
+  image: string;
+  badge: string;
+  title: string;
+  desc: string;
   onClick: () => void;
 }) {
   return (
@@ -76,15 +77,19 @@ export function CollectionCard({
 }
 
 // Simple Product card (no grouping)
-export function ProductCard({ 
-  product, 
+export function ProductCard({
+  product,
   onClick
-}: { 
-  product: any; 
-  onClick: () => void; 
+}: {
+  product: any;
+  onClick: () => void;
 }) {
   const [currentImgIndex, setCurrentImgIndex] = React.useState(0);
-  
+  const { isInStock } = useStock();
+
+  // Check stock status
+  const inStock = isInStock(product.id);
+
   // Safely get images with fallbacks
   const images = product.images || ["/placeholder.jpg"];
 
@@ -101,7 +106,9 @@ export function ProductCard({
   return (
     <motion.div
       whileHover={{ y: -6 }}
-      className="group cursor-pointer overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-sm transition-all hover:shadow-xl"
+      className={`group cursor-pointer overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:shadow-xl ${
+        inStock ? 'border-[#e8e6e3]' : 'border-red-200'
+      }`}
       onClick={onClick}
     >
       {/* Product Image */}
@@ -115,14 +122,14 @@ export function ProductCard({
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`object-cover transition-opacity duration-300 ${
               idx === currentImgIndex ? "opacity-100" : "opacity-0"
-            }`}
+            } ${!inStock ? 'grayscale opacity-60' : ''}`}
             loading={idx === 0 ? "eager" : "lazy"}
             priority={idx === 0}
           />
         ))}
 
         {/* Image Navigation Arrows (if multiple images) */}
-        {images.length > 1 && (
+        {images.length > 1 && inStock && (
           <>
             <button
               onClick={prevImage}
@@ -139,24 +146,29 @@ export function ProductCard({
           </>
         )}
 
-        {/* Material Badge */}
-        <div className="absolute left-3 top-3">
+        {/* Material Badge & Out of Stock Badge */}
+        <div className="absolute left-3 top-3 flex gap-2">
           <div className="rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#0f3f44] shadow-sm backdrop-blur-sm">
             {product.material}
           </div>
+          {!inStock && (
+            <div className="rounded-full bg-red-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white shadow-sm">
+              Tükendi
+            </div>
+          )}
         </div>
       </div>
-      
+
       {/* Product Info */}
       <div className="p-5">
         <div className="mb-1 text-xs font-light uppercase tracking-wider text-[#999]">
           {product.family}
         </div>
-        <h3 className="mb-2 line-clamp-2 text-sm font-medium leading-snug text-[#1a1a1a]">
+        <h3 className={`mb-2 line-clamp-2 text-sm font-medium leading-snug ${inStock ? 'text-[#1a1a1a]' : 'text-gray-400'}`}>
           {product.title}
         </h3>
-        
-        <div className="text-base font-semibold text-[#0f3f44]">
+
+        <div className={`text-base font-semibold ${inStock ? 'text-[#0f3f44]' : 'text-gray-400 line-through'}`}>
           {product.price}
         </div>
       </div>

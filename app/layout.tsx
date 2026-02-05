@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ClerkWrapper } from '@/components/ClerkWrapper';
 import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
+import { StockProvider } from '@/contexts/StockContext';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,7 +21,9 @@ export default function RootLayout({
         <ClerkWrapper>
           <CartProvider>
             <FavoritesProvider>
-              {children}
+              <StockProvider>
+                {children}
+              </StockProvider>
             </FavoritesProvider>
           </CartProvider>
         </ClerkWrapper>
