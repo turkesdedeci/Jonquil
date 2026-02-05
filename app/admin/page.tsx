@@ -87,6 +87,8 @@ export default function AdminPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
   const [productSearch, setProductSearch] = useState('');
   const [productFilter, setProductFilter] = useState('all');
+  const [stockStatus, setStockStatus] = useState<Record<string, boolean>>({});
+  const [updatingStock, setUpdatingStock] = useState<string | null>(null);
 
   // Admin kontrolü
   const isAdmin = user?.emailAddresses?.some(
@@ -96,8 +98,43 @@ export default function AdminPage() {
   useEffect(() => {
     if (isLoaded && isAdmin) {
       loadOrders();
+      loadStockStatus();
     }
   }, [isLoaded, isAdmin]);
+
+  const loadStockStatus = async () => {
+    try {
+      const res = await fetch('/api/admin/products');
+      if (res.ok) {
+        const data = await res.json();
+        setStockStatus(data.stockStatus || {});
+      }
+    } catch (error) {
+      console.error('Stok durumu yüklenirken hata:', error);
+    }
+  };
+
+  const toggleStockStatus = async (productId: string) => {
+    const currentStatus = stockStatus[productId] !== false; // Default true (in stock)
+    const newStatus = !currentStatus;
+
+    setUpdatingStock(productId);
+    try {
+      const res = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, inStock: newStatus }),
+      });
+
+      if (res.ok) {
+        setStockStatus(prev => ({ ...prev, [productId]: newStatus }));
+      }
+    } catch (error) {
+      console.error('Stok durumu güncellenirken hata:', error);
+    } finally {
+      setUpdatingStock(null);
+    }
+  };
 
   const loadOrders = async () => {
     setLoading(true);
@@ -571,68 +608,100 @@ export default function AdminPage() {
             </div>
 
             {/* Ürün Stats */}
-            <div className="mb-6 grid gap-4 sm:grid-cols-3">
+            <div className="mb-6 grid gap-4 sm:grid-cols-4">
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <p className="text-sm text-gray-500">Toplam Ürün</p>
                 <p className="text-2xl font-bold text-gray-900">{allProducts.length}</p>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
-                <p className="text-sm text-gray-500">Aslan Koleksiyonu</p>
-                <p className="text-2xl font-bold text-[#0f3f44]">
-                  {allProducts.filter(p => p.collection === 'aslan').length}
+                <p className="text-sm text-gray-500">Stokta</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {allProducts.filter(p => stockStatus[p.id] !== false).length}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
-                <p className="text-sm text-gray-500">Ottoman Koleksiyonu</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {allProducts.filter(p => p.collection === 'ottoman').length}
+                <p className="text-sm text-gray-500">Tükendi</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {allProducts.filter(p => stockStatus[p.id] === false).length}
                 </p>
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <p className="text-sm text-gray-500">Koleksiyonlar</p>
+                <p className="text-2xl font-bold text-purple-600">2</p>
               </div>
             </div>
 
             {/* Ürün Listesi */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-md"
-                >
-                  <div className="relative aspect-square bg-gray-100">
-                    {product.images?.[0] && (
-                      <Image
-                        src={product.images[0].startsWith('/') ? product.images[0] : `/${product.images[0]}`}
-                        alt={product.title}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover"
-                      />
-                    )}
-                    <span className={`absolute left-3 top-3 rounded-full px-2 py-1 text-xs font-medium ${
-                      product.collection === 'aslan'
-                        ? 'bg-[#0f3f44] text-white'
-                        : 'bg-purple-600 text-white'
-                    }`}>
-                      {product.collection === 'aslan' ? 'Aslan' : 'Ottoman'}
-                    </span>
-                  </div>
-                  <div className="p-4">
-                    <p className="font-medium text-gray-900 line-clamp-1">{product.title}</p>
-                    <p className="mt-1 text-sm text-gray-500 line-clamp-1">{product.subtitle}</p>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="font-bold text-[#0f3f44]">{product.price}</span>
-                      <span className="text-xs text-gray-400">{product.code}</span>
+              {filteredProducts.map((product) => {
+                const isInStock = stockStatus[product.id] !== false;
+                const isUpdating = updatingStock === product.id;
+
+                return (
+                  <div
+                    key={product.id}
+                    className={`overflow-hidden rounded-xl border bg-white transition-shadow hover:shadow-md ${
+                      isInStock ? 'border-gray-200' : 'border-red-200'
+                    }`}
+                  >
+                    <div className="relative aspect-square bg-gray-100">
+                      {product.images?.[0] && (
+                        <Image
+                          src={product.images[0].startsWith('/') ? product.images[0] : `/${product.images[0]}`}
+                          alt={product.title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className={`object-cover ${!isInStock ? 'opacity-50 grayscale' : ''}`}
+                        />
+                      )}
+                      <div className="absolute left-3 top-3 flex gap-2">
+                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${
+                          product.collection === 'aslan'
+                            ? 'bg-[#0f3f44] text-white'
+                            : 'bg-purple-600 text-white'
+                        }`}>
+                          {product.collection === 'aslan' ? 'Aslan' : 'Ottoman'}
+                        </span>
+                        {!isInStock && (
+                          <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-medium text-white">
+                            Tükendi
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-1">
-                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                        {product.productType}
-                      </span>
-                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
-                        {product.size}
-                      </span>
+                    <div className="p-4">
+                      <p className={`font-medium line-clamp-1 ${isInStock ? 'text-gray-900' : 'text-gray-400'}`}>
+                        {product.title}
+                      </p>
+                      <p className="mt-1 text-sm text-gray-500 line-clamp-1">{product.subtitle}</p>
+                      <div className="mt-3 flex items-center justify-between">
+                        <span className={`font-bold ${isInStock ? 'text-[#0f3f44]' : 'text-gray-400 line-through'}`}>
+                          {product.price}
+                        </span>
+                        <span className="text-xs text-gray-400">{product.code}</span>
+                      </div>
+
+                      {/* Stok Toggle */}
+                      <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4">
+                        <span className="text-sm text-gray-600">Stok Durumu</span>
+                        <button
+                          onClick={() => toggleStockStatus(product.id)}
+                          disabled={isUpdating}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            isInStock ? 'bg-green-500' : 'bg-gray-300'
+                          } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                              isInStock ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {filteredProducts.length === 0 && (
