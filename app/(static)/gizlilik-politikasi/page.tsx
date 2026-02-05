@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function GizlilikPolitikasiPage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-28">
+    <div className="mx-auto max-w-4xl px-4 py-12">
       <div className="mb-6 h-1 w-12 rounded-full bg-[#0f3f44]" />
       <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
         Gizlilik Politikası
@@ -201,6 +201,6 @@ export default function GizlilikPolitikasiPage() {
           </p>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
