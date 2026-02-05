@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useSafeUser } from '@/contexts/ClerkContext';
 import { useCart } from '@/contexts/CartContext';
 import { motion } from 'framer-motion';
 import { 
@@ -33,7 +33,7 @@ interface Address {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user } = useSafeUser();
   const { items, totalPrice, clearCart } = useCart();
   
   const [addresses, setAddresses] = useState<Address[]>([]);

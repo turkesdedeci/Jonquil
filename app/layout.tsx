@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ClerkProvider } from '@clerk/nextjs';
 import { trTR } from '@clerk/localizations';
 import { CartProvider } from '@/contexts/CartContext';
+import { SafeUserProvider } from '@/contexts/ClerkContext';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,11 +20,13 @@ export default function RootLayout({
 }>) {
   const content = (
     <CartProvider>
-      <html lang="tr">
-        <body className="antialiased font-sans">
-          {children}
-        </body>
-      </html>
+      <SafeUserProvider>
+        <html lang="tr">
+          <body className="antialiased font-sans">
+            {children}
+          </body>
+        </html>
+      </SafeUserProvider>
     </CartProvider>
   );
 

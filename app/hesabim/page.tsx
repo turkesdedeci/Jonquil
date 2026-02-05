@@ -5,10 +5,29 @@ export const dynamic = 'force-dynamic';
 
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { UserProfile } from '@clerk/nextjs';
+import dynamic_import from 'next/dynamic';
 import { AdreslerimTab } from '@/components/AdreslerimTab';
 import { SiparislerimTab } from '@/components/SiparislerimTab';
 import { MapPin, Package, Heart, User } from 'lucide-react';
+
+// Check if Clerk is configured
+const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+// Dynamically import UserProfile only if Clerk is configured
+const UserProfile = isClerkConfigured
+  ? dynamic_import(() => import('@clerk/nextjs').then(mod => mod.UserProfile), {
+      ssr: false,
+      loading: () => <div className="p-8 text-center text-[#666]">Yükleniyor...</div>
+    })
+  : () => (
+      <div className="rounded-xl border border-dashed border-[#e8e6e3] bg-[#faf8f5] p-12 text-center">
+        <User className="mx-auto mb-4 h-16 w-16 text-[#e8e6e3]" />
+        <p className="mb-2 font-medium text-[#1a1a1a]">Profil Ayarları</p>
+        <p className="text-sm text-[#666]">
+          Profil ayarları şu anda kullanılamıyor.
+        </p>
+      </div>
+    );
 
 type TabType = 'profil' | 'adreslerim' | 'siparislerim' | 'favorilerim';
 
