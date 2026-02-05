@@ -93,6 +93,9 @@ function MobileNav({
               </div>
               
               <div className="space-y-1">
+                <button onClick={() => { onGo({ name: "urunler" }); onClose(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+                  Ürünler <ChevronRight className="h-4 w-4 text-[#999]" />
+                </button>
                 <button onClick={() => { onGo({ name: "collections" }); onClose(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   Koleksiyonlar <ChevronRight className="h-4 w-4 text-[#999]" />
                 </button>
