@@ -21,6 +21,7 @@ import {
   X,
   Instagram,
   Mail,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -439,6 +440,7 @@ function AllProductsPage({
 
   const [sortBy, setSortBy] = useState("recommended");
   const [currentPage, setCurrentPage] = useState(1);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const itemsPerPage = 24;
 
   const filterOptions = useMemo(() => {
@@ -548,21 +550,105 @@ function AllProductsPage({
       {/* Products with Filters */}
       <section className="py-12">
         <div className="mx-auto max-w-[1400px] px-6">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-8 flex items-center justify-between gap-4">
             <div className="text-sm text-[#666]">
-              {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} arası gösteriliyor (toplam {filteredProducts.length} ürün)
+              {filteredProducts.length} ürün
             </div>
 
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm text-[#1a1a1a] outline-none focus:border-[#0f3f44]"
-            >
-              <option value="recommended">Önerilen</option>
-              <option value="price-low">Fiyat: Düşükten Yükseğe</option>
-              <option value="price-high">Fiyat: Yüksekten Düşüğe</option>
-            </select>
+            <div className="flex items-center gap-2">
+              {/* Mobile Filter Button */}
+              <button
+                onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+                className="flex items-center gap-2 rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm font-medium text-[#1a1a1a] lg:hidden"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filtrele
+              </button>
+
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm text-[#1a1a1a] outline-none focus:border-[#0f3f44]"
+              >
+                <option value="recommended">Önerilen</option>
+                <option value="price-low">Fiyat: Düşükten Yükseğe</option>
+                <option value="price-high">Fiyat: Yüksekten Düşüğe</option>
+              </select>
+            </div>
           </div>
+
+          {/* Mobile Filters Panel */}
+          <AnimatePresence>
+            {mobileFiltersOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="mb-6 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white lg:hidden"
+              >
+                <div className="p-4 space-y-4">
+                  {/* Collection Filter */}
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-[#1a1a1a]">Koleksiyon</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {filterOptions.collections.map((col) => (
+                        <button
+                          key={col}
+                          onClick={() => toggleFilter('collections', col)}
+                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                            filters.collections.includes(col)
+                              ? 'bg-[#0f3f44] text-white'
+                              : 'bg-[#faf8f5] text-[#666] hover:bg-[#e8e6e3]'
+                          }`}
+                        >
+                          {col === 'aslan' ? 'Aslan' : 'Ottoman'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Material Filter */}
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-[#1a1a1a]">Malzeme</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {filterOptions.materials.map((mat) => (
+                        <button
+                          key={mat}
+                          onClick={() => toggleFilter('materials', mat)}
+                          className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                            filters.materials.includes(mat)
+                              ? 'bg-[#0f3f44] text-white'
+                              : 'bg-[#faf8f5] text-[#666] hover:bg-[#e8e6e3]'
+                          }`}
+                        >
+                          {mat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Clear Filters */}
+                  <button
+                    onClick={() => {
+                      setFilters({
+                        priceRange: [0, 5000],
+                        materials: [],
+                        colors: [],
+                        productTypes: [],
+                        sizes: [],
+                        collections: [],
+                        inStock: true,
+                      });
+                      setMobileFiltersOpen(false);
+                    }}
+                    className="w-full rounded-lg border border-[#e8e6e3] py-2 text-sm font-medium text-[#666] hover:bg-[#faf8f5]"
+                  >
+                    Filtreleri Temizle
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="flex gap-8">
             {/* Sidebar - Koleksiyon filtresi de var! */}
@@ -605,7 +691,7 @@ function AllProductsPage({
 
             {/* Products Grid */}
             <div className="flex-1">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 grid-cols-2 lg:grid-cols-3">
                 {displayedProducts.map((product, index) => (
                   <ProductCard
                     key={product.id}
@@ -1002,7 +1088,7 @@ function CategoryPage({
 
             {/* Products Grid */}
             <div className="flex-1">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 grid-cols-2 lg:grid-cols-3">
                 {displayedProducts.map((product, index) => (
                   <ProductCard
                     key={product.id}
@@ -1428,7 +1514,7 @@ function CollectionPage({
 
             {/* Products Grid - 4 columns */}
             <div className="flex-1">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 grid-cols-2 lg:grid-cols-3">
                 {displayedProducts.map((product, index) => (
                   <ProductCard
                     key={product.id}
