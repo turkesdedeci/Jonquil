@@ -1,5 +1,8 @@
 'use client';
 
+// Force dynamic rendering to prevent build-time prerendering with Clerk
+export const dynamic = 'force-dynamic';
+
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { UserProfile } from '@clerk/nextjs';
