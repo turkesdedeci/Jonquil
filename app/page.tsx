@@ -605,7 +605,7 @@ function AllProductsPage({
 
             {/* Products Grid */}
             <div className="flex-1">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {displayedProducts.map((product, index) => (
                   <ProductCard
                     key={product.id}
@@ -1002,7 +1002,7 @@ function CategoryPage({
 
             {/* Products Grid */}
             <div className="flex-1">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {displayedProducts.map((product, index) => (
                   <ProductCard
                     key={product.id}
@@ -1428,7 +1428,7 @@ function CollectionPage({
 
             {/* Products Grid - 4 columns */}
             <div className="flex-1">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {displayedProducts.map((product, index) => (
                   <ProductCard
                     key={product.id}

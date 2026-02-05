@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { getColorSwatchStyle } from "@/utils/groupProducts";
 import { useCart } from "@/contexts/CartContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 interface ProductDetailProps {
   product: any;
@@ -11,13 +12,14 @@ interface ProductDetailProps {
   onProductClick?: (productId: string) => void; // Navigate to another product
 }
 
-export default function ProductDetail({ 
-  product, 
-  onGoBack, 
+export default function ProductDetail({
+  product,
+  onGoBack,
   relatedProducts = [],
-  onProductClick 
+  onProductClick
 }: ProductDetailProps) {
   const { addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(
     product.selectedVariantIndex || 0
@@ -258,9 +260,16 @@ export default function ProductDetail({
                 Hemen Satın Al
               </button>
 
-              <button className="flex w-full items-center justify-center gap-2 text-sm font-medium text-[#666] transition-colors hover:text-[#0f3f44]">
-                <Heart className="h-5 w-5" />
-                Favorilere Ekle
+              <button
+                onClick={() => toggleFavorite(product.id)}
+                className={`flex w-full items-center justify-center gap-2 text-sm font-medium transition-colors ${
+                  isFavorite(product.id)
+                    ? 'text-red-500 hover:text-red-600'
+                    : 'text-[#666] hover:text-[#0f3f44]'
+                }`}
+              >
+                <Heart className={`h-5 w-5 ${isFavorite(product.id) ? 'fill-current' : ''}`} />
+                {isFavorite(product.id) ? 'Favorilerde' : 'Favorilere Ekle'}
               </button>
             </div>
 
@@ -376,7 +385,7 @@ export default function ProductDetail({
           </div>
 
           {relatedProducts.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {relatedProducts.slice(0, 4).map((relatedProduct) => {
                 const firstImage = relatedProduct.variants?.[0]?.images?.[0] || relatedProduct.images?.[0];
                 
