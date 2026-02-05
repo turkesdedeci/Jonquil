@@ -3,7 +3,7 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
 
 // Admin email listesi
-const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(',') || ['admin@jonquil.com'];
+const ADMIN_EMAILS = ['turkesdedeci@icloud.com'];
 
 // Admin kontrolü
 async function isAdmin() {

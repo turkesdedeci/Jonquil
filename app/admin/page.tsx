@@ -18,8 +18,8 @@ import {
   Home
 } from 'lucide-react';
 
-// Admin email listesi - Vercel'de ADMIN_EMAILS env var olarak da ayarlanabilir
-const ADMIN_EMAILS = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',') || ['admin@jonquil.com'];
+// Admin email listesi
+const ADMIN_EMAILS = ['turkesdedeci@icloud.com'];
 
 interface Order {
   id: string;
