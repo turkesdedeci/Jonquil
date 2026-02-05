@@ -76,6 +76,18 @@ export default function ProductDetail({
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
+  // Buy Now handler
+  const handleBuyNow = () => {
+    // 1. Add to cart
+    handleAddToCart();
+    
+    // 2. Redirect to checkout
+    // A small delay to ensure cart context is updated before redirect
+    setTimeout(() => {
+      window.location.href = '/odeme';
+    }, 100);
+  };
+
   return (
     <main className="bg-white min-h-screen">
       <div className="mx-auto max-w-7xl px-6 py-12">
@@ -259,7 +271,10 @@ export default function ProductDetail({
                 )}
               </button>
               
-              <button className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[#0f3f44] bg-transparent px-8 py-4 text-sm font-semibold text-[#0f3f44] transition-all hover:bg-[#0f3f44] hover:text-white active:scale-98">
+              <button 
+                onClick={handleBuyNow}
+                className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[#0f3f44] bg-transparent px-8 py-4 text-sm font-semibold text-[#0f3f44] transition-all hover:bg-[#0f3f44] hover:text-white active:scale-98"
+              >
                 Hemen Satın Al
               </button>
 

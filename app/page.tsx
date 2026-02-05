@@ -338,6 +338,113 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
         </div>
       </section>
 
+      {/* Best Sellers Section */}
+      <section className="bg-white py-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16 text-center"
+          >
+            <div className="mb-4 font-light tracking-widest text-[#d4af7a]">EN SEVİLENLER</div>
+            <h2 className="mb-4 font-serif text-4xl font-light text-[#1a1a1a] md:text-5xl">
+              Çok Satanlar
+            </h2>
+            <p className="mx-auto max-w-2xl text-[#666]">
+              Müşterilerimizin favorisi olan en popüler ürünlerimize göz atın.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {allProducts.slice(0, 4).map((product, i) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <ProductCard
+                  product={product}
+                  onClick={() =>
+                    onGo({ name: "product", slug: product.collection, id: product.id })
+                  }
+                />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Photo Gallery Section */}
+      <section className="bg-gradient-to-b from-[#faf8f5] to-white py-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16 text-center"
+          >
+            <div className="mb-4 font-light tracking-widest text-[#d4af7a]">GÖZ ATIN</div>
+            <h2 className="mb-4 font-serif text-4xl font-light text-[#1a1a1a] md:text-5xl">
+              Fotoğraf Galerisi
+            </h2>
+            <p className="mx-auto max-w-2xl text-[#666]">
+              Jonquil dünyasından ilham verici anlar ve detaylar.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <motion.div
+              className="col-span-2 row-span-2 overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <img src="/images/products/GENEL FOTOLAR/Header-1.jpg" alt="Gallery image 1" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </motion.div>
+            <motion.div
+              className="overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <img src="/images/products/GENEL FOTOLAR/Header-2.jpg" alt="Gallery image 2" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </motion.div>
+            <motion.div
+              className="overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <img src="/images/products/GENEL FOTOLAR/Header-3.jpg" alt="Gallery image 3" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </motion.div>
+            <motion.div
+              className="overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+            >
+              <img src="/images/products/GENEL FOTOLAR/Aslan Temsil.jpg" alt="Gallery image 4" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </motion.div>
+            <motion.div
+              className="overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.5 }}
+            >
+              <img src="/images/products/GENEL FOTOLAR/Ottoman Temsil.jpg" alt="Gallery image 5" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Newsletter Section */}
       <section className="border-t border-[#e8e6e3] bg-white py-20">
         <div className="mx-auto max-w-4xl px-6 text-center">
@@ -1351,11 +1458,11 @@ function CollectionPage({
         <div className="mx-auto max-w-[1400px] px-6">
           {/* Top bar */}
           <div className="mb-8 flex items-center justify-between">
-            <div className="text-sm text-[#666]">
+            <div className="hidden text-sm text-[#666] md:block">
               {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} arası gösteriliyor (toplam {filteredProducts.length} ürün)
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex w-full items-center justify-between gap-2 md:w-auto md:justify-normal">
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all md:hidden ${
@@ -1371,7 +1478,7 @@ function CollectionPage({
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm outline-none focus:border-[#0f3f44]"
+                className="rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm text-[#1a1a1a] outline-none focus:border-[#0f3f44]"
               >
                 <option value="recommended">Önerilen</option>
                 <option value="price-low">Fiyat: Düşükten Yükseğe</option>
@@ -1740,6 +1847,26 @@ function AboutPage({ onGo }: { onGo: (r: Route) => void }) {
                 28 renk kullanarak, el işçiliği ve birinci sınıf porselen üzerine sır üstü dekal baskıyla 
                 ürünlerimizi hazırladık. Her gördüğünüzde neşelendirecek parçalar olmasını arzu ettiğimiz 
                 Ottoman Koleksiyonumuzu size sunmanın heyecanı içindeyiz.
+              </p>
+            </div>
+
+            {/* Aslan Koleksiyonu Hikayesi */}
+            <div className="mb-16">
+              <div className="mb-12 overflow-hidden rounded-3xl">
+                <img
+                  src={ASSETS.aslanGrid}
+                  alt="Jonquil Aslan Collection Montage"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <h2 className="mb-6 font-serif text-3xl font-light text-[#0f3f44]">
+                Aslan Koleksiyonu
+              </h2>
+              <p className="text-[17px] leading-relaxed text-[#666]">
+                Güç ve asaletin simgesi olan aslan figürünü modern bir zarafetle yorumladığımız bu koleksiyon, 
+                klasik estetiği ve sanatsal dokunuşları bir araya getiriyor. Her bir parça, sofralarınıza ve 
+                yaşam alanlarınıza zamansız bir şıklık katmak için özenle tasarlanmıştır. Aslan Koleksiyonu, 
+                cesur ve sofistike ruhuyla öne çıkarak, her detayıyla fark yaratmayı hedefler.
               </p>
             </div>
 

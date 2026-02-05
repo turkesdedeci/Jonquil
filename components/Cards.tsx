@@ -126,13 +126,13 @@ export function ProductCard({
           <>
             <button
               onClick={prevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#0f3f44] opacity-0 shadow-md backdrop-blur-sm transition-all group-hover:opacity-100 hover:scale-110"
+              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#0f3f44] opacity-100 shadow-md backdrop-blur-sm transition-all hover:scale-110 lg:opacity-0 lg:group-hover:opacity-100"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <button
               onClick={nextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#0f3f44] opacity-0 shadow-md backdrop-blur-sm transition-all group-hover:opacity-100 hover:scale-110"
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#0f3f44] opacity-100 shadow-md backdrop-blur-sm transition-all hover:scale-110 lg:opacity-0 lg:group-hover:opacity-100"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
