@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { UserProfile } from '@clerk/nextjs';
 import { AdreslerimTab } from '@/components/AdreslerimTab';
 import { SiparislerimTab } from '@/components/SiparislerimTab';
+import { FavorilerimTab } from '@/components/FavorilerimTab';
 import { MapPin, Package, Heart, User } from 'lucide-react';
 
 type TabType = 'profil' | 'adreslerim' | 'siparislerim' | 'favorilerim';
@@ -97,21 +98,7 @@ function HesabimContent() {
           
           {activeTab === 'siparislerim' && <SiparislerimTab />}
           
-          {activeTab === 'favorilerim' && (
-            <div className="rounded-xl border border-dashed border-[#e8e6e3] bg-[#faf8f5] p-12 text-center">
-              <Heart className="mx-auto mb-4 h-16 w-16 text-[#e8e6e3]" />
-              <p className="mb-2 font-medium text-[#1a1a1a]">Henüz favori yok</p>
-              <p className="mb-4 text-sm text-[#666]">
-                Beğendiğiniz ürünleri favorilerinize ekleyin
-              </p>
-              <button
-                onClick={() => (window.location.hash = '#/urunler')}
-                className="rounded-lg bg-[#0f3f44] px-6 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e]"
-              >
-                Ürünleri Keşfet
-              </button>
-            </div>
-          )}
+          {activeTab === 'favorilerim' && <FavorilerimTab />}
         </div>
       </div>
     </div>
