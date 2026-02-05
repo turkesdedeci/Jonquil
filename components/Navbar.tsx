@@ -1,21 +1,14 @@
 // components/Navbar.tsx - TAM VE DÜZELTİLMİŞ VERSİYON
-import React, { useState, useRef, useEffect, ReactNode } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, Search, User, ShoppingBag, X,
   ChevronDown, ChevronRight, ArrowRight
 } from "lucide-react";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { BRAND, ASSETS } from "@/constants/brand";
 import { useCart } from "@/contexts/CartContext";
-import { useSafeUser, isClerkConfigured } from "@/contexts/ClerkContext";
 import { UserDropdown } from './UserDropdown';
-
-// Conditionally import Clerk components
-const ClerkComponents = isClerkConfigured
-  ? require("@clerk/nextjs")
-  : { SignedIn: ({ children }: { children: ReactNode }) => null, SignedOut: ({ children }: { children: ReactNode }) => children, SignInButton: ({ children }: { children: ReactNode }) => children };
-
-const { SignedIn, SignedOut, SignInButton } = ClerkComponents;
 
 // Yardımcı Fonksiyon
 function cx(...classes: Array<string | false | null | undefined>) {

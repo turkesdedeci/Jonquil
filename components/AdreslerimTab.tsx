@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSafeUser } from '@/contexts/ClerkContext';
+import { useUser } from '@clerk/nextjs';
 
 interface Address {
   id: string;
@@ -16,7 +16,7 @@ interface Address {
 }
 
 export function AdreslerimTab() {
-  const { user } = useSafeUser();
+  const { user } = useUser();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

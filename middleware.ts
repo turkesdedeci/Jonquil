@@ -1,17 +1,7 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-// Check if Clerk is configured
-const isClerkConfigured = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-
-// Middleware that bypasses Clerk if not configured
-export default function middleware(request: NextRequest) {
-  if (!isClerkConfigured) {
-    return NextResponse.next();
-  }
-  return clerkMiddleware()(request, {} as any);
-}
+// Tüm sayfalar public - auth opsiyonel
+export default clerkMiddleware();
 
 export const config = {
   matcher: [

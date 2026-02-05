@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useSafeUser, useSafeClerk } from '@/contexts/ClerkContext';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, 
@@ -14,8 +14,8 @@ import {
 } from 'lucide-react';
 
 export function UserDropdown() {
-  const { user } = useSafeUser();
-  const { signOut } = useSafeClerk();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
