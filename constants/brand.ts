@@ -1,32 +1,46 @@
-// Jonquil Brand Identity - Fern&Co inspired luxury porcelain design
 export const BRAND = {
   name: "JONQUIL",
   tagline: "Designer Tableware",
-  subtitle: "Handcrafted Porcelain · Art Objects",
-  // Elegant color palette inspired by logo - dark teal + gold
-  darkTeal: "#0f3f44",
-  deepNavy: "#0a2a2e", 
-  gold: "#d4af7a",
-  lightGold: "#e8d5b7",
-  cream: "#faf8f5",
-  offWhite: "#f5f3f0",
-  warmGray: "#e8e6e3",
-  charcoal: "#2a2a2a",
-  softBlack: "#1a1a1a",
+  description: "Premium el yapımı porselen ve tasarım objeleri",
 };
 
 export const ASSETS = {
-  // Hero collection images - professional porcelain photography
-  hero1: "https://images.unsplash.com/photo-1578500351865-d2b170812846?auto=format&fit=crop&w=2400&q=90",
-  hero2: "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=2400&q=90",
-  hero3: "https://images.unsplash.com/photo-1584992236310-6ff8b5b20e28?auto=format&fit=crop&w=2400&q=90",
+  // Logo
+  logo: "/images/products/GENEL FOTOLAR/LOGO/Logo.jpg",
   
-  // Collection covers
-  aslanCover: "https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=2400&q=85",
-  ottomanCover: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=2400&q=85",
+  // Hero images
+  hero: "/images/products/GENEL FOTOLAR/Header-1.jpg",
+  hero1: "/images/products/GENEL FOTOLAR/Header-1.jpg",
+  hero2: "/images/products/GENEL FOTOLAR/Header-1.jpg",
+  hero3: "/images/products/GENEL FOTOLAR/Header-1.jpg",
   
-  // Lifestyle & detail shots
-  tablescape: "https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=2400&q=85",
-  packaging: "https://images.unsplash.com/photo-1520975682031-ae7cfd3f7a4a?auto=format&fit=crop&w=2400&q=85",
-  craftsmanship: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?auto=format&fit=crop&w=2400&q=85",
+  // Collection cover images
+  aslanCover: "/images/products/GENEL FOTOLAR/Aslan Temsil.jpg",
+  ottomanCover: "/images/products/GENEL FOTOLAR/Ottoman Temsil.jpg",
+  
+  // About page images
+  aboutHero: "/images/products/GENEL FOTOLAR/Header-1.jpg",
+  aboutStory: "/images/products/GENEL FOTOLAR/Header-1.jpg",
+  
+  // Lifestyle & Background images
+  tablescape: "/images/products/GENEL FOTOLAR/Header-1.jpg",
+  craftsmanship: "/images/products/GENEL FOTOLAR/Header-1.jpg",
+};
+
+// Collection metadata
+export const COLLECTIONS = {
+  aslan: {
+    title: "Aslan Koleksiyonu",
+    subtitle: "CLASSIC DESIGN",
+    description: "Zamansız çizgiler ve klasik tasarımlarla sofranıza zarafet katın. Aslan koleksiyonu, modern minimalizmi geleneksel el işçiliğiyle buluşturuyor.",
+    badge: "CLASSIC DESIGN",
+    cover: ASSETS.aslanCover,
+  },
+  ottoman: {
+    title: "Ottoman Koleksiyonu",
+    subtitle: "COLORFUL PATTERNS",
+    description: "Zengin renkler ve desenlerle Osmanlı sanatını yeniden yorumlayan koleksiyon. Her parça, kültürel miras + modern pop art birleşimi.",
+    badge: "COLORFUL PATTERNS",
+    cover: ASSETS.ottomanCover,
+  },
 };

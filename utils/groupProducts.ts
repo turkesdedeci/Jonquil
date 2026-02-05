@@ -28,6 +28,7 @@ export interface GroupedProduct {
   tags: string[];
   images: string[];
   variants: ProductVariant[];
+  isBestSeller?: boolean; // Optional: best seller flag
 }
 
 /**
@@ -115,12 +116,12 @@ export function getDisplayVariantIndex(product: GroupedProduct, productIndex: nu
     'Altıgen Tepsi': 'Yeşil/Turuncu',
     
     // Row 2: Make Sarı/Kırmızı (with /Altın suffix for gold-trimmed products)
-    'Kupa': 'Sarı/Kırmızı',
-    'Mumluk': 'Sarı/Kırmızı',
+    'Kupa': 'Sarı/Kırmızı/Altın',
+    'Mumluk': 'Sarı/Kırmızı/Altın',
     'Küllük': 'Sarı/Kırmızı/Altın',  // Has gold trim
     'Ashtray': 'Sarı/Kırmızı/Altın', // Has gold trim
-    'Bardak Altlığı': 'Sarı/Kırmızı',
-    'Coasters': 'Sarı/Kırmızı',
+    'Bardak Altlığı': 'Sarı/Kırmızı/Altın',
+    'Coasters': 'Sarı/Kırmızı/Altın',
   };
   
   // Check if this product has a custom color

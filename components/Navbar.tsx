@@ -5,7 +5,10 @@ import {
   Menu, Search, User, ShoppingBag, X, 
   ChevronDown, ChevronRight, ArrowRight 
 } from "lucide-react";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { BRAND, ASSETS } from "@/constants/brand";
+import { useCart } from "@/contexts/CartContext";
+import { UserDropdown } from './UserDropdown';
 
 // Yardımcı Fonksiyon
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -41,18 +44,51 @@ function MobileNav({
             className="fixed right-0 top-0 z-50 h-full w-[85%] max-w-sm bg-white shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-[#e8e6e3] p-6">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#0f3f44] to-[#0a2a2e]" />
-                <div>
-                  <div className="text-sm font-bold tracking-widest text-[#1a1a1a]">{BRAND.name}</div>
-                  <div className="text-[10px] font-light tracking-wide text-[#999]">{BRAND.tagline}</div>
-                </div>
-              </div>
+              <img 
+                src={ASSETS.logo} 
+                alt={BRAND.name}
+                className="h-10 w-auto object-contain"
+              />
               <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full text-[#1a1a1a] hover:bg-[#e8e6e3]">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <nav className="p-6">
+              {/* Auth Section - Mobile */}
+              <div className="mb-6 space-y-2">
+                <SignedOut>
+                  <SignInButton 
+                    mode="modal"
+                    appearance={{
+                      elements: {
+                        rootBox: "w-full",
+                        card: "rounded-2xl shadow-2xl",
+                        socialButtonsBlockButton: "border border-[#e8e6e3] hover:bg-[#faf8f5]",
+                        formButtonPrimary: "bg-[#0f3f44] hover:bg-[#0a2a2e]",
+                        footerActionLink: "text-[#0f3f44]",
+                      }
+                    }}
+                  >
+                    <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f44] px-4 py-3 text-sm font-medium text-white hover:bg-[#0a2a2e]">
+                      <User className="h-4 w-4" />
+                      Giriş Yap
+                    </button>
+                  </SignInButton>
+                </SignedOut>
+                
+                <SignedIn>
+                  <button 
+                    onClick={() => { onGo({ name: "hesabim" }); onClose(); }}
+                    className="flex w-full items-center gap-3 rounded-xl border border-[#e8e6e3] bg-[#faf8f5] p-3 text-left"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#0f3f44] bg-[#0f3f44] text-white font-semibold">
+                      H
+                    </div>
+                    <span className="text-sm font-medium text-[#1a1a1a]">Hesabım</span>
+                  </button>
+                </SignedIn>
+              </div>
+              
               <div className="space-y-1">
                 <button onClick={() => { onGo({ name: "collections" }); onClose(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   Koleksiyonlar <ChevronRight className="h-4 w-4 text-[#999]" />
@@ -182,23 +218,24 @@ function ProductsDropdown({
 }
 
 // --- ANA NAVBAR BİLEŞENİ ---
-export default function Navbar({ go }: { go: (r: any) => void }) {
+export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCartClick: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const collectionsBtnRef = useRef<HTMLButtonElement>(null);
   const productsBtnRef = useRef<HTMLButtonElement>(null);
+  const { totalItems } = useCart();
 
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-[#e8e6e3]/50 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-4">
-          <button type="button" className="flex items-center gap-4" onClick={() => go({ name: "home" })}>
-            <div className="h-11 w-11 shrink-0 rounded-full bg-gradient-to-br from-[#0f3f44] to-[#0a2a2e]" />
-            <div className="flex flex-col items-start gap-0.5">
-              <div className="text-sm font-bold tracking-[0.32em] text-[#1a1a1a]">{BRAND.name}</div>
-              <div className="text-[10px] font-light text-[#999]">{BRAND.tagline}</div>
-            </div>
+          <button type="button" className="flex items-center" onClick={() => go({ name: "home" })}>
+            <img 
+              src={ASSETS.logo} 
+              alt={BRAND.name}
+              className="h-12 w-auto object-contain"
+            />
           </button>
 
           <nav className="relative ml-auto hidden items-center gap-1 md:flex">
@@ -220,7 +257,48 @@ export default function Navbar({ go }: { go: (r: any) => void }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            <button className="flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]"><Search className="h-5 w-5" /></button>
+            <button className="flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]">
+              <Search className="h-5 w-5" />
+            </button>
+            
+            {/* Sepet */}
+            <button 
+              onClick={onCartClick}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              {totalItems > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3f44] text-xs font-medium text-white">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+            
+            {/* Auth Buttons */}
+            <SignedOut>
+              <SignInButton 
+                mode="modal"
+                appearance={{
+                  elements: {
+                    rootBox: "min-w-[400px]",
+                    card: "rounded-2xl shadow-2xl",
+                    socialButtonsBlockButton: "border border-[#e8e6e3] hover:bg-[#faf8f5]",
+                    formButtonPrimary: "bg-[#0f3f44] hover:bg-[#0a2a2e]",
+                    footerActionLink: "text-[#0f3f44]",
+                  }
+                }}
+              >
+                <button className="flex h-10 items-center gap-2 rounded-full bg-[#0f3f44] px-4 text-sm font-medium text-white hover:bg-[#0a2a2e]">
+                  <User className="h-4 w-4" />
+                  <span className="hidden lg:inline">Giriş Yap</span>
+                </button>
+              </SignInButton>
+            </SignedOut>
+            
+            <SignedIn>
+              <UserDropdown />
+            </SignedIn>
+            
             <button className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e8e6e3] text-[#2a2a2a] md:hidden" onClick={() => setMenuOpen(true)}>
               <Menu className="h-5 w-5" />
             </button>

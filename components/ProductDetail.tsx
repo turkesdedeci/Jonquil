@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { getColorSwatchStyle } from "@/utils/groupProducts";
+import { useCart } from "@/contexts/CartContext";
 
 interface ProductDetailProps {
   product: any;
@@ -16,6 +17,7 @@ export default function ProductDetail({
   relatedProducts = [],
   onProductClick 
 }: ProductDetailProps) {
+  const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(
     product.selectedVariantIndex || 0
@@ -23,6 +25,7 @@ export default function ProductDetail({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(true);
   const [isSpecsOpen, setIsSpecsOpen] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   // Get current variant
   const hasVariants = product.variants && product.variants.length > 1;
@@ -46,6 +49,29 @@ export default function ProductDetail({
   // Image navigation
   const nextImage = () => setActiveImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setActiveImageIndex((prev) => (prev - 1 + images.length) % images.length);
+
+  // Add to cart handler
+  const handleAddToCart = () => {
+    const currentProduct = hasVariants ? {
+      ...product,
+      ...product.variants[selectedVariantIndex],
+      images: images,
+    } : product;
+
+    addToCart({
+      id: currentProduct.id,
+      productId: currentProduct.id,
+      title: currentProduct.title,
+      subtitle: currentProduct.subtitle || currentProduct.color,
+      color: currentProduct.color,
+      price: currentProduct.price,
+      image: images[0],
+      material: currentProduct.material || 'Porselen',
+    }, quantity);
+
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 2000);
+  };
 
   return (
     <main className="bg-white min-h-screen">
@@ -210,9 +236,22 @@ export default function ProductDetail({
 
             {/* Add to Cart Buttons */}
             <div className="space-y-3">
-              <button className="flex w-full items-center justify-center gap-3 rounded-full bg-[#0f3f44] px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-[#0a2a2e] active:scale-98">
-                <ShoppingCart className="h-5 w-5" />
-                Sepete Ekle
+              <button 
+                onClick={handleAddToCart}
+                disabled={addedToCart}
+                className="flex w-full items-center justify-center gap-3 rounded-full bg-[#0f3f44] px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-[#0a2a2e] active:scale-98 disabled:opacity-70"
+              >
+                {addedToCart ? (
+                  <>
+                    <Check className="h-5 w-5" />
+                    Sepete Eklendi!
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-5 w-5" />
+                    Sepete Ekle
+                  </>
+                )}
               </button>
               
               <button className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[#0f3f44] bg-transparent px-8 py-4 text-sm font-semibold text-[#0f3f44] transition-all hover:bg-[#0f3f44] hover:text-white active:scale-98">

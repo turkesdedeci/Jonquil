@@ -29,6 +29,7 @@ import { BRAND, ASSETS } from "@/constants/brand";
 import { LuxuryBadge, FeatureCard, CollectionCard, ProductCard } from "@/components/Cards";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { CartDrawer } from "@/components/CartDrawer";
 import { groupProductsByVariants } from "@/utils/groupProducts";
 import ProductDetail from "@/components/ProductDetail";
 
@@ -37,6 +38,7 @@ type Route =
   | { name: "home" }
   | { name: "about" }
   | { name: "contact" }
+  | { name: "hesabim" }
   | { name: "collections" }
   | { name: "products" } // Tüm Ürünler
   | { name: "category"; category: string } // Kategori bazlı (Tabaklar, Fincanlar vb.)
@@ -88,6 +90,7 @@ function parseHash(): Route {
   if (parts[0] === "hakkimizda") return { name: "about" };
   if (parts[0] === "iletisim") return { name: "contact" };
   if (parts[0] === "urunler") return { name: "products" };
+  if (parts[0] === "hesabim") return { name: "hesabim" };
   
   if (parts[0] === "kategori" && parts[1]) {
     return { name: "category", category: parts[1] };
@@ -249,15 +252,17 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
 
           <div className="grid gap-8 md:grid-cols-2">
             <CollectionCard
-              title="Aslan Koleksiyonu"
-              subtitle="CLASSIC DESIGN"
               image={ASSETS.aslanCover}
+              badge="CLASSIC DESIGN"
+              title="Aslan Koleksiyonu"
+              desc="El yapımı porselen aslan figürlü klasik tasarım"
               onClick={() => onGo({ name: "collection", slug: "aslan" })}
             />
             <CollectionCard
-              title="Ottoman Koleksiyonu"
-              subtitle="COLORFUL PATTERNS"
               image={ASSETS.ottomanCover}
+              badge="COLORFUL PATTERNS"
+              title="Ottoman Koleksiyonu"
+              desc="Geleneksel Osmanlı motifleriyle bezeli renkli desenler"
               onClick={() => onGo({ name: "collection", slug: "ottoman" })}
             />
           </div>
@@ -281,19 +286,19 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
-              icon={<BadgeCheck className="h-6 w-6" />}
+              icon={<BadgeCheck className="h-8 w-8" />}
               title="El Yapımı Üretim"
-              description="Her ürün, deneyimli zanaatkarlar tarafından özenle üretilir ve kalite kontrolünden geçer."
+              desc="Her ürün, deneyimli zanaatkarlar tarafından özenle üretilir ve kalite kontrolünden geçer."
             />
             <FeatureCard
-              icon={<ShieldCheck className="h-6 w-6" />}
+              icon={<ShieldCheck className="h-8 w-8" />}
               title="Premium Malzeme"
-              description="En kaliteli porselen ve malzemeler kullanılarak uzun ömürlü ürünler sunuyoruz."
+              desc="En kaliteli porselen ve malzemeler kullanılarak uzun ömürlü ürünler sunuyoruz."
             />
             <FeatureCard
-              icon={<Gift className="h-6 w-6" />}
+              icon={<Gift className="h-8 w-8" />}
               title="Özel Paketleme"
-              description="Hediye vermek için ideal, şık kutularda özenle paketlenmiş ürünler."
+              desc="Hediye vermek için ideal, şık kutularda özenle paketlenmiş ürünler."
             />
           </div>
         </div>
@@ -394,15 +399,17 @@ function CollectionsPage({ onGo, products }: { onGo: (r: Route) => void; product
 
         <div className="grid gap-8 md:grid-cols-2">
           <CollectionCard
-            title="Aslan Koleksiyonu"
-            subtitle="CLASSIC DESIGN"
             image={ASSETS.aslanCover}
+            badge="CLASSIC DESIGN"
+            title="Aslan Koleksiyonu"
+            desc="El yapımı porselen aslan figürlü klasik tasarım"
             onClick={() => onGo({ name: "collection", slug: "aslan" })}
           />
           <CollectionCard
-            title="Ottoman Koleksiyonu"
-            subtitle="COLORFUL PATTERNS"
             image={ASSETS.ottomanCover}
+            badge="COLORFUL PATTERNS"
+            title="Ottoman Koleksiyonu"
+            desc="Geleneksel Osmanlı motifleriyle bezeli renkli desenler"
             onClick={() => onGo({ name: "collection", slug: "ottoman" })}
           />
         </div>
@@ -603,7 +610,6 @@ function AllProductsPage({
                   <ProductCard
                     key={product.id}
                     product={product}
-                    productIndex={startIndex + index}
                     onClick={() => onGo({ name: "product", slug: product.collection, id: product.id })}
                   />
                 ))}
@@ -1001,7 +1007,6 @@ function CategoryPage({
                   <ProductCard
                     key={product.id}
                     product={product}
-                    productIndex={startIndex + index}
                     onClick={() => onGo({ name: "product", slug: product.collection, id: product.id })}
                   />
                 ))}
@@ -1281,10 +1286,10 @@ function CollectionPage({
             </div>
           </div>
 
-          <div className="flex gap-8">
+          <div className="flex flex-col gap-8 md:flex-row">
             {/* Sidebar Filters */}
             <aside className={cx(
-              "w-64 shrink-0 space-y-6",
+              "w-full space-y-6 md:w-64 md:shrink-0",
               showFilters ? "block" : "hidden md:block"
             )}>
               {/* Price Range */}
@@ -1428,7 +1433,6 @@ function CollectionPage({
                   <ProductCard
                     key={product.id}
                     product={product}
-                    productIndex={startIndex + index}
                     onClick={() => onGo({ name: "product", slug, id: product.id })}
                   />
                 ))}
@@ -1517,26 +1521,30 @@ function CollectionPage({
 function ProductPage({ 
   product, 
   onGo, 
-  groupedProducts 
+  allProducts 
 }: { 
   product: any; 
   onGo: (r: any) => void;
-  groupedProducts: any[];
+  allProducts: any[];
 }) {
-  // Get related products (same collection, different product)
+  // Get related products (same collection, different title, unique titles only)
   const relatedProducts = useMemo(() => {
-    return groupedProducts
-      .filter(p => 
-        p.collection === product.collection && 
-        p.id !== product.id
-      )
+    const uniqueTitles = new Set<string>();
+    return allProducts
+      .filter(p => {
+        if (p.collection !== product.collection) return false;
+        if (p.title === product.title) return false; // Same product
+        if (uniqueTitles.has(p.title)) return false; // Already added
+        uniqueTitles.add(p.title);
+        return true;
+      })
       .slice(0, 4);
-  }, [product, groupedProducts]);
+  }, [product, allProducts]);
 
   // Handle related product click
   const handleRelatedProductClick = (productId: string) => {
     // Find the clicked product
-    const clickedProduct = groupedProducts.find(p => p.id === productId);
+    const clickedProduct = allProducts.find(p => p.id === productId);
     if (clickedProduct) {
       // Navigate to that product
       onGo({ 
@@ -1799,41 +1807,49 @@ function PageShell({ children }: { children: React.ReactNode }) {
 // Main exported component
 export default function JonquilHomepage() {
   const { route, go } = useRoute();
+  const [cartOpen, setCartOpen] = useState(false);
 
-  // Group products by variants (same product, different colors)
-  const groupedProducts = useMemo(() => {
-    return groupProductsByVariants(allProducts);
-  }, []);
-
+  // Use all products directly (no grouping)
   const aslanProducts = useMemo(
-    () => groupedProducts.filter((p) => p.collection === "aslan"),
-    [groupedProducts]
+    () => allProducts.filter((p) => p.collection === "aslan"),
+    []
   );
 
   const ottomanProducts = useMemo(
-    () => groupedProducts.filter((p) => p.collection === "ottoman"),
-    [groupedProducts]
+    () => allProducts.filter((p) => p.collection === "ottoman"),
+    []
   );
 
   const currentProduct = useMemo(() => {
     if (route.name !== "product") return null;
     
-    // Find the grouped product that contains this variant ID
-    const grouped = groupedProducts.find(p =>
-      p.variants.some((v: any) => v.id === route.id)
+    // Find product by ID (no grouping)
+    const product = allProducts.find(p => p.id === route.id);
+    if (!product) return null;
+    
+    // Find all variants of this product (same title, different colors)
+    const variants = allProducts.filter(p => 
+      p.title === product.title && p.collection === product.collection
     );
     
-    if (!grouped) return null;
+    // If multiple variants exist, add them to the product
+    if (variants.length > 1) {
+      return {
+        ...product,
+        variants: variants.map(v => ({
+          id: v.id,
+          color: v.color,
+          subtitle: v.subtitle,
+          code: v.code,
+          images: v.images,
+          tags: v.tags || [],
+        })),
+        selectedVariantIndex: variants.findIndex(v => v.id === product.id),
+      };
+    }
     
-    // Find which variant was clicked
-    const variantIndex = grouped.variants.findIndex((v: any) => v.id === route.id);
-    
-    // Return product with selected variant index
-    return {
-      ...grouped,
-      selectedVariantIndex: variantIndex >= 0 ? variantIndex : 0,
-    };
-  }, [route, groupedProducts]);
+    return product;
+  }, [route]);
 
   return (
     <PageShell>
@@ -1846,17 +1862,28 @@ export default function JonquilHomepage() {
         }}
       />
 
-      <Navbar go={go} />
+      <Navbar go={go} onCartClick={() => setCartOpen(true)} />
 
       {/* Route rendering */}
       {route.name === "home" ? <Home onGo={go} /> : null}
-      {route.name === "collections" ? <CollectionsPage onGo={go} products={groupedProducts} /> : null}
-      {route.name === "products" ? <AllProductsPage products={groupedProducts} onGo={go} /> : null}
+      {route.name === "collections" ? <CollectionsPage onGo={go} products={allProducts} /> : null}
+      {route.name === "products" ? <AllProductsPage products={allProducts} onGo={go} /> : null}
       {route.name === "category" ? (
-        <CategoryPage category={route.category} products={groupedProducts} onGo={go} />
+        <CategoryPage category={route.category} products={allProducts} onGo={go} />
       ) : null}
       {route.name === "about" ? <AboutPage onGo={go} /> : null}
       {route.name === "contact" ? <ContactPage onGo={go} /> : null}
+      {route.name === "hesabim" ? (
+        <div className="min-h-screen bg-[#faf8f5] py-12">
+          <div className="mx-auto max-w-4xl px-6">
+            <h1 className="mb-8 font-serif text-4xl font-light text-[#1a1a1a]">Hesabım</h1>
+            <div className="text-center text-[#666]">
+              <p>Hesap sayfası yükleniyor...</p>
+              <p className="mt-2 text-sm">Bu sayfa Clerk authentication ile çalışmaktadır.</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {route.name === "collection" ? (
         <CollectionPage
           slug={route.slug}
@@ -1865,8 +1892,17 @@ export default function JonquilHomepage() {
         />
       ) : null}
       {route.name === "product" && currentProduct ? (
-        <ProductPage product={currentProduct} onGo={go} groupedProducts={groupedProducts} />
+        <ProductPage product={currentProduct} onGo={go} allProducts={allProducts} />
       ) : null}
+
+      <CartDrawer 
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        onCheckout={() => {
+          setCartOpen(false);
+          window.location.href = '/odeme';
+        }}
+      />
 
       <Footer onGo={go} />
     </PageShell>
