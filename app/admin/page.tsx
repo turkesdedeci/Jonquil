@@ -26,7 +26,10 @@ import {
   Save,
   Trash2,
   Upload,
-  ImagePlus
+  ImagePlus,
+  Edit2,
+  AlertTriangle,
+  Database
 } from 'lucide-react';
 import { allProducts } from '@/data/products';
 
@@ -102,6 +105,9 @@ export default function AdminPage() {
   const [dbProducts, setDbProducts] = useState<any[]>([]);
   const [productFormMessage, setProductFormMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({
     title: '',
     subtitle: '',
@@ -117,6 +123,23 @@ export default function AdminPage() {
     images: [] as string[],
     in_stock: true
   });
+
+  // Default empty product for reset
+  const emptyProduct = {
+    title: '',
+    subtitle: '',
+    price: '',
+    collection: 'aslan',
+    family: '',
+    product_type: '',
+    material: 'Porselen',
+    color: '',
+    size: '',
+    capacity: '',
+    code: '',
+    images: [] as string[],
+    in_stock: true
+  };
 
   // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,7 +269,7 @@ export default function AdminPage() {
     }
   };
 
-  const saveNewProduct = async () => {
+  const saveProduct = async () => {
     if (!newProduct.title || !newProduct.price) {
       setProductFormMessage({ type: 'error', text: 'Ürün adı ve fiyat gerekli' });
       return;
@@ -254,40 +277,35 @@ export default function AdminPage() {
 
     setSavingProduct(true);
     setProductFormMessage(null);
+
+    const isEditing = !!editingProductId;
+
     try {
       const res = await fetch('/api/admin/products/manage', {
-        method: 'POST',
+        method: isEditing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProduct),
+        body: JSON.stringify(isEditing ? { id: editingProductId, ...newProduct } : newProduct),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        setProductFormMessage({ type: 'success', text: 'Ürün başarıyla eklendi!' });
-        setDbProducts(prev => [data.product, ...prev]);
-        // Reset form
-        setNewProduct({
-          title: '',
-          subtitle: '',
-          price: '',
-          collection: 'aslan',
-          family: '',
-          product_type: '',
-          material: 'Porselen',
-          color: '',
-          size: '',
-          capacity: '',
-          code: '',
-          images: [],
-          in_stock: true
-        });
+        setProductFormMessage({ type: 'success', text: isEditing ? 'Ürün güncellendi!' : 'Ürün başarıyla eklendi!' });
+
+        if (isEditing) {
+          setDbProducts(prev => prev.map(p => p.id === editingProductId ? data.product : p));
+        } else {
+          setDbProducts(prev => [data.product, ...prev]);
+        }
+
         setTimeout(() => {
           setShowProductModal(false);
           setProductFormMessage(null);
+          setEditingProductId(null);
+          setNewProduct(emptyProduct);
         }, 1500);
       } else {
-        setProductFormMessage({ type: 'error', text: data.error || 'Ürün eklenemedi' });
+        setProductFormMessage({ type: 'error', text: data.error || 'İşlem başarısız' });
       }
     } catch (error) {
       setProductFormMessage({ type: 'error', text: 'Bağlantı hatası' });
@@ -296,19 +314,52 @@ export default function AdminPage() {
     }
   };
 
-  const deleteDbProduct = async (id: string) => {
-    if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
+  // Open edit modal with product data
+  const openEditModal = (product: any) => {
+    setEditingProductId(product.id);
+    setNewProduct({
+      title: product.title || '',
+      subtitle: product.subtitle || '',
+      price: product.price || '',
+      collection: product.collection || 'aslan',
+      family: product.family || '',
+      product_type: product.product_type || product.productType || '',
+      material: product.material || 'Porselen',
+      color: product.color || '',
+      size: product.size || '',
+      capacity: product.capacity || '',
+      code: product.code || '',
+      images: product.images || [],
+      in_stock: product.in_stock !== false
+    });
+    setShowProductModal(true);
+  };
 
+  // Open new product modal
+  const openNewProductModal = () => {
+    setEditingProductId(null);
+    setNewProduct(emptyProduct);
+    setShowProductModal(true);
+  };
+
+  // Delete product with confirmation
+  const confirmDeleteProduct = async () => {
+    if (!deleteConfirmId) return;
+
+    setDeletingProduct(true);
     try {
-      const res = await fetch(`/api/admin/products/manage?id=${id}`, {
+      const res = await fetch(`/api/admin/products/manage?id=${deleteConfirmId}`, {
         method: 'DELETE',
       });
 
       if (res.ok) {
-        setDbProducts(prev => prev.filter(p => p.id !== id));
+        setDbProducts(prev => prev.filter(p => p.id !== deleteConfirmId));
+        setDeleteConfirmId(null);
       }
     } catch (error) {
       console.error('Ürün silinirken hata:', error);
+    } finally {
+      setDeletingProduct(false);
     }
   };
 
@@ -887,7 +938,7 @@ export default function AdminPage() {
                 <option value="ottoman">Ottoman Koleksiyonu</option>
               </select>
               <button
-                onClick={() => setShowProductModal(true)}
+                onClick={openNewProductModal}
                 className="flex items-center gap-2 rounded-lg bg-[#0f3f44] px-4 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e]"
               >
                 <Plus className="h-4 w-4" />
@@ -942,7 +993,7 @@ export default function AdminPage() {
                           className={`object-cover ${!isInStock ? 'opacity-50 grayscale' : ''}`}
                         />
                       )}
-                      <div className="absolute left-3 top-3 flex gap-2">
+                      <div className="absolute left-3 top-3 flex flex-wrap gap-2">
                         <span className={`rounded-full px-2 py-1 text-xs font-medium ${
                           product.collection === 'aslan'
                             ? 'bg-[#0f3f44] text-white'
@@ -950,12 +1001,37 @@ export default function AdminPage() {
                         }`}>
                           {product.collection === 'aslan' ? 'Aslan' : 'Ottoman'}
                         </span>
+                        {product.isFromDatabase && (
+                          <span className="flex items-center gap-1 rounded-full bg-blue-500 px-2 py-1 text-xs font-medium text-white">
+                            <Database className="h-3 w-3" />
+                            DB
+                          </span>
+                        )}
                         {!isInStock && (
                           <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-medium text-white">
                             Tükendi
                           </span>
                         )}
                       </div>
+                      {/* Edit/Delete buttons for DB products */}
+                      {product.isFromDatabase && (
+                        <div className="absolute right-2 top-2 flex gap-1">
+                          <button
+                            onClick={() => openEditModal(product)}
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm hover:bg-white hover:text-blue-600"
+                            title="Düzenle"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirmId(product.id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm hover:bg-white hover:text-red-600"
+                            title="Sil"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="p-4">
                       <p className={`font-medium line-clamp-1 ${isInStock ? 'text-gray-900' : 'text-gray-400'}`}>
@@ -1216,11 +1292,15 @@ export default function AdminPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
             <div className="sticky top-0 flex items-center justify-between border-b bg-white p-6">
-              <h2 className="text-lg font-bold text-gray-900">Yeni Ürün Ekle</h2>
+              <h2 className="text-lg font-bold text-gray-900">
+                {editingProductId ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}
+              </h2>
               <button
                 onClick={() => {
                   setShowProductModal(false);
                   setProductFormMessage(null);
+                  setEditingProductId(null);
+                  setNewProduct(emptyProduct);
                 }}
                 className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
               >
@@ -1526,19 +1606,60 @@ export default function AdminPage() {
 
               {/* Save Button */}
               <button
-                onClick={saveNewProduct}
+                onClick={saveProduct}
                 disabled={savingProduct || !newProduct.title || !newProduct.price}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f3f44] px-4 py-3 text-sm font-medium text-white hover:bg-[#0a2a2e] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {savingProduct ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    Kaydediliyor...
+                    {editingProductId ? 'Güncelleniyor...' : 'Kaydediliyor...'}
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    Ürünü Kaydet
+                    {editingProductId ? 'Güncelle' : 'Ürünü Kaydet'}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center gap-3 text-red-600">
+              <AlertTriangle className="h-6 w-6" />
+              <h3 className="text-lg font-bold">Ürünü Sil</h3>
+            </div>
+            <p className="mb-6 text-gray-600">
+              Bu ürünü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                disabled={deletingProduct}
+                className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                İptal
+              </button>
+              <button
+                onClick={confirmDeleteProduct}
+                disabled={deletingProduct}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deletingProduct ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Siliniyor...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Evet, Sil
                   </>
                 )}
               </button>
