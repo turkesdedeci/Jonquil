@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
+import {
+  checkRateLimit,
+  getClientIP,
+  sanitizeString,
+  safeErrorResponse,
+  handleDatabaseError
+} from '@/lib/security';
 
 // Admin emails from environment variable (comma-separated)
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
@@ -18,6 +25,13 @@ async function isAdmin() {
 // GET - Tüm siparişleri getir
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'read');
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     // Admin kontrolü
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
@@ -38,14 +52,12 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Siparişler çekilirken hata:', error);
-      return NextResponse.json({ error: 'Siparişler yüklenemedi' }, { status: 500 });
+      return handleDatabaseError(error);
     }
 
     return NextResponse.json(orders || []);
   } catch (error) {
-    console.error('API hatası:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Siparişler yüklenemedi');
   }
 }
 
@@ -91,6 +103,13 @@ function isValidTrackingUrl(url: string): boolean {
 // PATCH - Sipariş durumunu güncelle
 export async function PATCH(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     // Admin kontrolü
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
@@ -103,6 +122,9 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json();
     const { orderId, status, tracking_number, tracking_url } = body;
+
+    // Sanitize tracking number if provided
+    const sanitizedTrackingNumber = tracking_number ? sanitizeString(tracking_number).slice(0, 100) : undefined;
 
     if (!orderId || !status) {
       return NextResponse.json({ error: 'orderId ve status gerekli' }, { status: 400 });
@@ -127,9 +149,9 @@ export async function PATCH(request: NextRequest) {
       updated_at: new Date().toISOString()
     };
 
-    // Add tracking info if provided
-    if (tracking_number !== undefined) {
-      updateData.tracking_number = tracking_number;
+    // Add tracking info if provided (sanitized)
+    if (sanitizedTrackingNumber !== undefined) {
+      updateData.tracking_number = sanitizedTrackingNumber;
     }
     if (tracking_url !== undefined) {
       updateData.tracking_url = tracking_url;
@@ -144,13 +166,11 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Sipariş güncellenirken hata:', error);
-      return NextResponse.json({ error: 'Güncelleme başarısız' }, { status: 500 });
+      return handleDatabaseError(error);
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('API hatası:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Sipariş güncellenemedi');
   }
 }

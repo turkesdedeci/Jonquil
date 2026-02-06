@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
+import {
+  checkRateLimit,
+  getClientIP,
+  validateFileSignature,
+  validateFileSize,
+  safeErrorResponse
+} from '@/lib/security';
 
 // Admin emails from environment variable
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
@@ -21,13 +28,20 @@ async function isAdmin() {
   );
 }
 
-// Allowed file types
+// Allowed file types (validated by magic bytes, not just MIME type)
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB (Vercel limit is 4.5MB)
+const MAX_FILE_SIZE_MB = 4; // 4MB (Vercel limit is 4.5MB)
 
 // POST - Upload image to Supabase Storage
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting for uploads (strict)
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'upload');
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
@@ -43,24 +57,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Dosya bulunamadı' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    // Validate file size first (quick check)
+    const sizeValidation = validateFileSize(file, MAX_FILE_SIZE_MB);
+    if (!sizeValidation.valid) {
+      return NextResponse.json({ error: sizeValidation.error }, { status: 400 });
+    }
+
+    // Validate file by magic bytes (more secure than MIME type)
+    const signatureValidation = await validateFileSignature(file, ALLOWED_TYPES);
+    if (!signatureValidation.valid) {
       return NextResponse.json(
-        { error: 'Desteklenmeyen dosya türü. Sadece JPEG, PNG, WebP ve GIF desteklenir.' },
+        { error: signatureValidation.error || 'Desteklenmeyen dosya türü. Sadece JPEG, PNG, WebP ve GIF desteklenir.' },
         { status: 400 }
       );
     }
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: 'Dosya boyutu çok büyük. Maksimum 5MB.' },
-        { status: 400 }
-      );
-    }
-
-    // Generate unique filename
-    const ext = file.name.split('.').pop() || 'jpg';
+    // Use detected type for extension (more reliable than file.name)
+    const typeToExt: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+    };
+    const ext = typeToExt[signatureValidation.detectedType!] || 'jpg';
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
     const fileName = `products/${timestamp}-${randomStr}.${ext}`;
@@ -69,11 +88,11 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Upload to Supabase Storage
+    // Upload to Supabase Storage with validated content type
     const { data, error } = await supabase.storage
       .from('images')
       .upload(fileName, buffer, {
-        contentType: file.type,
+        contentType: signatureValidation.detectedType!,
         upsert: false,
       });
 
@@ -102,8 +121,7 @@ export async function POST(request: NextRequest) {
       path: data.path,
     });
   } catch (error) {
-    console.error('Upload API error:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Resim yüklenirken bir hata oluştu');
   }
 }
 
@@ -141,7 +159,6 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete API error:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Resim silinirken bir hata oluştu');
   }
 }
