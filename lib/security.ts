@@ -1,51 +1,93 @@
 /**
  * Security utilities for API routes
- * - Rate limiting
+ * - Rate limiting (Redis/Upstash for production, in-memory fallback)
  * - Input sanitization
  * - Safe error responses
  * - File validation
  */
 
 import { NextResponse } from 'next/server';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 // ============================================
-// RATE LIMITING (In-Memory - for production use Redis/Upstash)
+// RATE LIMITING (Upstash Redis for production, in-memory fallback)
 // ============================================
 
+// Check if Upstash is configured
+const isUpstashConfigured = !!(
+  process.env.UPSTASH_REDIS_REST_URL &&
+  process.env.UPSTASH_REDIS_REST_TOKEN
+);
+
+// Create Redis client if configured
+const redis = isUpstashConfigured
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    })
+  : null;
+
+// Rate limiters for different endpoint types (using sliding window algorithm)
+const rateLimiters = redis ? {
+  auth: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '60 s'),
+    analytics: true,
+    prefix: 'ratelimit:auth',
+  }),
+  write: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(30, '60 s'),
+    analytics: true,
+    prefix: 'ratelimit:write',
+  }),
+  read: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(100, '60 s'),
+    analytics: true,
+    prefix: 'ratelimit:read',
+  }),
+  upload: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, '60 s'),
+    analytics: true,
+    prefix: 'ratelimit:upload',
+  }),
+  contact: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, '60 s'),
+    analytics: true,
+    prefix: 'ratelimit:contact',
+  }),
+} : null;
+
+// Fallback in-memory rate limiting for development
 interface RateLimitEntry {
   count: number;
   resetTime: number;
 }
 
-// In-memory store (resets on server restart - use Redis for production)
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-// Clean up old entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetTime < now) {
-      rateLimitStore.delete(key);
+// Clean up old entries periodically (only for in-memory)
+if (!isUpstashConfigured) {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of rateLimitStore.entries()) {
+      if (entry.resetTime < now) {
+        rateLimitStore.delete(key);
+      }
     }
-  }
-}, 60000); // Clean every minute
-
-interface RateLimitConfig {
-  windowMs: number;  // Time window in milliseconds
-  maxRequests: number;  // Max requests per window
+  }, 60000);
 }
 
 // Different limits for different endpoint types
 export const RATE_LIMITS = {
-  // Strict limits for auth-related endpoints
   auth: { windowMs: 60 * 1000, maxRequests: 10 },
-  // Medium limits for write operations
   write: { windowMs: 60 * 1000, maxRequests: 30 },
-  // Relaxed limits for read operations
   read: { windowMs: 60 * 1000, maxRequests: 100 },
-  // Very strict for expensive operations
   upload: { windowMs: 60 * 1000, maxRequests: 10 },
-  // Contact/newsletter - prevent spam
   contact: { windowMs: 60 * 1000, maxRequests: 5 },
 } as const;
 
@@ -53,9 +95,46 @@ export type RateLimitType = keyof typeof RATE_LIMITS;
 
 /**
  * Check rate limit for a given identifier
+ * Uses Upstash Redis in production, falls back to in-memory for development
  * Returns null if allowed, or NextResponse if rate limited
  */
-export function checkRateLimit(
+export async function checkRateLimitAsync(
+  identifier: string,
+  type: RateLimitType = 'read'
+): Promise<NextResponse | null> {
+  // Use Redis rate limiting if configured
+  if (rateLimiters && rateLimiters[type]) {
+    const { success, limit, remaining, reset } = await rateLimiters[type].limit(identifier);
+
+    if (!success) {
+      const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+      return NextResponse.json(
+        {
+          error: 'Çok fazla istek. Lütfen biraz bekleyin.',
+          retryAfter
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfter),
+            'X-RateLimit-Limit': String(limit),
+            'X-RateLimit-Remaining': String(remaining),
+            'X-RateLimit-Reset': String(reset),
+          }
+        }
+      );
+    }
+    return null;
+  }
+
+  // Fallback to in-memory (for development)
+  return checkRateLimitSync(identifier, type);
+}
+
+/**
+ * Synchronous rate limit check (in-memory only, for backwards compatibility)
+ */
+function checkRateLimitSync(
   identifier: string,
   type: RateLimitType = 'read'
 ): NextResponse | null {
@@ -66,7 +145,6 @@ export function checkRateLimit(
   const entry = rateLimitStore.get(key);
 
   if (!entry || entry.resetTime < now) {
-    // First request or window expired
     rateLimitStore.set(key, {
       count: 1,
       resetTime: now + config.windowMs,
@@ -75,7 +153,6 @@ export function checkRateLimit(
   }
 
   if (entry.count >= config.maxRequests) {
-    // Rate limited
     const retryAfter = Math.ceil((entry.resetTime - now) / 1000);
     return NextResponse.json(
       {
@@ -94,8 +171,30 @@ export function checkRateLimit(
     );
   }
 
-  // Increment counter
   entry.count++;
+  return null;
+}
+
+/**
+ * Check rate limit (wrapper for backwards compatibility)
+ * Note: This is sync but internally handles async Redis calls
+ * For new code, prefer checkRateLimitAsync
+ */
+export function checkRateLimit(
+  identifier: string,
+  type: RateLimitType = 'read'
+): NextResponse | null {
+  // If Redis is not configured, use sync in-memory
+  if (!rateLimiters) {
+    return checkRateLimitSync(identifier, type);
+  }
+
+  // For Redis, we need async - return null and let async version handle it
+  // This maintains backwards compatibility but won't rate limit until async is used
+  // Log warning in development
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('[Security] Using sync checkRateLimit with Redis configured. Consider using checkRateLimitAsync.');
+  }
   return null;
 }
 

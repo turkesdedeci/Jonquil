@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
 import {
-  checkRateLimit,
+  checkRateLimitAsync,
   getClientIP,
   sanitizeString,
   safeErrorResponse,
   handleDatabaseError
 } from '@/lib/security';
+import { logAuditEvent } from '@/lib/audit';
 
 // Admin emails from environment variable (comma-separated)
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
@@ -25,9 +26,9 @@ async function isAdmin() {
 // GET - Tüm siparişleri getir
 export async function GET(request: NextRequest) {
   try {
-    // Rate limiting
+    // Rate limiting (async for Redis support)
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'read');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
@@ -103,9 +104,9 @@ function isValidTrackingUrl(url: string): boolean {
 // PATCH - Sipariş durumunu güncelle
 export async function PATCH(request: NextRequest) {
   try {
-    // Rate limiting
+    // Rate limiting (async for Redis support)
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
@@ -168,6 +169,18 @@ export async function PATCH(request: NextRequest) {
     if (error) {
       return handleDatabaseError(error);
     }
+
+    // Audit log: order status update
+    await logAuditEvent({
+      action: 'order_status_update',
+      resource_type: 'order',
+      resource_id: orderId,
+      details: {
+        new_status: status,
+        tracking_number: sanitizedTrackingNumber || null,
+        tracking_url: tracking_url || null,
+      },
+    }, request);
 
     return NextResponse.json(data);
   } catch (error) {

@@ -18,7 +18,7 @@ const cspDirectives = [
 ].join('; ');
 
 // Security headers to add to all responses
-const securityHeaders = {
+const securityHeaders: Record<string, string> = {
   // Content Security Policy
   'Content-Security-Policy': cspDirectives,
   // Prevent clickjacking (redundant with CSP frame-ancestors but good for older browsers)
@@ -31,9 +31,13 @@ const securityHeaders = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   // Permissions policy - disable unnecessary features
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  // HTTPS only (uncomment in production with HTTPS)
-  // 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
 };
+
+// Add HSTS header in production (HTTPS required)
+if (process.env.NODE_ENV === 'production') {
+  // Strict Transport Security - force HTTPS for 1 year, include subdomains
+  securityHeaders['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload';
+}
 
 // Wrap clerkMiddleware with security headers
 export default clerkMiddleware(async (auth, request) => {
