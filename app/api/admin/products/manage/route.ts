@@ -132,7 +132,16 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Product create error:', error);
-      return NextResponse.json({ error: 'Ürün oluşturulamadı' }, { status: 500 });
+
+      // Check if table doesn't exist
+      if (error.message?.includes('does not exist') || error.code === '42P01') {
+        return NextResponse.json({
+          error: 'Products tablosu bulunamadı. Lütfen önce tabloyu oluşturun.',
+          hint: 'Admin panelinde "Ürün Yönetimi" sekmesinde tablo kurulum butonuna tıklayın.'
+        }, { status: 400 });
+      }
+
+      return NextResponse.json({ error: `Ürün oluşturulamadı: ${error.message}` }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, product }, { status: 201 });

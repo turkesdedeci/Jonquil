@@ -1382,7 +1382,7 @@ export default function AdminPage() {
                   ) : (
                     <>
                       <ImagePlus className="h-5 w-5" />
-                      Resim Yükle (Maks 5MB)
+                      Resim Yükle (Maks 4MB)
                     </>
                   )}
                   <input
