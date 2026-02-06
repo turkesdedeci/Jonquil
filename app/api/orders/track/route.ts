@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import {
+  checkRateLimit,
+  getClientIP,
+  sanitizeString,
+  sanitizeEmail,
+  safeErrorResponse
+} from '@/lib/security';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -10,6 +17,13 @@ const supabase = supabaseUrl && supabaseServiceKey
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - strict for order tracking to prevent enumeration
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'auth');
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     if (!supabase) {
       return NextResponse.json(
         { error: 'Veritabanı bağlantısı yapılandırılmamış' },
@@ -17,7 +31,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { orderNumber, email } = await request.json();
+    const body = await request.json();
+    const { orderNumber, email } = body;
 
     if (!orderNumber || !email) {
       return NextResponse.json(
@@ -26,24 +41,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Input length validation
-    if (orderNumber.length > 50) {
+    // Sanitize and validate inputs
+    const sanitizedOrderNumber = sanitizeString(orderNumber).slice(0, 50);
+    const sanitizedEmail = sanitizeEmail(email);
+
+    if (!sanitizedOrderNumber) {
       return NextResponse.json(
         { error: 'Geçersiz sipariş numarası' },
         { status: 400 }
       );
     }
 
-    if (email.length > 254) {
-      return NextResponse.json(
-        { error: 'Geçersiz e-posta adresi' },
-        { status: 400 }
-      );
-    }
-
-    // Basic email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!sanitizedEmail) {
       return NextResponse.json(
         { error: 'Geçerli bir e-posta adresi girin' },
         { status: 400 }
@@ -71,8 +80,8 @@ export async function POST(request: NextRequest) {
         tracking_url,
         estimated_delivery
       `)
-      .eq('order_number', orderNumber.trim().toUpperCase())
-      .eq('customer_email', email.trim().toLowerCase())
+      .eq('order_number', sanitizedOrderNumber.toUpperCase())
+      .eq('customer_email', sanitizedEmail)
       .single();
 
     if (error || !order) {
@@ -103,10 +112,6 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Order tracking error:', error);
-    return NextResponse.json(
-      { error: 'Bir hata oluştu. Lütfen tekrar deneyin.' },
-      { status: 500 }
-    );
+    return safeErrorResponse(error, 'Bir hata oluştu. Lütfen tekrar deneyin.');
   }
 }

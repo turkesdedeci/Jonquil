@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { allProducts as staticProducts } from '@/data/products';
+import { checkRateLimit, getClientIP, safeErrorResponse } from '@/lib/security';
 
-// Prevent caching
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Enable ISR with 5-minute revalidation (reduces DB load significantly)
+export const revalidate = 300;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -40,6 +40,13 @@ function transformDbProduct(dbProduct: any) {
 // GET - Fetch all products (static + database)
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting for read operations
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'read');
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     // Get database products
     let dbProducts: any[] = [];
 
@@ -87,17 +94,23 @@ export async function GET(request: NextRequest) {
       staticProductCount: staticProducts.length,
     }, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        // Cache for 5 minutes, allow stale content for 10 minutes while revalidating
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
       },
     });
   } catch (error) {
-    console.error('Products API error:', error);
-    // Fallback to static products on error
+    // Use safe error response, fallback to static products
+    console.error('[Products API]', error instanceof Error ? error.message : error);
     return NextResponse.json({
       products: staticProducts.map(p => ({ ...p, inStock: true, isFromDatabase: false })),
       totalCount: staticProducts.length,
       dbProductCount: 0,
       staticProductCount: staticProducts.length,
+    }, {
+      headers: {
+        // Cache fallback response for 1 minute
+        'Cache-Control': 'public, s-maxage=60',
+      },
     });
   }
 }

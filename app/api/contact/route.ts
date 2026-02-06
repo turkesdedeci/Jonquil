@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendContactEmail, isResendConfigured, type ContactFormData } from '@/lib/resend';
+import {
+  checkRateLimit,
+  getClientIP,
+  sanitizeString,
+  sanitizeEmail,
+  escapeHtml,
+  safeErrorResponse
+} from '@/lib/security';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - strict for contact form to prevent spam
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'contact');
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     // Check if Resend is configured
     if (!isResendConfigured()) {
       return NextResponse.json(
@@ -54,22 +69,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Validate and sanitize email
+    const sanitizedEmail = sanitizeEmail(email);
+    if (!sanitizedEmail) {
       return NextResponse.json(
         { error: 'Geçerli bir e-posta adresi girin' },
         { status: 400 }
       );
     }
 
-    // Prepare contact data
+    // Prepare contact data with sanitization
     const contactData: ContactFormData = {
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      phone: phone?.trim() || undefined,
-      subject: subject.trim(),
-      message: message.trim(),
+      name: escapeHtml(sanitizeString(name)),
+      email: sanitizedEmail,
+      phone: phone ? sanitizeString(phone) : undefined,
+      subject: escapeHtml(sanitizeString(subject)),
+      message: escapeHtml(sanitizeString(message)),
     };
 
     // Send emails
@@ -87,10 +102,6 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error('Contact form error:', error);
-    return NextResponse.json(
-      { error: 'Bir hata oluştu. Lütfen tekrar deneyin.' },
-      { status: 500 }
-    );
+    return safeErrorResponse(error, 'Bir hata oluştu. Lütfen tekrar deneyin.');
   }
 }

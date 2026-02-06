@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resend, isResendConfigured, EMAIL_FROM } from '@/lib/resend';
 import { createClient } from '@supabase/supabase-js';
+import {
+  checkRateLimit,
+  getClientIP,
+  sanitizeEmail,
+  escapeHtml,
+  safeErrorResponse
+} from '@/lib/security';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,18 +16,6 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
-
-// HTML escape function to prevent XSS
-function escapeHtml(text: string): string {
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  };
-  return text.replace(/[&<>"']/g, (char) => map[char]);
-}
 
 function getWelcomeEmailHtml(email: string): string {
   const safeEmail = escapeHtml(email);
@@ -76,34 +71,24 @@ function getWelcomeEmailHtml(email: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - strict for newsletter to prevent spam
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'contact');
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const body = await request.json();
     const { email } = body;
 
-    // Validate email
-    if (!email) {
-      return NextResponse.json(
-        { error: 'E-posta adresi gerekli' },
-        { status: 400 }
-      );
-    }
-
-    // Input length validation
-    if (email.length > 254) {
-      return NextResponse.json(
-        { error: 'E-posta adresi çok uzun' },
-        { status: 400 }
-      );
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Validate and sanitize email
+    const normalizedEmail = sanitizeEmail(email);
+    if (!normalizedEmail) {
       return NextResponse.json(
         { error: 'Geçerli bir e-posta adresi girin' },
         { status: 400 }
       );
     }
-
-    const normalizedEmail = email.trim().toLowerCase();
 
     // Save to database if available
     if (supabase) {
@@ -164,10 +149,6 @@ export async function POST(request: NextRequest) {
       message: 'Bültene başarıyla kaydoldunuz',
     });
   } catch (error) {
-    console.error('Newsletter subscription error:', error);
-    return NextResponse.json(
-      { error: 'Bir hata oluştu. Lütfen tekrar deneyin.' },
-      { status: 500 }
-    );
+    return safeErrorResponse(error, 'Bir hata oluştu. Lütfen tekrar deneyin.');
   }
 }
