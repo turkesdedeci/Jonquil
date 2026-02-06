@@ -527,8 +527,19 @@ export default function AdminPage() {
     )
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  // Ürün filtreleme
-  const filteredProducts = allProducts
+  // Ürün filtreleme - combine static and database products
+  const allCombinedProducts = useMemo(() => {
+    // Transform dbProducts to match allProducts format
+    const transformedDbProducts = dbProducts.map(p => ({
+      ...p,
+      productType: p.product_type,
+      setSingle: p.set_single,
+      isFromDatabase: true,
+    }));
+    return [...transformedDbProducts, ...allProducts];
+  }, [dbProducts]);
+
+  const filteredProducts = allCombinedProducts
     .filter(p => productFilter === 'all' || p.collection === productFilter)
     .filter(p =>
       productSearch === '' ||
@@ -599,7 +610,7 @@ export default function AdminPage() {
               <Layers className="h-4 w-4" />
               Ürünler
               <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                {allProducts.length}
+                {allCombinedProducts.length}
               </span>
             </button>
           </div>
@@ -888,18 +899,18 @@ export default function AdminPage() {
             <div className="mb-6 grid gap-4 sm:grid-cols-4">
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <p className="text-sm text-gray-500">Toplam Ürün</p>
-                <p className="text-2xl font-bold text-gray-900">{allProducts.length}</p>
+                <p className="text-2xl font-bold text-gray-900">{allCombinedProducts.length}</p>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <p className="text-sm text-gray-500">Stokta</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {allProducts.filter(p => stockStatus[p.id] !== false).length}
+                  {allCombinedProducts.filter(p => stockStatus[p.id] !== false).length}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <p className="text-sm text-gray-500">Tükendi</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {allProducts.filter(p => stockStatus[p.id] === false).length}
+                  {allCombinedProducts.filter(p => stockStatus[p.id] === false).length}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
