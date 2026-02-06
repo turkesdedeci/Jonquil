@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
+import {
+  checkRateLimit,
+  getClientIP,
+  sanitizeString,
+  escapeHtml,
+  safeErrorResponse,
+  handleDatabaseError
+} from '@/lib/security';
 
 // Admin emails from environment variable
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
@@ -44,6 +52,11 @@ function validateProduct(data: any): { valid: boolean; error?: string } {
 // GET - List all products from database
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'read');
+    if (rateLimitResponse) return rateLimitResponse;
+
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
@@ -58,20 +71,27 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Products fetch error:', error);
-      return NextResponse.json({ products: [], tableExists: false });
+      // Table doesn't exist yet
+      if (error.message?.includes('does not exist') || error.code === '42P01') {
+        return NextResponse.json({ products: [], tableExists: false });
+      }
+      return handleDatabaseError(error);
     }
 
     return NextResponse.json({ products: products || [], tableExists: true });
   } catch (error) {
-    console.error('API error:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Ürünler yüklenemedi');
   }
 }
 
 // POST - Create new product
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    if (rateLimitResponse) return rateLimitResponse;
+
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
@@ -88,51 +108,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const {
-      title,
-      subtitle,
-      price,
-      collection,
-      family,
-      product_type,
-      material,
-      color,
-      size,
-      capacity,
-      code,
-      usage,
-      set_single,
-      images,
-      tags,
-      in_stock
-    } = body;
+    // Sanitize all string inputs
+    const sanitizedData = {
+      title: sanitizeString(body.title).slice(0, 255),
+      subtitle: body.subtitle ? sanitizeString(body.subtitle).slice(0, 255) : null,
+      price: sanitizeString(body.price).slice(0, 50),
+      collection: sanitizeString(body.collection).toLowerCase().slice(0, 100),
+      family: body.family ? sanitizeString(body.family).slice(0, 100) : null,
+      product_type: body.product_type ? sanitizeString(body.product_type).slice(0, 100) : null,
+      material: body.material ? sanitizeString(body.material).slice(0, 100) : 'Porselen',
+      color: body.color ? sanitizeString(body.color).slice(0, 50) : null,
+      size: body.size ? sanitizeString(body.size).slice(0, 50) : null,
+      capacity: body.capacity ? sanitizeString(body.capacity).slice(0, 50) : null,
+      code: body.code ? sanitizeString(body.code).slice(0, 50) : null,
+      usage: body.usage ? sanitizeString(body.usage).slice(0, 100) : null,
+      set_single: body.set_single ? sanitizeString(body.set_single).slice(0, 50) : 'Tek Parça',
+      images: Array.isArray(body.images) ? body.images.slice(0, 20) : [],
+      tags: Array.isArray(body.tags) ? body.tags.map((t: string) => sanitizeString(t).slice(0, 50)).slice(0, 20) : [],
+      in_stock: body.in_stock !== false
+    };
 
     const { data: product, error } = await supabase
       .from('products')
-      .insert({
-        title: title.trim(),
-        subtitle: subtitle?.trim() || null,
-        price: price.trim(),
-        collection: collection.trim().toLowerCase(),
-        family: family?.trim() || null,
-        product_type: product_type?.trim() || null,
-        material: material?.trim() || 'Porselen',
-        color: color?.trim() || null,
-        size: size?.trim() || null,
-        capacity: capacity?.trim() || null,
-        code: code?.trim() || null,
-        usage: usage?.trim() || null,
-        set_single: set_single?.trim() || 'Tek Parça',
-        images: images || [],
-        tags: tags || [],
-        in_stock: in_stock !== false
-      })
+      .insert(sanitizedData)
       .select()
       .single();
 
     if (error) {
-      console.error('Product create error:', error);
-
       // Check if table doesn't exist
       if (error.message?.includes('does not exist') || error.code === '42P01') {
         return NextResponse.json({
@@ -141,19 +143,23 @@ export async function POST(request: NextRequest) {
         }, { status: 400 });
       }
 
-      return NextResponse.json({ error: `Ürün oluşturulamadı: ${error.message}` }, { status: 500 });
+      return handleDatabaseError(error);
     }
 
     return NextResponse.json({ success: true, product }, { status: 201 });
   } catch (error) {
-    console.error('API error:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Ürün oluşturulamadı');
   }
 }
 
 // PATCH - Update product
 export async function PATCH(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    if (rateLimitResponse) return rateLimitResponse;
+
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
@@ -169,6 +175,12 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Ürün ID gerekli' }, { status: 400 });
     }
 
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return NextResponse.json({ error: 'Geçersiz ürün ID' }, { status: 400 });
+    }
+
     // Validate if title or price being updated
     if (updateData.title || updateData.price || updateData.collection) {
       const validation = validateProduct({
@@ -182,11 +194,22 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // Clean up data
-    const cleanData: Record<string, any> = {};
+    // Sanitize and clean up data
+    const cleanData: Record<string, unknown> = {};
+    const stringFields = ['title', 'subtitle', 'price', 'collection', 'family', 'product_type',
+                          'material', 'color', 'size', 'capacity', 'code', 'usage', 'set_single'];
+
     Object.entries(updateData).forEach(([key, value]) => {
       if (value !== undefined) {
-        cleanData[key] = typeof value === 'string' ? value.trim() : value;
+        if (stringFields.includes(key) && typeof value === 'string') {
+          cleanData[key] = sanitizeString(value).slice(0, 255);
+        } else if (key === 'tags' && Array.isArray(value)) {
+          cleanData[key] = value.map((t: string) => sanitizeString(t).slice(0, 50)).slice(0, 20);
+        } else if (key === 'images' && Array.isArray(value)) {
+          cleanData[key] = value.slice(0, 20);
+        } else {
+          cleanData[key] = value;
+        }
       }
     });
 
@@ -198,20 +221,23 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Product update error:', error);
-      return NextResponse.json({ error: 'Ürün güncellenemedi' }, { status: 500 });
+      return handleDatabaseError(error);
     }
 
     return NextResponse.json({ success: true, product });
   } catch (error) {
-    console.error('API error:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Ürün güncellenemedi');
   }
 }
 
 // DELETE - Delete product
 export async function DELETE(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    if (rateLimitResponse) return rateLimitResponse;
+
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
@@ -227,19 +253,23 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Ürün ID gerekli' }, { status: 400 });
     }
 
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      return NextResponse.json({ error: 'Geçersiz ürün ID' }, { status: 400 });
+    }
+
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('id', id);
 
     if (error) {
-      console.error('Product delete error:', error);
-      return NextResponse.json({ error: 'Ürün silinemedi' }, { status: 500 });
+      return handleDatabaseError(error);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('API error:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Ürün silinemedi');
   }
 }

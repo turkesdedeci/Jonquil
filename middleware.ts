@@ -1,9 +1,27 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+// Content Security Policy
+// Allows: self, Clerk auth, Supabase storage, iyzico payment
+const cspDirectives = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://*.supabase.co https://img.clerk.com",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.clerk.accounts.dev https://*.supabase.co https://api.iyzipay.com wss://*.supabase.co",
+  "frame-src 'self' https://*.iyzipay.com https://challenges.cloudflare.com",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join('; ');
+
 // Security headers to add to all responses
 const securityHeaders = {
-  // Prevent clickjacking
+  // Content Security Policy
+  'Content-Security-Policy': cspDirectives,
+  // Prevent clickjacking (redundant with CSP frame-ancestors but good for older browsers)
   'X-Frame-Options': 'DENY',
   // Prevent MIME type sniffing
   'X-Content-Type-Options': 'nosniff',
