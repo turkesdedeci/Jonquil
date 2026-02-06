@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
-import { allProducts } from '@/data/products';
+import { useProducts, Product } from '@/hooks/useProducts';
 
 interface SearchModalProps {
   open: boolean;
@@ -13,8 +13,9 @@ interface SearchModalProps {
 }
 
 export default function SearchModal({ open, onClose, onProductClick }: SearchModalProps) {
+  const { products: allProducts } = useProducts();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<typeof allProducts>([]);
+  const [results, setResults] = useState<Product[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus input when modal opens
@@ -53,7 +54,7 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
 
     // Limit to 10 results
     setResults(filtered.slice(0, 10));
-  }, [query]);
+  }, [query, allProducts]);
 
   // Handle keyboard
   useEffect(() => {

@@ -1,21 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeCheckoutForm, isIyzicoConfigured, type BasketItem, type Buyer, type Address } from '@/lib/iyzico';
 import { headers } from 'next/headers';
-import { allProducts } from '@/data/products';
-
-// Helper to get product price from server data
-function getServerProductPrice(productId: string): number | null {
-  const product = allProducts.find(p => p.id === productId);
-  if (!product) return null;
-  // Parse price like "1250 ₺/adet" -> 1250
-  const priceMatch = product.price.match(/[\d.]+/);
-  return priceMatch ? parseFloat(priceMatch[0]) : null;
-}
-
-// Helper to get product by ID
-function getServerProduct(productId: string) {
-  return allProducts.find(p => p.id === productId);
-}
+import { getProductByIdServer, getProductPriceServer } from '@/lib/products-server';
 
 // Shipping cost configuration
 const SHIPPING_COST = 0; // Free shipping
@@ -54,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     for (const item of items) {
       const productId = item.id || item.productId;
-      const serverProduct = getServerProduct(productId);
+      const serverProduct = await getProductByIdServer(productId);
 
       if (!serverProduct) {
         return NextResponse.json(
@@ -63,7 +49,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const serverPrice = getServerProductPrice(productId);
+      const serverPrice = await getProductPriceServer(productId);
       if (serverPrice === null) {
         return NextResponse.json(
           { error: `Ürün fiyatı alınamadı: ${productId}` },
