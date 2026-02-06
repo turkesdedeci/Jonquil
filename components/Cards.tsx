@@ -112,7 +112,7 @@ export function ProductCard({
       onClick={onClick}
     >
       {/* Product Image */}
-      <div className="relative aspect-square overflow-hidden bg-[#faf8f5]">
+      <div className={`relative aspect-square overflow-hidden bg-[#faf8f5] ${!inStock ? 'grayscale' : ''}`}>
         {images.map((img: string, idx: number) => (
           <Image
             key={idx}
@@ -122,7 +122,7 @@ export function ProductCard({
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`object-cover transition-opacity duration-300 ${
               idx === currentImgIndex ? "opacity-100" : "opacity-0"
-            } ${!inStock ? 'grayscale opacity-60' : ''}`}
+            } ${!inStock && idx === currentImgIndex ? 'opacity-60' : ''}`}
             loading={idx === 0 ? "eager" : "lazy"}
             priority={idx === 0}
           />
