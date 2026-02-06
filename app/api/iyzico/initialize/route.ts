@@ -2,12 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { initializeCheckoutForm, isIyzicoConfigured, type BasketItem, type Buyer, type Address } from '@/lib/iyzico';
 import { headers } from 'next/headers';
 import { getProductByIdServer, getProductPriceServer } from '@/lib/products-server';
+import {
+  checkRateLimit,
+  getClientIP,
+  sanitizeString,
+  sanitizeEmail,
+  sanitizePhone,
+  safeErrorResponse
+} from '@/lib/security';
 
 // Shipping cost configuration
 const SHIPPING_COST = 0; // Free shipping
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - strict for payment operations
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'auth');
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Check if iyzico is configured
     if (!isIyzicoConfigured()) {
       return NextResponse.json(
@@ -32,6 +45,39 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate items count
+    if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
+      return NextResponse.json(
+        { error: 'Geçersiz ürün listesi' },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize buyer info
+    const sanitizedBuyer = {
+      id: sanitizeString(buyerInfo.id || '').slice(0, 100),
+      firstName: sanitizeString(buyerInfo.firstName || '').slice(0, 100),
+      lastName: sanitizeString(buyerInfo.lastName || '').slice(0, 100),
+      email: sanitizeEmail(buyerInfo.email || '') || '',
+      phone: sanitizePhone(buyerInfo.phone || '') || '+905000000000',
+      identityNumber: sanitizeString(buyerInfo.identityNumber || '11111111111').slice(0, 11),
+    };
+
+    // Validate sanitized buyer
+    if (!sanitizedBuyer.firstName || !sanitizedBuyer.lastName || !sanitizedBuyer.email) {
+      return NextResponse.json(
+        { error: 'Geçersiz alıcı bilgileri' },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize address info
+    const sanitizedShipping = {
+      address: sanitizeString(shippingInfo.address || '').slice(0, 500),
+      city: sanitizeString(shippingInfo.city || '').slice(0, 100),
+      zipCode: sanitizeString(shippingInfo.zipCode || '34000').slice(0, 10),
+    };
 
     // SERVER-SIDE PRICE VALIDATION
     // Calculate total from server-side product data (prevent price manipulation)
@@ -80,36 +126,36 @@ export async function POST(request: NextRequest) {
     const forwarded = headersList.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0] : headersList.get('x-real-ip') || '127.0.0.1';
 
-    // Format buyer
+    // Format buyer with sanitized data
     const buyer: Buyer = {
-      id: buyerInfo.id || `BUYER_${orderId}`,
-      name: buyerInfo.firstName,
-      surname: buyerInfo.lastName,
-      email: buyerInfo.email,
-      identityNumber: buyerInfo.identityNumber || '11111111111', // TC Kimlik No
-      registrationAddress: shippingInfo.address,
-      city: shippingInfo.city,
+      id: sanitizedBuyer.id || `BUYER_${orderId}`,
+      name: sanitizedBuyer.firstName,
+      surname: sanitizedBuyer.lastName,
+      email: sanitizedBuyer.email,
+      identityNumber: sanitizedBuyer.identityNumber,
+      registrationAddress: sanitizedShipping.address,
+      city: sanitizedShipping.city,
       country: 'Turkey',
       ip: ip,
-      gsmNumber: buyerInfo.phone || '+905000000000',
+      gsmNumber: sanitizedBuyer.phone,
     };
 
-    // Format shipping address
+    // Format shipping address with sanitized data
     const shippingAddress: Address = {
-      contactName: `${buyerInfo.firstName} ${buyerInfo.lastName}`,
-      city: shippingInfo.city,
+      contactName: `${sanitizedBuyer.firstName} ${sanitizedBuyer.lastName}`,
+      city: sanitizedShipping.city,
       country: 'Turkey',
-      address: shippingInfo.address,
-      zipCode: shippingInfo.zipCode || '34000',
+      address: sanitizedShipping.address,
+      zipCode: sanitizedShipping.zipCode,
     };
 
     // Format billing address (use shipping if not provided)
     const billingAddress: Address = billingInfo ? {
-      contactName: `${billingInfo.firstName || buyerInfo.firstName} ${billingInfo.lastName || buyerInfo.lastName}`,
-      city: billingInfo.city || shippingInfo.city,
+      contactName: `${sanitizeString(billingInfo.firstName || sanitizedBuyer.firstName).slice(0, 100)} ${sanitizeString(billingInfo.lastName || sanitizedBuyer.lastName).slice(0, 100)}`,
+      city: sanitizeString(billingInfo.city || sanitizedShipping.city).slice(0, 100),
       country: 'Turkey',
-      address: billingInfo.address || shippingInfo.address,
-      zipCode: billingInfo.zipCode || shippingInfo.zipCode || '34000',
+      address: sanitizeString(billingInfo.address || sanitizedShipping.address).slice(0, 500),
+      zipCode: sanitizeString(billingInfo.zipCode || sanitizedShipping.zipCode).slice(0, 10),
     } : shippingAddress;
 
     // Use SERVER-CALCULATED price (not client-sent)
@@ -154,10 +200,6 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error('iyzico initialize error:', error);
-    return NextResponse.json(
-      { error: 'Bir hata oluştu' },
-      { status: 500 }
-    );
+    return safeErrorResponse(error, 'Ödeme başlatılırken bir hata oluştu');
   }
 }

@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
+import {
+  checkRateLimit,
+  getClientIP,
+  sanitizeString,
+  safeErrorResponse,
+  handleDatabaseError
+} from '@/lib/security';
 
 // GET - Kullanıcının favorilerini getir
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'read');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'Giriş gerekli' }, { status: 401 });
@@ -21,20 +33,23 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Favoriler yüklenirken hata:', error);
-      return NextResponse.json([]);
+      return handleDatabaseError(error);
     }
 
     return NextResponse.json(data || []);
   } catch (error) {
-    console.error('API hatası:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Favoriler yüklenemedi');
   }
 }
 
 // POST - Favorilere ekle
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'Giriş gerekli' }, { status: 401 });
@@ -45,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { productId } = body;
+    const productId = sanitizeString(body.productId as string).slice(0, 100);
 
     if (!productId) {
       return NextResponse.json({ error: 'productId gerekli' }, { status: 400 });
@@ -73,20 +88,23 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Favori eklenirken hata:', error);
-      return NextResponse.json({ error: 'Eklenemedi' }, { status: 500 });
+      return handleDatabaseError(error);
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('API hatası:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Favori eklenemedi');
   }
 }
 
 // DELETE - Favorilerden kaldır
 export async function DELETE(request: NextRequest) {
   try {
+    // Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'Giriş gerekli' }, { status: 401 });
@@ -97,7 +115,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const productId = searchParams.get('productId');
+    const productId = sanitizeString(searchParams.get('productId') || '').slice(0, 100);
 
     if (!productId) {
       return NextResponse.json({ error: 'productId gerekli' }, { status: 400 });
@@ -110,13 +128,11 @@ export async function DELETE(request: NextRequest) {
       .eq('product_id', productId);
 
     if (error) {
-      console.error('Favori silinirken hata:', error);
-      return NextResponse.json({ error: 'Silinemedi' }, { status: 500 });
+      return handleDatabaseError(error);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('API hatası:', error);
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+    return safeErrorResponse(error, 'Favori silinemedi');
   }
 }
