@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { allProducts as staticProducts } from '@/data/products';
 
+// Prevent caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -81,6 +85,10 @@ export async function GET(request: NextRequest) {
       totalCount: allCombinedProducts.length,
       dbProductCount: dbProducts.length,
       staticProductCount: staticProducts.length,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
     });
   } catch (error) {
     console.error('Products API error:', error);
