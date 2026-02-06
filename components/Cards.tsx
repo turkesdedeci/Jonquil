@@ -8,6 +8,22 @@ import {
 } from "lucide-react";
 import { useStock } from "@/contexts/StockContext";
 
+// Helper function to derive subcategory from product title
+function getSubCategory(title: string): string | null {
+  const lowerTitle = title.toLowerCase();
+  if (lowerTitle.includes('pasta tabağı') || lowerTitle.includes('cake plate')) return 'Pasta Tabağı';
+  if (lowerTitle.includes('servis tabağı') || lowerTitle.includes('serving plate')) return 'Servis Tabağı';
+  if (lowerTitle.includes('kase') || lowerTitle.includes('bowl')) return 'Kase';
+  if (lowerTitle.includes('fincan') || lowerTitle.includes('cup')) return 'Fincan';
+  if (lowerTitle.includes('kupa') || lowerTitle.includes('mug')) return 'Kupa';
+  if (lowerTitle.includes('küllük') || lowerTitle.includes('ashtray')) return 'Küllük';
+  if (lowerTitle.includes('mumluk') || lowerTitle.includes('candle')) return 'Mumluk';
+  if (lowerTitle.includes('yastık') || lowerTitle.includes('pillow') || lowerTitle.includes('cushion')) return 'Yastık';
+  if (lowerTitle.includes('tepsi') || lowerTitle.includes('tray')) return 'Tepsi';
+  if (lowerTitle.includes('kutu') || lowerTitle.includes('box')) return 'Kutu';
+  return null;
+}
+
 // Luxury badge component
 export function LuxuryBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
@@ -157,12 +173,26 @@ export function ProductCard({
             </div>
           )}
         </div>
+
+        {/* Size Badge */}
+        {product.size && (
+          <div className="absolute right-3 top-3 rounded-full bg-[#0f3f44]/90 px-3 py-1 text-[10px] font-bold text-white shadow-sm backdrop-blur-sm">
+            {product.size}
+          </div>
+        )}
       </div>
 
       {/* Product Info */}
       <div className="p-5">
-        <div className="mb-1 text-xs font-light uppercase tracking-wider text-[#999]">
-          {product.family}
+        <div className="mb-1 flex items-center justify-between">
+          <span className="text-xs font-light uppercase tracking-wider text-[#999]">
+            {product.family}
+          </span>
+          {getSubCategory(product.title) && (
+            <span className="text-[10px] font-medium text-[#d4af7a]">
+              {getSubCategory(product.title)}
+            </span>
+          )}
         </div>
         <h3 className={`mb-2 line-clamp-2 text-sm font-medium leading-snug ${inStock ? 'text-[#1a1a1a]' : 'text-gray-400'}`}>
           {product.title}

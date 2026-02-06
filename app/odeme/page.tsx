@@ -251,10 +251,42 @@ export default function CheckoutPage() {
       <div className="mx-auto max-w-7xl px-6">
         {/* Header */}
         <div className="mb-8">
+          <div className="mb-4 flex items-center gap-2">
+            <button
+              onClick={() => router.push('/')}
+              className="text-sm text-[#0f3f44] hover:underline"
+            >
+              ← Alışverişe Devam Et
+            </button>
+          </div>
           <h1 className="mb-2 font-serif text-4xl font-light text-[#1a1a1a]">
             Ödeme
           </h1>
           <p className="text-[#666]">Siparişinizi tamamlamak için bilgilerinizi kontrol edin</p>
+
+          {/* Progress Steps */}
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0f3f44] text-sm font-bold text-white">
+                1
+              </div>
+              <span className="hidden text-sm font-medium text-[#0f3f44] sm:inline">Adres Seçimi</span>
+            </div>
+            <div className="h-0.5 w-8 bg-[#e8e6e3]" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0f3f44] text-sm font-bold text-white">
+                2
+              </div>
+              <span className="hidden text-sm font-medium text-[#0f3f44] sm:inline">Ödeme</span>
+            </div>
+            <div className="h-0.5 w-8 bg-[#e8e6e3]" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8e6e3] text-sm font-bold text-[#666]">
+                3
+              </div>
+              <span className="hidden text-sm font-medium text-[#666] sm:inline">Onay</span>
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">

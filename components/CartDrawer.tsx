@@ -57,9 +57,15 @@ export function CartDrawer({ open, onClose, onCheckout }: CartDrawerProps) {
                 <div className="flex h-full flex-col items-center justify-center text-center">
                   <ShoppingBag className="mb-4 h-16 w-16 text-[#e8e6e3]" />
                   <p className="mb-2 font-medium text-[#1a1a1a]">Sepetiniz boş</p>
-                  <p className="text-sm text-[#666]">
+                  <p className="mb-6 text-sm text-[#666]">
                     Ürün eklemek için koleksiyonumuzu keşfedin
                   </p>
+                  <button
+                    onClick={onClose}
+                    className="rounded-lg bg-[#0f3f44] px-6 py-3 font-medium text-white hover:bg-[#0a2a2e]"
+                  >
+                    Ürünlere Göz At
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -143,6 +149,12 @@ export function CartDrawer({ open, onClose, onCheckout }: CartDrawerProps) {
                   className="w-full rounded-lg bg-[#0f3f44] py-3 font-medium text-white hover:bg-[#0a2a2e]"
                 >
                   Siparişi Tamamla
+                </button>
+                <button
+                  onClick={onClose}
+                  className="mt-3 w-full rounded-lg border border-[#e8e6e3] bg-white py-3 font-medium text-[#0f3f44] hover:bg-[#faf8f5]"
+                >
+                  Alışverişe Devam Et
                 </button>
                 <p className="mt-3 text-center text-xs text-[#666]">
                   Kargo ücreti ödeme adımında hesaplanacaktır
