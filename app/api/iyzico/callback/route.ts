@@ -16,10 +16,13 @@ async function sendOrderConfirmationEmails(orderId: string) {
   if (!supabase) return;
 
   try {
-    // Fetch order details
+    // Fetch order with items in a single query (N+1 fix)
     const { data: order } = await supabase
       .from('orders')
-      .select('*')
+      .select(`
+        *,
+        items:order_items(*)
+      `)
       .eq('id', orderId)
       .single();
 
@@ -27,12 +30,6 @@ async function sendOrderConfirmationEmails(orderId: string) {
       console.error('Order not found for email:', orderId);
       return;
     }
-
-    // Fetch order items
-    const { data: orderItems } = await supabase
-      .from('order_items')
-      .select('*')
-      .eq('order_id', orderId);
 
     // Prepare email data
     const emailData: OrderEmailData = {
@@ -46,7 +43,7 @@ async function sendOrderConfirmationEmails(orderId: string) {
         district: order.shipping_district,
         zipCode: order.shipping_zip_code,
       },
-      items: (orderItems || []).map(item => ({
+      items: (order.items || []).map((item: any) => ({
         title: item.product_title || item.product_name || 'Ürün',
         quantity: item.quantity || 1,
         price: `${item.price || 0} TL`,

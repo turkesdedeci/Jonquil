@@ -25,9 +25,6 @@ import {
 } from 'lucide-react';
 import { allProducts } from '@/data/products';
 
-// Admin email listesi
-const ADMIN_EMAILS = ['turkesdedeci@icloud.com'];
-
 interface Order {
   id: string;
   order_number: string;
@@ -92,18 +89,26 @@ export default function AdminPage() {
   const [stockTableExists, setStockTableExists] = useState(true);
   const [settingUpTable, setSettingUpTable] = useState(false);
   const [setupMessage, setSetupMessage] = useState<{type: 'success' | 'error' | 'info', text: string, sql?: string} | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-  // Admin kontrolü
-  const isAdmin = user?.emailAddresses?.some(
-    email => ADMIN_EMAILS.includes(email.emailAddress)
-  );
+  // Admin kontrolü - server-side'dan kontrol et
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetch('/api/admin/check')
+        .then(res => res.json())
+        .then(data => setIsAdmin(data.isAdmin))
+        .catch(() => setIsAdmin(false));
+    } else if (isLoaded && !user) {
+      setIsAdmin(false);
+    }
+  }, [isLoaded, user]);
 
   useEffect(() => {
-    if (isLoaded && isAdmin) {
+    if (isAdmin === true) {
       loadOrders();
       loadStockStatus();
     }
-  }, [isLoaded, isAdmin]);
+  }, [isAdmin]);
 
   const loadStockStatus = async () => {
     try {
@@ -252,8 +257,8 @@ export default function AdminPage() {
     link.click();
   };
 
-  // Yükleniyor
-  if (!isLoaded) {
+  // Yükleniyor (kullanıcı ve admin durumu kontrol ediliyor)
+  if (!isLoaded || isAdmin === null) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#0f3f44]" />

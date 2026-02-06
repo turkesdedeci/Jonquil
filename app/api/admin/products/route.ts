@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { currentUser } from '@clerk/nextjs/server';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Admin emails from environment variable (comma-separated)
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+
+// Admin check helper
+async function isAdmin() {
+  const user = await currentUser();
+  if (!user) return false;
+  return user.emailAddresses.some(email => ADMIN_EMAILS.includes(email.emailAddress));
+}
 
 const supabase = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
@@ -68,8 +79,13 @@ export async function GET() {
   }
 }
 
-// PATCH - Update product stock status
+// PATCH - Update product stock status (admin only)
 export async function PATCH(request: NextRequest) {
+  // Admin check
+  if (!await isAdmin()) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
+  }
+
   if (!supabase) {
     return NextResponse.json(
       { error: 'Veritabanı bağlantısı yapılandırılmamış' },

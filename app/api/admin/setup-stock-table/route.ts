@@ -1,10 +1,25 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { currentUser } from '@clerk/nextjs/server';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+// Admin emails from environment variable (comma-separated)
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+
+// Admin check helper
+async function isAdmin() {
+  const user = await currentUser();
+  if (!user) return false;
+  return user.emailAddresses.some(email => ADMIN_EMAILS.includes(email.emailAddress));
+}
+
 export async function POST() {
+  // Admin check
+  if (!await isAdmin()) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
+  }
   if (!supabaseUrl || !supabaseServiceKey) {
     return NextResponse.json(
       { error: 'Supabase yapılandırması eksik' },
