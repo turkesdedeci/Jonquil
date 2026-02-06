@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import {
-  checkRateLimit,
+  checkRateLimitAsync,
   getClientIP,
   sanitizeString,
-  escapeHtml,
   safeErrorResponse,
   handleDatabaseError
 } from '@/lib/security';
+import { logAuditEvent } from '@/lib/audit';
 
 // Admin emails from environment variable
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
   try {
     // Rate limiting
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'read');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
     if (rateLimitResponse) return rateLimitResponse;
 
     if (!await isAdmin()) {
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
 
     if (!await isAdmin()) {
@@ -146,6 +146,18 @@ export async function POST(request: NextRequest) {
       return handleDatabaseError(error);
     }
 
+    // Audit log: product created
+    await logAuditEvent({
+      action: 'product_create',
+      resource_type: 'product',
+      resource_id: product.id,
+      details: {
+        title: sanitizedData.title,
+        collection: sanitizedData.collection,
+        price: sanitizedData.price,
+      },
+    }, request);
+
     return NextResponse.json({ success: true, product }, { status: 201 });
   } catch (error) {
     return safeErrorResponse(error, 'Ürün oluşturulamadı');
@@ -157,7 +169,7 @@ export async function PATCH(request: NextRequest) {
   try {
     // Rate limiting
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
 
     if (!await isAdmin()) {
@@ -224,6 +236,16 @@ export async function PATCH(request: NextRequest) {
       return handleDatabaseError(error);
     }
 
+    // Audit log: product updated
+    await logAuditEvent({
+      action: 'product_update',
+      resource_type: 'product',
+      resource_id: id,
+      details: {
+        updated_fields: Object.keys(cleanData),
+      },
+    }, request);
+
     return NextResponse.json({ success: true, product });
   } catch (error) {
     return safeErrorResponse(error, 'Ürün güncellenemedi');
@@ -235,7 +257,7 @@ export async function DELETE(request: NextRequest) {
   try {
     // Rate limiting
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
 
     if (!await isAdmin()) {
@@ -267,6 +289,14 @@ export async function DELETE(request: NextRequest) {
     if (error) {
       return handleDatabaseError(error);
     }
+
+    // Audit log: product deleted
+    await logAuditEvent({
+      action: 'product_delete',
+      resource_type: 'product',
+      resource_id: id,
+      details: {},
+    }, request);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import {
-  checkRateLimit,
+  checkRateLimitAsync,
   getClientIP,
   validateFileSignature,
   validateFileSize,
   safeErrorResponse
 } from '@/lib/security';
+import { logAuditEvent } from '@/lib/audit';
 
 // Admin emails from environment variable
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
@@ -35,9 +36,9 @@ const MAX_FILE_SIZE_MB = 4; // 4MB (Vercel limit is 4.5MB)
 // POST - Upload image to Supabase Storage
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting for uploads (strict)
+    // Rate limiting for uploads (strict, async for Redis support)
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'upload');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'upload');
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
@@ -114,6 +115,19 @@ export async function POST(request: NextRequest) {
     const { data: publicUrlData } = supabase.storage
       .from('images')
       .getPublicUrl(fileName);
+
+    // Audit log: file upload
+    await logAuditEvent({
+      action: 'file_upload',
+      resource_type: 'image',
+      resource_id: data.path,
+      details: {
+        file_name: fileName,
+        file_size: file.size,
+        file_type: signatureValidation.detectedType,
+        public_url: publicUrlData.publicUrl,
+      },
+    }, request);
 
     return NextResponse.json({
       success: true,
