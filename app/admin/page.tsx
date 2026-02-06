@@ -89,6 +89,9 @@ export default function AdminPage() {
   const [productFilter, setProductFilter] = useState('all');
   const [stockStatus, setStockStatus] = useState<Record<string, boolean>>({});
   const [updatingStock, setUpdatingStock] = useState<string | null>(null);
+  const [stockTableExists, setStockTableExists] = useState(true);
+  const [settingUpTable, setSettingUpTable] = useState(false);
+  const [setupMessage, setSetupMessage] = useState<{type: 'success' | 'error' | 'info', text: string, sql?: string} | null>(null);
 
   // Admin kontrolü
   const isAdmin = user?.emailAddresses?.some(
@@ -108,9 +111,34 @@ export default function AdminPage() {
       if (res.ok) {
         const data = await res.json();
         setStockStatus(data.stockStatus || {});
+        setStockTableExists(data.tableExists !== false);
       }
     } catch (error) {
       console.error('Stok durumu yüklenirken hata:', error);
+      setStockTableExists(false);
+    }
+  };
+
+  const setupStockTable = async () => {
+    setSettingUpTable(true);
+    setSetupMessage(null);
+    try {
+      const res = await fetch('/api/admin/setup-stock-table', { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success) {
+        setSetupMessage({ type: 'success', text: data.message });
+        setStockTableExists(true);
+        loadStockStatus();
+      } else if (data.sql) {
+        setSetupMessage({ type: 'info', text: data.message, sql: data.sql });
+      } else {
+        setSetupMessage({ type: 'error', text: data.error || 'Bir hata oluştu' });
+      }
+    } catch (error) {
+      setSetupMessage({ type: 'error', text: 'Bağlantı hatası' });
+    } finally {
+      setSettingUpTable(false);
     }
   };
 
@@ -584,6 +612,41 @@ export default function AdminPage() {
         {/* PRODUCTS TAB */}
         {activeTab === 'products' && (
           <>
+            {/* Stock Table Setup Warning */}
+            {!stockTableExists && (
+              <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-yellow-800">Stok Yönetimi Kurulumu Gerekli</h3>
+                    <p className="mt-1 text-sm text-yellow-700">
+                      Stok yönetimi için veritabanı tablosu henüz oluşturulmamış. Aşağıdaki butona tıklayarak kurulumu başlatabilirsiniz.
+                    </p>
+                    {setupMessage && (
+                      <div className={`mt-3 rounded-lg p-3 ${
+                        setupMessage.type === 'success' ? 'bg-green-100 text-green-800' :
+                        setupMessage.type === 'error' ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        <p className="text-sm font-medium">{setupMessage.text}</p>
+                        {setupMessage.sql && (
+                          <pre className="mt-2 overflow-x-auto rounded bg-white p-3 text-xs text-gray-800">
+                            {setupMessage.sql}
+                          </pre>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={setupStockTable}
+                    disabled={settingUpTable}
+                    className="rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50"
+                  >
+                    {settingUpTable ? 'Kuruluyor...' : 'Tabloyu Kur'}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Ürün Filtreler */}
             <div className="mb-6 flex flex-wrap items-center gap-4">
               <div className="relative flex-1">
