@@ -198,6 +198,22 @@ export default function AdminPage() {
     };
   }, []);
 
+  // Determine which fields to show based on product type
+  const fieldVisibility = useMemo(() => {
+    const type = newProduct.product_type?.toLowerCase() || '';
+
+    // Products that need capacity: Fincan, Kupa, Set
+    const needsCapacity = ['fincan', 'kupa', 'set', 'bardak'].some(t => type.includes(t));
+
+    // Products that need size: Almost all except some
+    const needsSize = true; // Most products have size
+
+    return {
+      showCapacity: needsCapacity || type === '', // Show if relevant or no type selected yet
+      showSize: needsSize,
+    };
+  }, [newProduct.product_type]);
+
   // Admin kontrolü - server-side'dan kontrol et
   useEffect(() => {
     if (isLoaded && user) {
@@ -1332,43 +1348,50 @@ export default function AdminPage() {
                   </datalist>
                 </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Boyut
-                  </label>
-                  <input
-                    type="text"
-                    list="sizes"
-                    value={newProduct.size}
-                    onChange={(e) => setNewProduct(prev => ({ ...prev, size: e.target.value }))}
-                    placeholder="Ø21cm, 25x30cm..."
-                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
-                  />
-                  <datalist id="sizes">
-                    {existingValues.sizes.map(size => (
-                      <option key={size} value={size} />
-                    ))}
-                  </datalist>
-                </div>
+                {/* Boyut - always visible */}
+                {fieldVisibility.showSize && (
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Boyut
+                    </label>
+                    <input
+                      type="text"
+                      list="sizes"
+                      value={newProduct.size}
+                      onChange={(e) => setNewProduct(prev => ({ ...prev, size: e.target.value }))}
+                      placeholder="Ø21cm, 25x30cm..."
+                      className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                    />
+                    <datalist id="sizes">
+                      {existingValues.sizes.map(size => (
+                        <option key={size} value={size} />
+                      ))}
+                    </datalist>
+                  </div>
+                )}
 
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
-                    Kapasite
-                  </label>
-                  <input
-                    type="text"
-                    list="capacities"
-                    value={newProduct.capacity}
-                    onChange={(e) => setNewProduct(prev => ({ ...prev, capacity: e.target.value }))}
-                    placeholder="150ml, 250ml..."
-                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
-                  />
-                  <datalist id="capacities">
-                    {existingValues.capacities.map(cap => (
-                      <option key={cap} value={cap} />
-                    ))}
-                  </datalist>
-                </div>
+                {/* Kapasite - only for cups, mugs, sets */}
+                {fieldVisibility.showCapacity && (
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Kapasite
+                      <span className="ml-1 text-xs text-gray-400">(Fincan/Kupa/Set için)</span>
+                    </label>
+                    <input
+                      type="text"
+                      list="capacities"
+                      value={newProduct.capacity}
+                      onChange={(e) => setNewProduct(prev => ({ ...prev, capacity: e.target.value }))}
+                      placeholder="150ml, 250ml..."
+                      className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                    />
+                    <datalist id="capacities">
+                      {existingValues.capacities.map(cap => (
+                        <option key={cap} value={cap} />
+                      ))}
+                    </datalist>
+                  </div>
+                )}
 
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">
