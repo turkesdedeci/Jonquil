@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check, XCircle } from "lucide-react";
 import { getColorSwatchStyle } from "@/utils/groupProducts";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useStock } from "@/contexts/StockContext";
 
 interface ProductDetailProps {
   product: any;
@@ -21,7 +22,11 @@ export default function ProductDetail({
 }: ProductDetailProps) {
   const { addToCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { isInStock } = useStock();
   const [quantity, setQuantity] = useState(1);
+
+  // Check stock status for current product
+  const inStock = isInStock(product.id);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(
     product.selectedVariantIndex || 0
   );
@@ -55,6 +60,8 @@ export default function ProductDetail({
 
   // Add to cart handler
   const handleAddToCart = () => {
+    if (!inStock) return;
+
     const currentProduct = hasVariants ? {
       ...product,
       ...product.variants[selectedVariantIndex],
@@ -78,9 +85,11 @@ export default function ProductDetail({
 
   // Buy Now handler
   const handleBuyNow = () => {
+    if (!inStock) return;
+
     // 1. Add to cart
     handleAddToCart();
-    
+
     // 2. Redirect to checkout
     // A small delay to ensure cart context is updated before redirect
     setTimeout(() => {
@@ -251,14 +260,34 @@ export default function ProductDetail({
               </div>
             </div>
 
+            {/* Out of Stock Warning */}
+            {!inStock && (
+              <div className="flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 p-4">
+                <XCircle className="h-6 w-6 text-red-500 shrink-0" />
+                <div>
+                  <p className="font-semibold text-red-700">Bu ürün şu an stokta yok</p>
+                  <p className="text-sm text-red-600">Stok durumu için bizimle iletişime geçebilirsiniz.</p>
+                </div>
+              </div>
+            )}
+
             {/* Add to Cart Buttons */}
             <div className="space-y-3">
-              <button 
+              <button
                 onClick={handleAddToCart}
-                disabled={addedToCart}
-                className="flex w-full items-center justify-center gap-3 rounded-full bg-[#0f3f44] px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-[#0a2a2e] active:scale-98 disabled:opacity-70"
+                disabled={addedToCart || !inStock}
+                className={`flex w-full items-center justify-center gap-3 rounded-full px-8 py-4 text-sm font-semibold transition-all active:scale-98 disabled:opacity-70 ${
+                  inStock
+                    ? 'bg-[#0f3f44] text-white hover:bg-[#0a2a2e]'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                {addedToCart ? (
+                {!inStock ? (
+                  <>
+                    <XCircle className="h-5 w-5" />
+                    Stokta Yok
+                  </>
+                ) : addedToCart ? (
                   <>
                     <Check className="h-5 w-5" />
                     Sepete Eklendi!
@@ -270,12 +299,17 @@ export default function ProductDetail({
                   </>
                 )}
               </button>
-              
-              <button 
+
+              <button
                 onClick={handleBuyNow}
-                className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[#0f3f44] bg-transparent px-8 py-4 text-sm font-semibold text-[#0f3f44] transition-all hover:bg-[#0f3f44] hover:text-white active:scale-98"
+                disabled={!inStock}
+                className={`flex w-full items-center justify-center gap-3 rounded-full border-2 px-8 py-4 text-sm font-semibold transition-all active:scale-98 ${
+                  inStock
+                    ? 'border-[#0f3f44] bg-transparent text-[#0f3f44] hover:bg-[#0f3f44] hover:text-white'
+                    : 'border-gray-300 bg-transparent text-gray-400 cursor-not-allowed'
+                }`}
               >
-                Hemen Satın Al
+                {inStock ? 'Hemen Satın Al' : 'Satın Alınamaz'}
               </button>
 
               <button
