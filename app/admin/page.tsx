@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/hooks/useClerkUser';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -169,6 +169,34 @@ export default function AdminPage() {
       images: prev.images.filter((_, i) => i !== index)
     }));
   };
+
+  // Extract unique values from existing products for dropdown suggestions
+  const existingValues = useMemo(() => {
+    const colors = new Set<string>();
+    const sizes = new Set<string>();
+    const capacities = new Set<string>();
+    const materials = new Set<string>();
+    const productTypes = new Set<string>();
+    const families = new Set<string>();
+
+    allProducts.forEach(p => {
+      if (p.color) colors.add(p.color);
+      if (p.size) sizes.add(p.size);
+      if (p.capacity) capacities.add(p.capacity);
+      if (p.material) materials.add(p.material);
+      if (p.productType) productTypes.add(p.productType);
+      if (p.family) families.add(p.family);
+    });
+
+    return {
+      colors: Array.from(colors).sort(),
+      sizes: Array.from(sizes).sort(),
+      capacities: Array.from(capacities).sort(),
+      materials: Array.from(materials).sort(),
+      productTypes: Array.from(productTypes).sort(),
+      families: Array.from(families).sort(),
+    };
+  }, []);
 
   // Admin kontrolü - server-side'dan kontrol et
   useEffect(() => {
@@ -1203,13 +1231,18 @@ export default function AdminPage() {
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     Fiyat *
                   </label>
-                  <input
-                    type="text"
-                    value={newProduct.price}
-                    onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
-                    placeholder="1250 ₺/adet"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
-                  />
+                  <div className="flex">
+                    <input
+                      type="number"
+                      value={newProduct.price.replace(/[^\d]/g, '')}
+                      onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value ? `${e.target.value} ₺/adet` : '' }))}
+                      placeholder="1250"
+                      className="w-full rounded-l-lg border border-r-0 border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                    />
+                    <span className="inline-flex items-center rounded-r-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-500">
+                      ₺/adet
+                    </span>
+                  </div>
                 </div>
 
                 <div>
@@ -1246,22 +1279,19 @@ export default function AdminPage() {
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     Ürün Tipi
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    list="productTypes"
                     value={newProduct.product_type}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, product_type: e.target.value }))}
+                    placeholder="Tabak, Fincan, Kupa..."
                     className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
-                  >
-                    <option value="">Seçiniz</option>
-                    <option value="Tabak">Tabak</option>
-                    <option value="Fincan">Fincan</option>
-                    <option value="Kupa">Kupa</option>
-                    <option value="Mumluk">Mumluk</option>
-                    <option value="Küllük">Küllük</option>
-                    <option value="Tepsi">Tepsi</option>
-                    <option value="Kutu">Kutu</option>
-                    <option value="Tekstil">Tekstil</option>
-                    <option value="Aksesuar">Aksesuar</option>
-                  </select>
+                  />
+                  <datalist id="productTypes">
+                    {existingValues.productTypes.map(type => (
+                      <option key={type} value={type} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div>
@@ -1270,11 +1300,17 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="text"
+                    list="materials"
                     value={newProduct.material}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, material: e.target.value }))}
                     placeholder="Porselen"
                     className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
                   />
+                  <datalist id="materials">
+                    {existingValues.materials.map(mat => (
+                      <option key={mat} value={mat} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div>
@@ -1283,11 +1319,17 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="text"
+                    list="colors"
                     value={newProduct.color}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, color: e.target.value }))}
                     placeholder="Kırmızı/Altın"
                     className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
                   />
+                  <datalist id="colors">
+                    {existingValues.colors.map(color => (
+                      <option key={color} value={color} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div>
@@ -1296,11 +1338,17 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="text"
+                    list="sizes"
                     value={newProduct.size}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, size: e.target.value }))}
-                    placeholder="Ø21cm"
+                    placeholder="Ø21cm, 25x30cm..."
                     className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
                   />
+                  <datalist id="sizes">
+                    {existingValues.sizes.map(size => (
+                      <option key={size} value={size} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div>
@@ -1309,11 +1357,17 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="text"
+                    list="capacities"
                     value={newProduct.capacity}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, capacity: e.target.value }))}
-                    placeholder="150ml"
+                    placeholder="150ml, 250ml..."
                     className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
                   />
+                  <datalist id="capacities">
+                    {existingValues.capacities.map(cap => (
+                      <option key={cap} value={cap} />
+                    ))}
+                  </datalist>
                 </div>
 
                 <div>
@@ -1335,11 +1389,17 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="text"
+                    list="families"
                     value={newProduct.family}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, family: e.target.value }))}
-                    placeholder="ASLAN"
+                    placeholder="ASLAN, OTTOMAN..."
                     className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
                   />
+                  <datalist id="families">
+                    {existingValues.families.map(fam => (
+                      <option key={fam} value={fam} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
