@@ -24,7 +24,9 @@ import {
   ExternalLink,
   Plus,
   Save,
-  Trash2
+  Trash2,
+  Upload,
+  ImagePlus
 } from 'lucide-react';
 import { allProducts } from '@/data/products';
 
@@ -99,6 +101,7 @@ export default function AdminPage() {
   const [savingProduct, setSavingProduct] = useState(false);
   const [dbProducts, setDbProducts] = useState<any[]>([]);
   const [productFormMessage, setProductFormMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [newProduct, setNewProduct] = useState({
     title: '',
     subtitle: '',
@@ -114,6 +117,58 @@ export default function AdminPage() {
     images: [] as string[],
     in_stock: true
   });
+
+  // Image upload handler
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingImage(true);
+    setProductFormMessage(null);
+
+    try {
+      const uploadedUrls: string[] = [];
+
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          uploadedUrls.push(data.url);
+        } else {
+          const error = await res.json();
+          throw new Error(error.error || 'Yükleme hatası');
+        }
+      }
+
+      setNewProduct(prev => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls]
+      }));
+
+      setProductFormMessage({ type: 'success', text: `${uploadedUrls.length} resim yüklendi` });
+    } catch (error: any) {
+      setProductFormMessage({ type: 'error', text: error.message || 'Resim yüklenemedi' });
+    } finally {
+      setUploadingImage(false);
+      // Reset file input
+      e.target.value = '';
+    }
+  };
+
+  // Remove image from list
+  const removeImage = (index: number) => {
+    setNewProduct(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
 
   // Admin kontrolü - server-side'dan kontrol et
   useEffect(() => {
@@ -1288,21 +1343,74 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Image URLs */}
+              {/* Image Upload */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
-                  Resim URL'leri (her satıra bir URL)
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Ürün Resimleri
                 </label>
-                <textarea
-                  value={newProduct.images.join('\n')}
-                  onChange={(e) => setNewProduct(prev => ({
-                    ...prev,
-                    images: e.target.value.split('\n').filter(url => url.trim())
-                  }))}
-                  placeholder="/images/products/urun1.jpg&#10;/images/products/urun2.jpg"
-                  rows={4}
-                  className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
-                />
+
+                {/* Uploaded Images Preview */}
+                {newProduct.images.length > 0 && (
+                  <div className="mb-3 grid grid-cols-4 gap-2">
+                    {newProduct.images.map((url, idx) => (
+                      <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+                        <Image
+                          src={url}
+                          alt={`Ürün resmi ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                        <button
+                          onClick={() => removeImage(idx)}
+                          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload Button */}
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 transition-colors hover:border-[#0f3f44] hover:text-[#0f3f44]">
+                  {uploadingImage ? (
+                    <>
+                      <RefreshCw className="h-5 w-5 animate-spin" />
+                      Yükleniyor...
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="h-5 w-5" />
+                      Resim Yükle (Maks 5MB)
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    multiple
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* Manual URL Input (collapsed) */}
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700">
+                    veya manuel URL girin
+                  </summary>
+                  <textarea
+                    value={newProduct.images.join('\n')}
+                    onChange={(e) => setNewProduct(prev => ({
+                      ...prev,
+                      images: e.target.value.split('\n').filter(url => url.trim())
+                    }))}
+                    placeholder="/images/products/urun1.jpg"
+                    rows={2}
+                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-[#0f3f44] focus:outline-none"
+                  />
+                </details>
               </div>
 
               {/* In Stock Toggle */}
