@@ -22,6 +22,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Input length validation to prevent DoS
+    if (name.length > 100) {
+      return NextResponse.json(
+        { error: 'İsim çok uzun (maksimum 100 karakter)' },
+        { status: 400 }
+      );
+    }
+    if (email.length > 254) {
+      return NextResponse.json(
+        { error: 'E-posta çok uzun' },
+        { status: 400 }
+      );
+    }
+    if (subject.length > 200) {
+      return NextResponse.json(
+        { error: 'Konu çok uzun (maksimum 200 karakter)' },
+        { status: 400 }
+      );
+    }
+    if (message.length > 5000) {
+      return NextResponse.json(
+        { error: 'Mesaj çok uzun (maksimum 5000 karakter)' },
+        { status: 400 }
+      );
+    }
+    if (phone && phone.length > 20) {
+      return NextResponse.json(
+        { error: 'Telefon numarası çok uzun' },
+        { status: 400 }
+      );
+    }
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {

@@ -26,6 +26,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Input length validation
+    if (orderNumber.length > 50) {
+      return NextResponse.json(
+        { error: 'Geçersiz sipariş numarası' },
+        { status: 400 }
+      );
+    }
+
+    if (email.length > 254) {
+      return NextResponse.json(
+        { error: 'Geçersiz e-posta adresi' },
+        { status: 400 }
+      );
+    }
+
+    // Basic email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Geçerli bir e-posta adresi girin' },
+        { status: 400 }
+      );
+    }
+
     // Find order by order number and email
     const { data: order, error } = await supabase
       .from('orders')

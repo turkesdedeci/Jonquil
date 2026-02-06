@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/hooks/useClerkUser';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -21,12 +21,14 @@ import {
   X,
   Download,
   Layers,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Save,
+  Trash2,
+  Upload,
+  ImagePlus
 } from 'lucide-react';
 import { allProducts } from '@/data/products';
-
-// Admin email listesi
-const ADMIN_EMAILS = ['turkesdedeci@icloud.com'];
 
 interface Order {
   id: string;
@@ -92,18 +94,207 @@ export default function AdminPage() {
   const [stockTableExists, setStockTableExists] = useState(true);
   const [settingUpTable, setSettingUpTable] = useState(false);
   const [setupMessage, setSetupMessage] = useState<{type: 'success' | 'error' | 'info', text: string, sql?: string} | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-  // Admin kontrolü
-  const isAdmin = user?.emailAddresses?.some(
-    email => ADMIN_EMAILS.includes(email.emailAddress)
-  );
+  // New product states
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [savingProduct, setSavingProduct] = useState(false);
+  const [dbProducts, setDbProducts] = useState<any[]>([]);
+  const [productFormMessage, setProductFormMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    title: '',
+    subtitle: '',
+    price: '',
+    collection: 'aslan',
+    family: '',
+    product_type: '',
+    material: 'Porselen',
+    color: '',
+    size: '',
+    capacity: '',
+    code: '',
+    images: [] as string[],
+    in_stock: true
+  });
+
+  // Image upload handler
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingImage(true);
+    setProductFormMessage(null);
+
+    try {
+      const uploadedUrls: string[] = [];
+
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          uploadedUrls.push(data.url);
+        } else {
+          const error = await res.json();
+          throw new Error(error.error || 'Yükleme hatası');
+        }
+      }
+
+      setNewProduct(prev => ({
+        ...prev,
+        images: [...prev.images, ...uploadedUrls]
+      }));
+
+      setProductFormMessage({ type: 'success', text: `${uploadedUrls.length} resim yüklendi` });
+    } catch (error: any) {
+      setProductFormMessage({ type: 'error', text: error.message || 'Resim yüklenemedi' });
+    } finally {
+      setUploadingImage(false);
+      // Reset file input
+      e.target.value = '';
+    }
+  };
+
+  // Remove image from list
+  const removeImage = (index: number) => {
+    setNewProduct(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Extract unique values from existing products for dropdown suggestions
+  const existingValues = useMemo(() => {
+    const colors = new Set<string>();
+    const sizes = new Set<string>();
+    const capacities = new Set<string>();
+    const materials = new Set<string>();
+    const productTypes = new Set<string>();
+    const families = new Set<string>();
+
+    allProducts.forEach(p => {
+      if (p.color) colors.add(p.color);
+      if (p.size) sizes.add(p.size);
+      if (p.capacity) capacities.add(p.capacity);
+      if (p.material) materials.add(p.material);
+      if (p.productType) productTypes.add(p.productType);
+      if (p.family) families.add(p.family);
+    });
+
+    return {
+      colors: Array.from(colors).sort(),
+      sizes: Array.from(sizes).sort(),
+      capacities: Array.from(capacities).sort(),
+      materials: Array.from(materials).sort(),
+      productTypes: Array.from(productTypes).sort(),
+      families: Array.from(families).sort(),
+    };
+  }, []);
+
+  // Admin kontrolü - server-side'dan kontrol et
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetch('/api/admin/check')
+        .then(res => res.json())
+        .then(data => setIsAdmin(data.isAdmin))
+        .catch(() => setIsAdmin(false));
+    } else if (isLoaded && !user) {
+      setIsAdmin(false);
+    }
+  }, [isLoaded, user]);
 
   useEffect(() => {
-    if (isLoaded && isAdmin) {
+    if (isAdmin === true) {
       loadOrders();
       loadStockStatus();
+      loadDbProducts();
     }
-  }, [isLoaded, isAdmin]);
+  }, [isAdmin]);
+
+  const loadDbProducts = async () => {
+    try {
+      const res = await fetch('/api/admin/products/manage');
+      if (res.ok) {
+        const data = await res.json();
+        setDbProducts(data.products || []);
+      }
+    } catch (error) {
+      console.error('DB ürünleri yüklenirken hata:', error);
+    }
+  };
+
+  const saveNewProduct = async () => {
+    if (!newProduct.title || !newProduct.price) {
+      setProductFormMessage({ type: 'error', text: 'Ürün adı ve fiyat gerekli' });
+      return;
+    }
+
+    setSavingProduct(true);
+    setProductFormMessage(null);
+    try {
+      const res = await fetch('/api/admin/products/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProduct),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setProductFormMessage({ type: 'success', text: 'Ürün başarıyla eklendi!' });
+        setDbProducts(prev => [data.product, ...prev]);
+        // Reset form
+        setNewProduct({
+          title: '',
+          subtitle: '',
+          price: '',
+          collection: 'aslan',
+          family: '',
+          product_type: '',
+          material: 'Porselen',
+          color: '',
+          size: '',
+          capacity: '',
+          code: '',
+          images: [],
+          in_stock: true
+        });
+        setTimeout(() => {
+          setShowProductModal(false);
+          setProductFormMessage(null);
+        }, 1500);
+      } else {
+        setProductFormMessage({ type: 'error', text: data.error || 'Ürün eklenemedi' });
+      }
+    } catch (error) {
+      setProductFormMessage({ type: 'error', text: 'Bağlantı hatası' });
+    } finally {
+      setSavingProduct(false);
+    }
+  };
+
+  const deleteDbProduct = async (id: string) => {
+    if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
+
+    try {
+      const res = await fetch(`/api/admin/products/manage?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setDbProducts(prev => prev.filter(p => p.id !== id));
+      }
+    } catch (error) {
+      console.error('Ürün silinirken hata:', error);
+    }
+  };
 
   const loadStockStatus = async () => {
     try {
@@ -252,8 +443,8 @@ export default function AdminPage() {
     link.click();
   };
 
-  // Yükleniyor
-  if (!isLoaded) {
+  // Yükleniyor (kullanıcı ve admin durumu kontrol ediliyor)
+  if (!isLoaded || isAdmin === null) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-[#0f3f44]" />
@@ -668,6 +859,13 @@ export default function AdminPage() {
                 <option value="aslan">Aslan Koleksiyonu</option>
                 <option value="ottoman">Ottoman Koleksiyonu</option>
               </select>
+              <button
+                onClick={() => setShowProductModal(true)}
+                className="flex items-center gap-2 rounded-lg bg-[#0f3f44] px-4 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e]"
+              >
+                <Plus className="h-4 w-4" />
+                Yeni Ürün Ekle
+              </button>
             </div>
 
             {/* Ürün Stats */}
@@ -978,6 +1176,335 @@ export default function AdminPage() {
                   <>
                     <Truck className="h-4 w-4" />
                     Kaydet ve Kargoya Ver
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Product Modal */}
+      {showProductModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+            <div className="sticky top-0 flex items-center justify-between border-b bg-white p-6">
+              <h2 className="text-lg font-bold text-gray-900">Yeni Ürün Ekle</h2>
+              <button
+                onClick={() => {
+                  setShowProductModal(false);
+                  setProductFormMessage(null);
+                }}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {productFormMessage && (
+                <div className={`rounded-lg p-3 ${
+                  productFormMessage.type === 'success'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  <p className="text-sm font-medium">{productFormMessage.text}</p>
+                </div>
+              )}
+
+              {/* Required Fields */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Ürün Adı *
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.title}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Porselen Pasta Tabağı"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Fiyat *
+                  </label>
+                  <div className="flex">
+                    <input
+                      type="number"
+                      value={newProduct.price.replace(/[^\d]/g, '')}
+                      onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value ? `${e.target.value} ₺/adet` : '' }))}
+                      placeholder="1250"
+                      className="w-full rounded-l-lg border border-r-0 border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                    />
+                    <span className="inline-flex items-center rounded-r-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-500">
+                      ₺/adet
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Koleksiyon *
+                  </label>
+                  <select
+                    value={newProduct.collection}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, collection: e.target.value }))}
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  >
+                    <option value="aslan">Aslan</option>
+                    <option value="ottoman">Ottoman</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Optional Fields */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Alt Başlık
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.subtitle}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, subtitle: e.target.value }))}
+                    placeholder="Kırmızı/Altın · Red/Gold"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Ürün Tipi
+                  </label>
+                  <input
+                    type="text"
+                    list="productTypes"
+                    value={newProduct.product_type}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, product_type: e.target.value }))}
+                    placeholder="Tabak, Fincan, Kupa..."
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                  <datalist id="productTypes">
+                    {existingValues.productTypes.map(type => (
+                      <option key={type} value={type} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Malzeme
+                  </label>
+                  <input
+                    type="text"
+                    list="materials"
+                    value={newProduct.material}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, material: e.target.value }))}
+                    placeholder="Porselen"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                  <datalist id="materials">
+                    {existingValues.materials.map(mat => (
+                      <option key={mat} value={mat} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Renk
+                  </label>
+                  <input
+                    type="text"
+                    list="colors"
+                    value={newProduct.color}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, color: e.target.value }))}
+                    placeholder="Kırmızı/Altın"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                  <datalist id="colors">
+                    {existingValues.colors.map(color => (
+                      <option key={color} value={color} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Boyut
+                  </label>
+                  <input
+                    type="text"
+                    list="sizes"
+                    value={newProduct.size}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, size: e.target.value }))}
+                    placeholder="Ø21cm, 25x30cm..."
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                  <datalist id="sizes">
+                    {existingValues.sizes.map(size => (
+                      <option key={size} value={size} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Kapasite
+                  </label>
+                  <input
+                    type="text"
+                    list="capacities"
+                    value={newProduct.capacity}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, capacity: e.target.value }))}
+                    placeholder="150ml, 250ml..."
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                  <datalist id="capacities">
+                    {existingValues.capacities.map(cap => (
+                      <option key={cap} value={cap} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Ürün Kodu
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.code}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, code: e.target.value }))}
+                    placeholder="20231500061"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Aile
+                  </label>
+                  <input
+                    type="text"
+                    list="families"
+                    value={newProduct.family}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, family: e.target.value }))}
+                    placeholder="ASLAN, OTTOMAN..."
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                  <datalist id="families">
+                    {existingValues.families.map(fam => (
+                      <option key={fam} value={fam} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Ürün Resimleri
+                </label>
+
+                {/* Uploaded Images Preview */}
+                {newProduct.images.length > 0 && (
+                  <div className="mb-3 grid grid-cols-4 gap-2">
+                    {newProduct.images.map((url, idx) => (
+                      <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+                        <Image
+                          src={url}
+                          alt={`Ürün resmi ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="80px"
+                        />
+                        <button
+                          onClick={() => removeImage(idx)}
+                          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload Button */}
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 transition-colors hover:border-[#0f3f44] hover:text-[#0f3f44]">
+                  {uploadingImage ? (
+                    <>
+                      <RefreshCw className="h-5 w-5 animate-spin" />
+                      Yükleniyor...
+                    </>
+                  ) : (
+                    <>
+                      <ImagePlus className="h-5 w-5" />
+                      Resim Yükle (Maks 4MB)
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    multiple
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* Manual URL Input (collapsed) */}
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-xs text-gray-500 hover:text-gray-700">
+                    veya manuel URL girin
+                  </summary>
+                  <textarea
+                    value={newProduct.images.join('\n')}
+                    onChange={(e) => setNewProduct(prev => ({
+                      ...prev,
+                      images: e.target.value.split('\n').filter(url => url.trim())
+                    }))}
+                    placeholder="/images/products/urun1.jpg"
+                    rows={2}
+                    className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 text-xs focus:border-[#0f3f44] focus:outline-none"
+                  />
+                </details>
+              </div>
+
+              {/* In Stock Toggle */}
+              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
+                <span className="text-sm font-medium text-gray-700">Stokta</span>
+                <button
+                  onClick={() => setNewProduct(prev => ({ ...prev, in_stock: !prev.in_stock }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    newProduct.in_stock ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                      newProduct.in_stock ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Save Button */}
+              <button
+                onClick={saveNewProduct}
+                disabled={savingProduct || !newProduct.title || !newProduct.price}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0f3f44] px-4 py-3 text-sm font-medium text-white hover:bg-[#0a2a2e] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {savingProduct ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Kaydediliyor...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Ürünü Kaydet
                   </>
                 )}
               </button>

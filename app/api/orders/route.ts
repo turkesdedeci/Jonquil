@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
+import crypto from 'crypto';
+
+// Generate cryptographically secure order number
+function generateOrderNumber(): string {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = crypto.randomBytes(3).toString('hex').toUpperCase();
+  return `JQ${timestamp}${random}`;
+}
 
 // GET - Kullanıcının siparişlerini getir
 export async function GET(request: NextRequest) {
@@ -11,34 +19,22 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Siparişleri getir
+    // Siparişleri ve ürünleri tek sorguda getir (N+1 query fix)
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
-      .select('*')
+      .select(`
+        *,
+        items:order_items(*)
+      `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (ordersError) throw ordersError;
 
-    // Her sipariş için ürünleri getir
-    const ordersWithItems = await Promise.all(
-      (orders || []).map(async (order) => {
-        const { data: items } = await supabase
-          .from('order_items')
-          .select('*')
-          .eq('order_id', order.id);
-
-        return {
-          ...order,
-          items: items || [],
-        };
-      })
-    );
-
-    return NextResponse.json(ordersWithItems);
+    return NextResponse.json(orders || []);
   } catch (error: any) {
     console.error('Orders fetch error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Siparişler yüklenemedi' }, { status: 500 });
   }
 }
 
@@ -65,13 +61,54 @@ export async function POST(request: NextRequest) {
     // Validation
     if (!shipping_address_id || !items || items.length === 0) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Eksik bilgi: Adres ve ürün gerekli' },
         { status: 400 }
       );
     }
 
-    // Generate order number
-    const orderNumber = `JQ${Date.now().toString().slice(-8)}`;
+    // Input length validation to prevent DoS
+    if (items.length > 50) {
+      return NextResponse.json(
+        { error: 'Çok fazla ürün (maksimum 50)' },
+        { status: 400 }
+      );
+    }
+
+    if (order_note && order_note.length > 1000) {
+      return NextResponse.json(
+        { error: 'Sipariş notu çok uzun (maksimum 1000 karakter)' },
+        { status: 400 }
+      );
+    }
+
+    // Check stock status for all items
+    const productIds = items.map((item: any) => item.product_id);
+    const { data: stockData } = await supabase
+      .from('product_stock')
+      .select('product_id, in_stock')
+      .in('product_id', productIds);
+
+    // Create stock lookup map (default to in stock if not in table)
+    const stockStatus: Record<string, boolean> = {};
+    stockData?.forEach(item => {
+      stockStatus[item.product_id] = item.in_stock;
+    });
+
+    // Check if any item is out of stock
+    const outOfStockItems = items.filter((item: any) =>
+      stockStatus[item.product_id] === false
+    );
+
+    if (outOfStockItems.length > 0) {
+      const outOfStockNames = outOfStockItems.map((item: any) => item.product_title).join(', ');
+      return NextResponse.json(
+        { error: `Stokta olmayan ürünler: ${outOfStockNames}` },
+        { status: 400 }
+      );
+    }
+
+    // Generate cryptographically secure order number
+    const orderNumber = generateOrderNumber();
 
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -117,7 +154,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(completeOrder, { status: 201 });
   } catch (error: any) {
     console.error('Order creation error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Sipariş oluşturulamadı' }, { status: 500 });
   }
 }
 
@@ -154,6 +191,6 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error: any) {
     console.error('Order update error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Sipariş güncellenemedi' }, { status: 500 });
   }
 }

@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { allProducts } from "../data/products";
+import { useProducts } from "@/hooks/useProducts";
 import { BRAND, ASSETS } from "@/constants/brand";
 import { LuxuryBadge, FeatureCard, CollectionCard, ProductCard } from "@/components/Cards";
 import Navbar from "@/components/Navbar";
@@ -132,7 +132,7 @@ function useRoute() {
 
 
 // Homepage component
-function Home({ onGo }: { onGo: (r: Route) => void }) {
+function Home({ onGo, products }: { onGo: (r: Route) => void; products: any[] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3];
 
@@ -357,7 +357,7 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
           </motion.div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {allProducts.slice(0, 4).map((product, i) => (
+            {products.slice(0, 4).map((product, i) => (
               <motion.div
                 key={product.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -1729,18 +1729,50 @@ function ProductPage({
   onGo: (r: any) => void;
   allProducts: any[];
 }) {
-  // Get related products (same collection, different title, unique titles only)
+  // Get truly related products based on product type and collection
   const relatedProducts = useMemo(() => {
     const uniqueTitles = new Set<string>();
-    return allProducts
-      .filter(p => {
-        if (p.collection !== product.collection) return false;
-        if (p.title === product.title) return false; // Same product
-        if (uniqueTitles.has(p.title)) return false; // Already added
-        uniqueTitles.add(p.title);
-        return true;
-      })
-      .slice(0, 4);
+
+    // Priority 1: Same productType within same collection
+    const sameTypeAndCollection = allProducts.filter(p => {
+      if (p.id === product.id) return false; // Not the same product
+      if (p.productType !== product.productType) return false;
+      if (p.collection !== product.collection) return false;
+      if (uniqueTitles.has(p.title)) return false;
+      uniqueTitles.add(p.title);
+      return true;
+    });
+
+    // If we have enough, return them
+    if (sameTypeAndCollection.length >= 3) {
+      return sameTypeAndCollection.slice(0, 3);
+    }
+
+    // Priority 2: Same productType from other collections
+    const sameTypeOtherCollection = allProducts.filter(p => {
+      if (p.id === product.id) return false;
+      if (p.productType !== product.productType) return false;
+      if (p.collection === product.collection) return false; // Already processed
+      if (uniqueTitles.has(p.title)) return false;
+      uniqueTitles.add(p.title);
+      return true;
+    });
+
+    const combinedByType = [...sameTypeAndCollection, ...sameTypeOtherCollection];
+    if (combinedByType.length >= 3) {
+      return combinedByType.slice(0, 3);
+    }
+
+    // Priority 3: Same collection, different product type
+    const sameCollectionDiffType = allProducts.filter(p => {
+      if (p.id === product.id) return false;
+      if (p.collection !== product.collection) return false;
+      if (uniqueTitles.has(p.title)) return false;
+      uniqueTitles.add(p.title);
+      return true;
+    });
+
+    return [...combinedByType, ...sameCollectionDiffType].slice(0, 3);
   }, [product, allProducts]);
 
   // Handle related product click
@@ -2030,6 +2062,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
 export default function JonquilHomepage() {
   const { route, go } = useRoute();
   const [cartOpen, setCartOpen] = useState(false);
+  const { products: allProducts, loading: productsLoading } = useProducts();
 
   // Scroll to top when route changes
   useEffect(() => {
@@ -2039,26 +2072,26 @@ export default function JonquilHomepage() {
   // Use all products directly (no grouping)
   const aslanProducts = useMemo(
     () => allProducts.filter((p) => p.collection === "aslan"),
-    []
+    [allProducts]
   );
 
   const ottomanProducts = useMemo(
     () => allProducts.filter((p) => p.collection === "ottoman"),
-    []
+    [allProducts]
   );
 
   const currentProduct = useMemo(() => {
     if (route.name !== "product") return null;
-    
+
     // Find product by ID (no grouping)
     const product = allProducts.find(p => p.id === route.id);
     if (!product) return null;
-    
+
     // Find all variants of this product (same title, different colors)
-    const variants = allProducts.filter(p => 
+    const variants = allProducts.filter(p =>
       p.title === product.title && p.collection === product.collection
     );
-    
+
     // If multiple variants exist, add them to the product
     if (variants.length > 1) {
       return {
@@ -2074,9 +2107,9 @@ export default function JonquilHomepage() {
         selectedVariantIndex: variants.findIndex(v => v.id === product.id),
       };
     }
-    
+
     return product;
-  }, [route]);
+  }, [route, allProducts]);
 
   return (
     <PageShell>
@@ -2092,7 +2125,7 @@ export default function JonquilHomepage() {
       <Navbar go={go} onCartClick={() => setCartOpen(true)} />
 
       {/* Route rendering */}
-      {route.name === "home" ? <Home onGo={go} /> : null}
+      {route.name === "home" ? <Home onGo={go} products={allProducts} /> : null}
       {route.name === "collections" ? <CollectionsPage onGo={go} products={allProducts} /> : null}
       {route.name === "products" ? <AllProductsPage products={allProducts} onGo={go} /> : null}
       {route.name === "category" ? (

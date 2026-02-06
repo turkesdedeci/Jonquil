@@ -10,7 +10,20 @@ const supabase = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
 
+// HTML escape function to prevent XSS
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return text.replace(/[&<>"']/g, (char) => map[char]);
+}
+
 function getWelcomeEmailHtml(email: string): string {
+  const safeEmail = escapeHtml(email);
   return `
 <!DOCTYPE html>
 <html>
@@ -48,7 +61,7 @@ function getWelcomeEmailHtml(email: string): string {
       <!-- Footer -->
       <div style="border-top: 1px solid #e8e6e3; padding-top: 24px; margin-top: 32px; text-align: center;">
         <p style="margin: 0 0 8px; color: #999; font-size: 12px;">
-          Bu e-postayı ${email} adresine gönderilmiştir.
+          Bu e-postayı ${safeEmail} adresine gönderilmiştir.
         </p>
         <p style="margin: 0; color: #999; font-size: 12px;">
           <a href="https://jonquil.com" style="color: #0f3f44; text-decoration: none;">jonquil.com</a>
@@ -70,6 +83,14 @@ export async function POST(request: NextRequest) {
     if (!email) {
       return NextResponse.json(
         { error: 'E-posta adresi gerekli' },
+        { status: 400 }
+      );
+    }
+
+    // Input length validation
+    if (email.length > 254) {
+      return NextResponse.json(
+        { error: 'E-posta adresi çok uzun' },
         { status: 400 }
       );
     }

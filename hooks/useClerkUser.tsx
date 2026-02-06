@@ -51,9 +51,9 @@ export function SignedOut({ children }: { children: React.ReactNode }) {
 }
 
 // Safe wrapper for SignInButton
-export function SignInButton({ children, mode }: { children?: React.ReactNode; mode?: 'modal' | 'redirect' }) {
+export function SignInButton({ children, mode, appearance }: { children?: React.ReactNode; mode?: 'modal' | 'redirect'; appearance?: any }) {
   if (!hasClerkKey) {
     return <>{children}</>; // No Clerk, just render children as-is (non-functional)
   }
-  return <ClerkSignInButton mode={mode}>{children}</ClerkSignInButton>;
+  return <ClerkSignInButton mode={mode} appearance={appearance}>{children}</ClerkSignInButton>;
 }

@@ -5,10 +5,11 @@ import Image from 'next/image';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { Heart, Trash2, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { allProducts } from '@/data/products';
+import { useProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 
 export function FavorilerimTab() {
+  const { products: allProducts } = useProducts();
   const { favorites, removeFavorite } = useFavorites();
   const { addToCart } = useCart();
   const [favoriteProducts, setFavoriteProducts] = useState<any[]>([]);
@@ -19,7 +20,7 @@ export function FavorilerimTab() {
       .map(id => allProducts.find(p => p.id === id))
       .filter(Boolean);
     setFavoriteProducts(products);
-  }, [favorites]);
+  }, [favorites, allProducts]);
 
   const handleAddToCart = (product: any) => {
     addToCart({

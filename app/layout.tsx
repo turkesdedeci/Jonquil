@@ -3,6 +3,7 @@ import { ClerkWrapper } from '@/components/ClerkWrapper';
 import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { StockProvider } from '@/contexts/StockContext';
+import { ProductsProvider } from '@/hooks/useProducts';
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,13 +20,15 @@ export default function RootLayout({
     <html lang="tr">
       <body className="antialiased font-sans">
         <ClerkWrapper>
-          <CartProvider>
-            <FavoritesProvider>
-              <StockProvider>
-                {children}
-              </StockProvider>
-            </FavoritesProvider>
-          </CartProvider>
+          <ProductsProvider>
+            <CartProvider>
+              <FavoritesProvider>
+                <StockProvider>
+                  {children}
+                </StockProvider>
+              </FavoritesProvider>
+            </CartProvider>
+          </ProductsProvider>
         </ClerkWrapper>
       </body>
     </html>

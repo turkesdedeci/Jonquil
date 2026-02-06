@@ -438,7 +438,7 @@ export default function ProductDetail({
 
           {relatedProducts.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {relatedProducts.slice(0, 4).map((relatedProduct) => {
+              {relatedProducts.slice(0, 3).map((relatedProduct) => {
                 const firstImage = relatedProduct.variants?.[0]?.images?.[0] || relatedProduct.images?.[0];
                 
                 return (
