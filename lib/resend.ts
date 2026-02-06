@@ -1,5 +1,17 @@
 import { Resend } from 'resend';
 
+// HTML escape function to prevent XSS in email templates
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return text.replace(/[&<>"']/g, (char) => map[char]);
+}
+
 // Initialize Resend client
 const resendApiKey = process.env.RESEND_API_KEY;
 
@@ -63,20 +75,20 @@ export function getContactEmailHtml(data: ContactFormData): string {
       <!-- Content -->
       <div style="border-left: 4px solid #0f3f44; padding-left: 20px; margin-bottom: 24px;">
         <p style="margin: 0 0 8px; color: #666; font-size: 14px;">Gönderen:</p>
-        <p style="margin: 0 0 4px; color: #1a1a1a; font-size: 16px; font-weight: 600;">${data.name}</p>
-        <p style="margin: 0; color: #666; font-size: 14px;">${data.email}</p>
-        ${data.phone ? `<p style="margin: 4px 0 0; color: #666; font-size: 14px;">${data.phone}</p>` : ''}
+        <p style="margin: 0 0 4px; color: #1a1a1a; font-size: 16px; font-weight: 600;">${escapeHtml(data.name)}</p>
+        <p style="margin: 0; color: #666; font-size: 14px;">${escapeHtml(data.email)}</p>
+        ${data.phone ? `<p style="margin: 4px 0 0; color: #666; font-size: 14px;">${escapeHtml(data.phone)}</p>` : ''}
       </div>
 
       <div style="margin-bottom: 24px;">
         <p style="margin: 0 0 8px; color: #666; font-size: 14px;">Konu:</p>
-        <p style="margin: 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">${data.subject}</p>
+        <p style="margin: 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">${escapeHtml(data.subject)}</p>
       </div>
 
       <div style="margin-bottom: 24px;">
         <p style="margin: 0 0 8px; color: #666; font-size: 14px;">Mesaj:</p>
         <div style="background-color: #faf8f5; border-radius: 8px; padding: 20px;">
-          <p style="margin: 0; color: #1a1a1a; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${data.message}</p>
+          <p style="margin: 0; color: #1a1a1a; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${escapeHtml(data.message)}</p>
         </div>
       </div>
 
@@ -114,7 +126,7 @@ export function getContactAutoReplyHtml(data: ContactFormData): string {
       <div style="text-align: center; margin-bottom: 32px;">
         <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 16px;">Mesajınız Alındı</h2>
         <p style="color: #666; font-size: 15px; line-height: 1.6; margin: 0;">
-          Sayın ${data.name},<br><br>
+          Sayın ${escapeHtml(data.name)},<br><br>
           İletişim formumuz aracılığıyla gönderdiğiniz mesaj tarafımıza ulaşmıştır.
           En kısa sürede sizinle iletişime geçeceğiz.
         </p>
@@ -122,8 +134,8 @@ export function getContactAutoReplyHtml(data: ContactFormData): string {
 
       <div style="background-color: #faf8f5; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
         <p style="margin: 0 0 8px; color: #666; font-size: 13px;">Mesajınızın özeti:</p>
-        <p style="margin: 0 0 4px; color: #1a1a1a; font-size: 14px;"><strong>Konu:</strong> ${data.subject}</p>
-        <p style="margin: 0; color: #1a1a1a; font-size: 14px; line-height: 1.5;"><strong>Mesaj:</strong> ${data.message.substring(0, 200)}${data.message.length > 200 ? '...' : ''}</p>
+        <p style="margin: 0 0 4px; color: #1a1a1a; font-size: 14px;"><strong>Konu:</strong> ${escapeHtml(data.subject)}</p>
+        <p style="margin: 0; color: #1a1a1a; font-size: 14px; line-height: 1.5;"><strong>Mesaj:</strong> ${escapeHtml(data.message.substring(0, 200))}${data.message.length > 200 ? '...' : ''}</p>
       </div>
 
       <!-- Footer -->
@@ -147,11 +159,11 @@ export function getOrderConfirmationHtml(data: OrderEmailData): string {
   const itemsHtml = data.items.map(item => `
     <tr>
       <td style="padding: 12px 0; border-bottom: 1px solid #e8e6e3;">
-        <p style="margin: 0; color: #1a1a1a; font-size: 14px;">${item.title}</p>
+        <p style="margin: 0; color: #1a1a1a; font-size: 14px;">${escapeHtml(item.title)}</p>
         <p style="margin: 4px 0 0; color: #666; font-size: 13px;">Adet: ${item.quantity}</p>
       </td>
       <td style="padding: 12px 0; border-bottom: 1px solid #e8e6e3; text-align: right;">
-        <p style="margin: 0; color: #1a1a1a; font-size: 14px; font-weight: 600;">${item.price}</p>
+        <p style="margin: 0; color: #1a1a1a; font-size: 14px; font-weight: 600;">${escapeHtml(item.price)}</p>
       </td>
     </tr>
   `).join('');
@@ -187,7 +199,7 @@ export function getOrderConfirmationHtml(data: OrderEmailData): string {
 
       <div style="margin-bottom: 32px;">
         <p style="color: #666; font-size: 15px; line-height: 1.6; margin: 0;">
-          Sayın ${data.customerName},<br><br>
+          Sayın ${escapeHtml(data.customerName)},<br><br>
           Siparişiniz başarıyla alınmıştır. Ödemeniz onaylandıktan sonra siparişiniz hazırlanmaya başlayacaktır.
         </p>
       </div>
@@ -202,15 +214,15 @@ export function getOrderConfirmationHtml(data: OrderEmailData): string {
         <table style="width: 100%; margin-top: 16px;">
           <tr>
             <td style="padding: 4px 0; color: #666; font-size: 14px;">Ara Toplam</td>
-            <td style="padding: 4px 0; text-align: right; color: #1a1a1a; font-size: 14px;">${data.subtotal}</td>
+            <td style="padding: 4px 0; text-align: right; color: #1a1a1a; font-size: 14px;">${escapeHtml(data.subtotal)}</td>
           </tr>
           <tr>
             <td style="padding: 4px 0; color: #666; font-size: 14px;">Kargo</td>
-            <td style="padding: 4px 0; text-align: right; color: #1a1a1a; font-size: 14px;">${data.shippingCost}</td>
+            <td style="padding: 4px 0; text-align: right; color: #1a1a1a; font-size: 14px;">${escapeHtml(data.shippingCost)}</td>
           </tr>
           <tr>
             <td style="padding: 12px 0 0; color: #1a1a1a; font-size: 16px; font-weight: 600; border-top: 1px solid #e8e6e3;">Toplam</td>
-            <td style="padding: 12px 0 0; text-align: right; color: #0f3f44; font-size: 18px; font-weight: 600; border-top: 1px solid #e8e6e3;">${data.total}</td>
+            <td style="padding: 12px 0 0; text-align: right; color: #0f3f44; font-size: 18px; font-weight: 600; border-top: 1px solid #e8e6e3;">${escapeHtml(data.total)}</td>
           </tr>
         </table>
       </div>
@@ -219,10 +231,10 @@ export function getOrderConfirmationHtml(data: OrderEmailData): string {
       <div style="background-color: #faf8f5; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
         <h3 style="color: #1a1a1a; font-size: 14px; margin: 0 0 12px;">Teslimat Adresi</h3>
         <p style="color: #666; font-size: 14px; line-height: 1.6; margin: 0;">
-          ${data.customerName}<br>
-          ${data.shippingAddress.address}<br>
-          ${data.shippingAddress.district ? data.shippingAddress.district + ', ' : ''}${data.shippingAddress.city}
-          ${data.shippingAddress.zipCode ? ' ' + data.shippingAddress.zipCode : ''}
+          ${escapeHtml(data.customerName)}<br>
+          ${escapeHtml(data.shippingAddress.address)}<br>
+          ${data.shippingAddress.district ? escapeHtml(data.shippingAddress.district) + ', ' : ''}${escapeHtml(data.shippingAddress.city)}
+          ${data.shippingAddress.zipCode ? ' ' + escapeHtml(data.shippingAddress.zipCode) : ''}
         </p>
       </div>
 
@@ -248,9 +260,9 @@ export function getOrderConfirmationHtml(data: OrderEmailData): string {
 export function getNewOrderNotificationHtml(data: OrderEmailData): string {
   const itemsHtml = data.items.map(item => `
     <tr>
-      <td style="padding: 8px; border: 1px solid #e8e6e3;">${item.title}</td>
+      <td style="padding: 8px; border: 1px solid #e8e6e3;">${escapeHtml(item.title)}</td>
       <td style="padding: 8px; border: 1px solid #e8e6e3; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border: 1px solid #e8e6e3; text-align: right;">${item.price}</td>
+      <td style="padding: 8px; border: 1px solid #e8e6e3; text-align: right;">${escapeHtml(item.price)}</td>
     </tr>
   `).join('');
 
@@ -276,16 +288,16 @@ export function getNewOrderNotificationHtml(data: OrderEmailData): string {
         <table style="width: 100%;">
           <tr>
             <td style="padding: 4px 0; color: #666; font-size: 14px; width: 100px;">Ad Soyad:</td>
-            <td style="padding: 4px 0; color: #1a1a1a; font-size: 14px; font-weight: 600;">${data.customerName}</td>
+            <td style="padding: 4px 0; color: #1a1a1a; font-size: 14px; font-weight: 600;">${escapeHtml(data.customerName)}</td>
           </tr>
           <tr>
             <td style="padding: 4px 0; color: #666; font-size: 14px;">E-posta:</td>
-            <td style="padding: 4px 0; color: #1a1a1a; font-size: 14px;"><a href="mailto:${data.customerEmail}" style="color: #0f3f44;">${data.customerEmail}</a></td>
+            <td style="padding: 4px 0; color: #1a1a1a; font-size: 14px;"><a href="mailto:${escapeHtml(data.customerEmail)}" style="color: #0f3f44;">${escapeHtml(data.customerEmail)}</a></td>
           </tr>
           ${data.customerPhone ? `
           <tr>
             <td style="padding: 4px 0; color: #666; font-size: 14px;">Telefon:</td>
-            <td style="padding: 4px 0; color: #1a1a1a; font-size: 14px;"><a href="tel:${data.customerPhone}" style="color: #0f3f44;">${data.customerPhone}</a></td>
+            <td style="padding: 4px 0; color: #1a1a1a; font-size: 14px;"><a href="tel:${escapeHtml(data.customerPhone)}" style="color: #0f3f44;">${escapeHtml(data.customerPhone)}</a></td>
           </tr>
           ` : ''}
         </table>
@@ -295,9 +307,9 @@ export function getNewOrderNotificationHtml(data: OrderEmailData): string {
       <div style="background-color: #faf8f5; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
         <h3 style="color: #1a1a1a; font-size: 14px; margin: 0 0 8px;">Teslimat Adresi</h3>
         <p style="color: #666; font-size: 14px; line-height: 1.6; margin: 0;">
-          ${data.shippingAddress.address}<br>
-          ${data.shippingAddress.district ? data.shippingAddress.district + ', ' : ''}${data.shippingAddress.city}
-          ${data.shippingAddress.zipCode ? ' ' + data.shippingAddress.zipCode : ''}
+          ${escapeHtml(data.shippingAddress.address)}<br>
+          ${data.shippingAddress.district ? escapeHtml(data.shippingAddress.district) + ', ' : ''}${escapeHtml(data.shippingAddress.city)}
+          ${data.shippingAddress.zipCode ? ' ' + escapeHtml(data.shippingAddress.zipCode) : ''}
         </p>
       </div>
 
@@ -323,15 +335,15 @@ export function getNewOrderNotificationHtml(data: OrderEmailData): string {
         <table style="width: 100%;">
           <tr>
             <td style="padding: 4px 0; color: #666; font-size: 14px;">Ara Toplam:</td>
-            <td style="padding: 4px 0; text-align: right; color: #1a1a1a; font-size: 14px;">${data.subtotal}</td>
+            <td style="padding: 4px 0; text-align: right; color: #1a1a1a; font-size: 14px;">${escapeHtml(data.subtotal)}</td>
           </tr>
           <tr>
             <td style="padding: 4px 0; color: #666; font-size: 14px;">Kargo:</td>
-            <td style="padding: 4px 0; text-align: right; color: #1a1a1a; font-size: 14px;">${data.shippingCost}</td>
+            <td style="padding: 4px 0; text-align: right; color: #1a1a1a; font-size: 14px;">${escapeHtml(data.shippingCost)}</td>
           </tr>
           <tr>
             <td style="padding: 8px 0 0; color: #1a1a1a; font-size: 18px; font-weight: 700;">TOPLAM:</td>
-            <td style="padding: 8px 0 0; text-align: right; color: #0f3f44; font-size: 20px; font-weight: 700;">${data.total}</td>
+            <td style="padding: 8px 0 0; text-align: right; color: #0f3f44; font-size: 20px; font-weight: 700;">${escapeHtml(data.total)}</td>
           </tr>
         </table>
       </div>

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useUser } from '@/hooks/useClerkUser';
+import { useUser, useClerk, SignInButton } from '@/hooks/useClerkUser';
 import { useCart } from '@/contexts/CartContext';
 import { motion } from 'framer-motion';
 import {
@@ -213,17 +213,81 @@ export default function CheckoutPage() {
     }
   }, [iyzicoFormContent]);
 
-  if (!user) {
+  // Show login modal overlay when not logged in
+  const showLoginModal = !user;
+
+  if (showLoginModal) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="mb-4 text-lg text-[#666]">Ödeme yapmak için giriş yapmalısınız</p>
-          <button
-            onClick={() => router.push('/')}
-            className="rounded-full bg-[#0f3f44] px-6 py-3 text-white hover:bg-[#0a2a2e]"
+      <div className="relative min-h-screen">
+        {/* Blurred background - checkout preview */}
+        <div className="pointer-events-none blur-sm">
+          <div className="min-h-screen bg-[#faf8f5] py-12">
+            <div className="mx-auto max-w-7xl px-6">
+              <div className="mb-8">
+                <h1 className="mb-2 font-serif text-4xl font-light text-[#1a1a1a]">
+                  Ödeme
+                </h1>
+                <p className="text-[#666]">Siparişinizi tamamlamak için bilgilerinizi kontrol edin</p>
+              </div>
+              <div className="grid gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6 h-64" />
+                  <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6 h-48" />
+                </div>
+                <div className="lg:col-span-1">
+                  <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6 h-96" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Login Modal Overlay */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl"
           >
-            Ana Sayfaya Dön
-          </button>
+            <div className="mb-6 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#0f3f44]/10">
+                <Lock className="h-8 w-8 text-[#0f3f44]" />
+              </div>
+              <h2 className="mb-2 font-serif text-2xl font-light text-[#1a1a1a]">
+                Giriş Yapın
+              </h2>
+              <p className="text-sm text-[#666]">
+                Ödeme işlemine devam etmek için hesabınıza giriş yapmalısınız
+              </p>
+            </div>
+
+            <SignInButton
+              mode="modal"
+              appearance={{
+                elements: {
+                  rootBox: "w-full",
+                  card: "rounded-2xl shadow-2xl",
+                  socialButtonsBlockButton: "border border-[#e8e6e3] hover:bg-[#faf8f5]",
+                  formButtonPrimary: "bg-[#0f3f44] hover:bg-[#0a2a2e]",
+                  footerActionLink: "text-[#0f3f44]",
+                }
+              }}
+            >
+              <button className="flex w-full items-center justify-center gap-2 rounded-full bg-[#0f3f44] px-6 py-4 text-base font-semibold text-white transition-all hover:bg-[#0a2a2e]">
+                <Lock className="h-5 w-5" />
+                Giriş Yap veya Hesap Oluştur
+              </button>
+            </SignInButton>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => router.push('/')}
+                className="text-sm text-[#666] hover:text-[#0f3f44] hover:underline"
+              >
+                ← Alışverişe devam et
+              </button>
+            </div>
+          </motion.div>
         </div>
       </div>
     );

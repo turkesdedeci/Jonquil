@@ -1729,18 +1729,50 @@ function ProductPage({
   onGo: (r: any) => void;
   allProducts: any[];
 }) {
-  // Get related products (same collection, different title, unique titles only)
+  // Get truly related products based on product type and collection
   const relatedProducts = useMemo(() => {
     const uniqueTitles = new Set<string>();
-    return allProducts
-      .filter(p => {
-        if (p.collection !== product.collection) return false;
-        if (p.title === product.title) return false; // Same product
-        if (uniqueTitles.has(p.title)) return false; // Already added
-        uniqueTitles.add(p.title);
-        return true;
-      })
-      .slice(0, 4);
+
+    // Priority 1: Same productType within same collection
+    const sameTypeAndCollection = allProducts.filter(p => {
+      if (p.id === product.id) return false; // Not the same product
+      if (p.productType !== product.productType) return false;
+      if (p.collection !== product.collection) return false;
+      if (uniqueTitles.has(p.title)) return false;
+      uniqueTitles.add(p.title);
+      return true;
+    });
+
+    // If we have enough, return them
+    if (sameTypeAndCollection.length >= 3) {
+      return sameTypeAndCollection.slice(0, 3);
+    }
+
+    // Priority 2: Same productType from other collections
+    const sameTypeOtherCollection = allProducts.filter(p => {
+      if (p.id === product.id) return false;
+      if (p.productType !== product.productType) return false;
+      if (p.collection === product.collection) return false; // Already processed
+      if (uniqueTitles.has(p.title)) return false;
+      uniqueTitles.add(p.title);
+      return true;
+    });
+
+    const combinedByType = [...sameTypeAndCollection, ...sameTypeOtherCollection];
+    if (combinedByType.length >= 3) {
+      return combinedByType.slice(0, 3);
+    }
+
+    // Priority 3: Same collection, different product type
+    const sameCollectionDiffType = allProducts.filter(p => {
+      if (p.id === product.id) return false;
+      if (p.collection !== product.collection) return false;
+      if (uniqueTitles.has(p.title)) return false;
+      uniqueTitles.add(p.title);
+      return true;
+    });
+
+    return [...combinedByType, ...sameCollectionDiffType].slice(0, 3);
   }, [product, allProducts]);
 
   // Handle related product click
