@@ -81,9 +81,6 @@ export default function CategoryPageClient({
     return result;
   }, [products, sortBy, filterCollection]);
 
-  // Dummy go function for Navbar
-  const dummyGo = () => {};
-
   // Collection display names
   const collectionNames: Record<string, string> = {
     aslan: 'Aslan Koleksiyonu',
@@ -92,7 +89,7 @@ export default function CategoryPageClient({
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <Navbar go={dummyGo} />
+      <Navbar />
 
       <main className="flex-1 pt-20">
         {/* Hero Section */}

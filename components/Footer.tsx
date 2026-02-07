@@ -1,10 +1,11 @@
 // components/Footer.tsx
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Instagram, Mail, Phone, MapPin } from "lucide-react";
 import { BRAND } from "@/constants/brand";
 
-export default function Footer({ onGo }: { onGo: (r: any) => void }) {
+export default function Footer() {
   return (
     <footer className="border-t border-[#e8e6e3] bg-[#faf8f5]">
       <div className="mx-auto max-w-7xl px-6 py-16">
@@ -45,9 +46,9 @@ export default function Footer({ onGo }: { onGo: (r: any) => void }) {
           <div>
             <h3 className="mb-4 text-sm font-semibold tracking-wide text-[#1a1a1a]">Alışveriş</h3>
             <ul className="space-y-3 text-sm text-[#666]">
-              <li><button onClick={() => onGo({ name: "urunler" })} className="hover:text-[#0f3f44]">Tüm Ürünler</button></li>
-              <li><button onClick={() => onGo({ name: "collection", slug: "aslan" })} className="hover:text-[#0f3f44]">Aslan Koleksiyonu</button></li>
-              <li><button onClick={() => onGo({ name: "collection", slug: "ottoman" })} className="hover:text-[#0f3f44]">Ottoman Koleksiyonu</button></li>
+              <li><Link href="/urunler" className="hover:text-[#0f3f44]">Tüm Ürünler</Link></li>
+              <li><Link href="/koleksiyon/aslan" className="hover:text-[#0f3f44]">Aslan Koleksiyonu</Link></li>
+              <li><Link href="/koleksiyon/ottoman" className="hover:text-[#0f3f44]">Ottoman Koleksiyonu</Link></li>
             </ul>
           </div>
 
@@ -55,10 +56,10 @@ export default function Footer({ onGo }: { onGo: (r: any) => void }) {
           <div>
             <h3 className="mb-4 text-sm font-semibold tracking-wide text-[#1a1a1a]">Kurumsal</h3>
             <ul className="space-y-3 text-sm text-[#666]">
-              <li><button onClick={() => onGo({ name: "about" })} className="hover:text-[#0f3f44]">Hakkımızda</button></li>
-              <li><a href="/iletisim" className="hover:text-[#0f3f44]">İletişim</a></li>
-              <li><a href="/mesafeli-satis-sozlesmesi" className="hover:text-[#0f3f44]">Mesafeli Satış Sözleşmesi</a></li>
-              <li><a href="/gizlilik-politikasi" className="hover:text-[#0f3f44]">Gizlilik Politikası</a></li>
+              <li><Link href="/hakkimizda" className="hover:text-[#0f3f44]">Hakkımızda</Link></li>
+              <li><Link href="/iletisim" className="hover:text-[#0f3f44]">İletişim</Link></li>
+              <li><Link href="/mesafeli-satis-sozlesmesi" className="hover:text-[#0f3f44]">Mesafeli Satış Sözleşmesi</Link></li>
+              <li><Link href="/gizlilik-politikasi" className="hover:text-[#0f3f44]">Gizlilik Politikası</Link></li>
             </ul>
           </div>
 
@@ -66,9 +67,9 @@ export default function Footer({ onGo }: { onGo: (r: any) => void }) {
           <div>
             <h3 className="mb-4 text-sm font-semibold tracking-wide text-[#1a1a1a]">Yardım</h3>
             <ul className="space-y-3 text-sm text-[#666]">
-              <li><a href="/siparis-takip" className="hover:text-[#0f3f44]">Sipariş Takip</a></li>
-              <li><a href="/teslimat-iade" className="hover:text-[#0f3f44]">Teslimat ve İade</a></li>
-              <li><a href="/iletisim" className="hover:text-[#0f3f44]">Sıkça Sorulan Sorular</a></li>
+              <li><Link href="/siparis-takip" className="hover:text-[#0f3f44]">Sipariş Takip</Link></li>
+              <li><Link href="/teslimat-iade" className="hover:text-[#0f3f44]">Teslimat ve İade</Link></li>
+              <li><Link href="/iletisim" className="hover:text-[#0f3f44]">Sıkça Sorulan Sorular</Link></li>
               <li>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />

@@ -2122,7 +2122,7 @@ export default function JonquilHomepage() {
         }}
       />
 
-      <Navbar go={go} onCartClick={() => setCartOpen(true)} />
+      <Navbar onCartClick={() => setCartOpen(true)} />
 
       {/* Route rendering */}
       {route.name === "home" ? <Home onGo={go} products={allProducts} /> : null}
@@ -2164,7 +2164,7 @@ export default function JonquilHomepage() {
         }}
       />
 
-      <Footer onGo={go} />
+      <Footer />
     </PageShell>
   );
 }

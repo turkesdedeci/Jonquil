@@ -1,6 +1,8 @@
 // components/Navbar.tsx - TAM VE DÜZELTİLMİŞ VERSİYON
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, Search, User, ShoppingBag, X,
@@ -11,6 +13,7 @@ import { BRAND, ASSETS } from "@/constants/brand";
 import { useCart } from "@/contexts/CartContext";
 import { UserDropdown } from './UserDropdown';
 import SearchModal from './SearchModal';
+import { CartDrawer } from './CartDrawer';
 
 // Yardımcı Fonksiyon
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -21,11 +24,9 @@ function cx(...classes: Array<string | false | null | undefined>) {
 function MobileNav({
   open,
   onClose,
-  onGo,
 }: {
   open: boolean;
   onClose: () => void;
-  onGo: (r: any) => void;
 }) {
   return (
     <AnimatePresence>
@@ -61,7 +62,7 @@ function MobileNav({
               {/* Auth Section - Mobile */}
               <div className="mb-6 space-y-2">
                 <SignedOut>
-                  <SignInButton 
+                  <SignInButton
                     mode="modal"
                     appearance={{
                       elements: {
@@ -79,33 +80,34 @@ function MobileNav({
                     </button>
                   </SignInButton>
                 </SignedOut>
-                
+
                 <SignedIn>
-                  <button 
-                    onClick={() => { onGo({ name: "hesabim" }); onClose(); }}
+                  <Link
+                    href="/hesabim"
+                    onClick={onClose}
                     className="flex w-full items-center gap-3 rounded-xl border border-[#e8e6e3] bg-[#faf8f5] p-3 text-left"
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#0f3f44] bg-[#0f3f44] text-white font-semibold">
                       H
                     </div>
                     <span className="text-sm font-medium text-[#1a1a1a]">Hesabım</span>
-                  </button>
+                  </Link>
                 </SignedIn>
               </div>
-              
+
               <div className="space-y-1">
-                <button onClick={() => { onGo({ name: "products" }); onClose(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+                <Link href="/urunler" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   Ürünler <ChevronRight className="h-4 w-4 text-[#999]" />
-                </button>
-                <button onClick={() => { onGo({ name: "collections" }); onClose(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+                </Link>
+                <Link href="/#koleksiyonlar" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   Koleksiyonlar <ChevronRight className="h-4 w-4 text-[#999]" />
-                </button>
-                <button onClick={() => { onGo({ name: "about" }); onClose(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+                </Link>
+                <Link href="/hakkimizda" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   Hakkımızda <ChevronRight className="h-4 w-4 text-[#999]" />
-                </button>
-                <button onClick={() => { onGo({ name: "contact" }); onClose(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+                </Link>
+                <Link href="/iletisim" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   İletişim <ChevronRight className="h-4 w-4 text-[#999]" />
-                </button>
+                </Link>
               </div>
             </nav>
           </motion.div>
@@ -120,12 +122,10 @@ function CollectionDropdown({
   open,
   anchorRef,
   onClose,
-  onGo,
 }: {
   open: boolean;
   anchorRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
-  onGo: (r: any) => void;
 }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -144,7 +144,7 @@ function CollectionDropdown({
       {open && (
         <motion.div ref={dropdownRef} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute left-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
           <div className="p-3">
-            <button onClick={() => { onGo({ name: "collection", slug: "aslan" }); onClose(); }} className="flex w-full items-center gap-4 rounded-xl p-3 text-left hover:bg-[#faf8f5]">
+            <Link href="/koleksiyon/aslan" onClick={onClose} className="flex w-full items-center gap-4 rounded-xl p-3 text-left hover:bg-[#faf8f5]">
               <div className="relative h-16 w-16 overflow-hidden rounded-lg">
                 <Image src={ASSETS.aslanCover} alt="Aslan" fill sizes="64px" className="object-cover" />
               </div>
@@ -152,8 +152,8 @@ function CollectionDropdown({
                   <div className="text-sm font-semibold text-[#1a1a1a]">Aslan Koleksiyonu</div>
                   <div className="text-xs text-[#999]">Klasik tasarımlar</div>
               </div>
-            </button>
-            <button onClick={() => { onGo({ name: "collection", slug: "ottoman" }); onClose(); }} className="flex w-full items-center gap-4 rounded-xl p-3 text-left hover:bg-[#faf8f5]">
+            </Link>
+            <Link href="/koleksiyon/ottoman" onClick={onClose} className="flex w-full items-center gap-4 rounded-xl p-3 text-left hover:bg-[#faf8f5]">
               <div className="relative h-16 w-16 overflow-hidden rounded-lg">
                 <Image src={ASSETS.ottomanCover} alt="Ottoman" fill sizes="64px" className="object-cover" />
               </div>
@@ -161,7 +161,7 @@ function CollectionDropdown({
                   <div className="text-sm font-semibold text-[#1a1a1a]">Ottoman Koleksiyonu</div>
                   <div className="text-xs text-[#999]">Renkli desenler</div>
               </div>
-            </button>
+            </Link>
           </div>
         </motion.div>
       )}
@@ -174,12 +174,10 @@ function ProductsDropdown({
   open,
   anchorRef,
   onClose,
-  onGo,
 }: {
   open: boolean;
   anchorRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
-  onGo: (r: any) => void;
 }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -209,15 +207,15 @@ function ProductsDropdown({
         <motion.div ref={dropdownRef} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
           <div className="p-3">
             {categories.map((cat) => (
-              <button key={cat.id} onClick={() => { onGo({ name: "category", category: cat.id }); onClose(); }} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium text-[#2a2a2a] transition-colors hover:bg-[#faf8f5]">
+              <Link key={cat.id} href={`/kategori/${cat.id}`} onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium text-[#2a2a2a] transition-colors hover:bg-[#faf8f5]">
                 {cat.label}
                 <ChevronRight className="h-4 w-4 text-[#999]" />
-              </button>
+              </Link>
             ))}
             <div className="mt-3 border-t border-[#e8e6e3] pt-3">
-              <button onClick={() => { onGo({ name: "products" }); onClose(); }} className="flex w-full items-center justify-between rounded-xl bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+              <Link href="/urunler" onClick={onClose} className="flex w-full items-center justify-between rounded-xl bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90">
                 Tüm Ürünler <ArrowRight className="h-4 w-4" />
-              </button>
+              </Link>
             </div>
           </div>
         </motion.div>
@@ -227,25 +225,35 @@ function ProductsDropdown({
 }
 
 // --- ANA NAVBAR BİLEŞENİ ---
-export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCartClick: () => void }) {
+export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {}) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const collectionsBtnRef = useRef<HTMLButtonElement>(null);
   const productsBtnRef = useRef<HTMLButtonElement>(null);
   const { totalItems } = useCart();
 
+  const handleCartClick = () => {
+    if (onCartClick) {
+      onCartClick();
+    } else {
+      setCartOpen(true);
+    }
+  };
+
   // Handle product click from search
   const handleSearchProductClick = (product: any) => {
-    go({ name: "product", slug: product.collection, id: product.id });
+    router.push(`/urun/${product.id}`);
   };
 
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-[#e8e6e3]/50 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-4">
-          <button type="button" className="flex items-center" onClick={() => go({ name: "home" })}>
+          <Link href="/" className="flex items-center">
             <Image
               src={ASSETS.logo}
               alt={BRAND.name}
@@ -253,7 +261,7 @@ export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCa
               height={48}
               className="h-12 w-auto object-contain"
             />
-          </button>
+          </Link>
 
           <nav className="relative ml-auto hidden items-center gap-1 md:flex">
              {/* DÜZELTME: Ana linklere text-[#2a2a2a] eklendi */}
@@ -261,16 +269,16 @@ export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCa
                <button ref={collectionsBtnRef} onClick={() => setCollectionsOpen(!collectionsOpen)} className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                  Koleksiyonlar
                </button>
-               <CollectionDropdown open={collectionsOpen} anchorRef={collectionsBtnRef} onClose={() => setCollectionsOpen(false)} onGo={go} />
+               <CollectionDropdown open={collectionsOpen} anchorRef={collectionsBtnRef} onClose={() => setCollectionsOpen(false)} />
              </div>
              <div className="relative">
                <button ref={productsBtnRef} onClick={() => setProductsOpen(!productsOpen)} className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                  Ürünler
                </button>
-               <ProductsDropdown open={productsOpen} anchorRef={productsBtnRef} onClose={() => setProductsOpen(false)} onGo={go} />
+               <ProductsDropdown open={productsOpen} anchorRef={productsBtnRef} onClose={() => setProductsOpen(false)} />
              </div>
-             <button onClick={() => go({ name: "about" })} className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">Hakkımızda</button>
-             <button onClick={() => go({ name: "contact" })} className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">İletişim</button>
+             <Link href="/hakkimizda" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">Hakkımızda</Link>
+             <Link href="/iletisim" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">İletişim</Link>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -282,8 +290,8 @@ export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCa
             </button>
             
             {/* Sepet */}
-            <button 
-              onClick={onCartClick}
+            <button
+              onClick={handleCartClick}
               className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]"
             >
               <ShoppingBag className="h-5 w-5" />
@@ -325,12 +333,22 @@ export default function Navbar({ go, onCartClick }: { go: (r: any) => void; onCa
           </div>
         </div>
       </header>
-      <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} onGo={go} />
+      <MobileNav open={menuOpen} onClose={() => setMenuOpen(false)} />
       <SearchModal
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
         onProductClick={handleSearchProductClick}
       />
+      {!onCartClick && (
+        <CartDrawer
+          open={cartOpen}
+          onClose={() => setCartOpen(false)}
+          onCheckout={() => {
+            setCartOpen(false);
+            router.push('/odeme');
+          }}
+        />
+      )}
     </>
   );
 }
