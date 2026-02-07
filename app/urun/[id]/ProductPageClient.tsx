@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -20,8 +20,11 @@ import { getColorSwatchStyle } from '@/utils/groupProducts';
 import { useCart } from '@/contexts/CartContext';
 import { useFavorites } from '@/contexts/FavoritesContext';
 import { useStock } from '@/contexts/StockContext';
+import { useRecentlyViewed } from '@/contexts/RecentlyViewedContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { RecentlyViewed } from '@/components/RecentlyViewed';
+import { SocialShare } from '@/components/SocialShare';
 
 interface Product {
   id: string;
@@ -57,6 +60,22 @@ export default function ProductPageClient({
   const { addToCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { isInStock } = useStock();
+  const { addToRecentlyViewed } = useRecentlyViewed();
+
+  // Track recently viewed product
+  useEffect(() => {
+    if (product) {
+      addToRecentlyViewed({
+        id: product.id,
+        title: product.title,
+        subtitle: product.subtitle,
+        price: product.price,
+        image: product.images?.[0] || '/placeholder.jpg',
+        collection: product.collection,
+        viewedAt: Date.now(),
+      });
+    }
+  }, [product, addToRecentlyViewed]);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(
@@ -363,19 +382,31 @@ export default function ProductPageClient({
                   {inStock ? 'Hemen Satın Al' : 'Satın Alınamaz'}
                 </button>
 
-                <button
-                  onClick={() => toggleFavorite(product.id)}
-                  className={`flex w-full items-center justify-center gap-2 text-sm font-medium transition-colors ${
-                    isFavorite(product.id)
-                      ? 'text-red-500 hover:text-red-600'
-                      : 'text-[#666] hover:text-[#0f3f44]'
-                  }`}
-                >
-                  <Heart
-                    className={`h-5 w-5 ${isFavorite(product.id) ? 'fill-current' : ''}`}
+                {/* Favorite and Share buttons */}
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => toggleFavorite(product.id)}
+                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                      isFavorite(product.id)
+                        ? 'text-red-500 hover:text-red-600'
+                        : 'text-[#666] hover:text-[#0f3f44]'
+                    }`}
+                    aria-label={isFavorite(product.id) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                  >
+                    <Heart
+                      className={`h-5 w-5 ${isFavorite(product.id) ? 'fill-current' : ''}`}
+                      aria-hidden="true"
+                    />
+                    {isFavorite(product.id) ? 'Favorilerde' : 'Favorilere Ekle'}
+                  </button>
+
+                  <SocialShare
+                    url={typeof window !== 'undefined' ? window.location.href : `/urun/${product.id}`}
+                    title={`${product.title} - Jonquil Studio`}
+                    description={product.subtitle}
+                    image={product.images?.[0]}
                   />
-                  {isFavorite(product.id) ? 'Favorilerde' : 'Favorilere Ekle'}
-                </button>
+                </div>
               </div>
 
               <div className="border-t border-[#e8e6e3] pt-6" />
@@ -553,6 +584,9 @@ export default function ProductPageClient({
           </section>
         </div>
       </main>
+
+      {/* Recently Viewed Products */}
+      <RecentlyViewed currentProductId={product.id} />
 
       {/* Footer */}
       <Footer />

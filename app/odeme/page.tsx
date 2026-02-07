@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useUser, useClerk, SignInButton } from '@/hooks/useClerkUser';
 import { useCart } from '@/contexts/CartContext';
+import { useAlert } from '@/components/AlertModal';
 import { motion } from 'framer-motion';
 import {
   MapPin,
@@ -37,7 +38,8 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useUser();
   const { items, totalPrice, clearCart } = useCart();
-  
+  const { showError, showWarning, AlertComponent } = useAlert();
+
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank'>('card');
@@ -84,17 +86,17 @@ export default function CheckoutPage() {
   // Sipariş oluştur
   const handleSubmitOrder = async () => {
     if (!selectedAddressId) {
-      alert('Lütfen bir teslimat adresi seçin');
+      showWarning('Lütfen bir teslimat adresi seçin', 'Adres Gerekli');
       return;
     }
 
     if (items.length === 0) {
-      alert('Sepetiniz boş');
+      showWarning('Sepetiniz boş', 'Sepet Boş');
       return;
     }
 
     if (!acceptedTerms) {
-      alert('Lütfen satış sözleşmesini kabul edin');
+      showWarning('Lütfen satış sözleşmesini kabul edin', 'Sözleşme Onayı');
       return;
     }
 
@@ -132,7 +134,7 @@ export default function CheckoutPage() {
       });
 
       if (!res.ok) {
-        alert('Sipariş oluşturulurken hata oluştu');
+        showError('Sipariş oluşturulurken hata oluştu', 'Sipariş Hatası');
         return;
       }
 
@@ -181,7 +183,7 @@ export default function CheckoutPage() {
             iyzicoFormRef.current?.scrollIntoView({ behavior: 'smooth' });
           }, 100);
         } else {
-          alert(iyzicoData.error || 'Ödeme başlatılamadı');
+          showError(iyzicoData.error || 'Ödeme başlatılamadı', 'Ödeme Hatası');
         }
       } else {
         // Havale/EFT için doğrudan başarı sayfasına git
@@ -190,7 +192,7 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       console.error('Sipariş hatası:', error);
-      alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+      showError('Bir hata oluştu. Lütfen tekrar deneyin.', 'Hata');
     } finally {
       setSubmitting(false);
     }
@@ -312,6 +314,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8f5] py-12">
+      <AlertComponent />
       <div className="mx-auto max-w-7xl px-6">
         {/* Header */}
         <div className="mb-8">

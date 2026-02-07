@@ -97,24 +97,30 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="fixed left-1/2 top-24 z-50 w-full max-w-2xl -translate-x-1/2 px-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Ürün arama"
           >
             <div className="overflow-hidden rounded-2xl bg-white shadow-2xl">
               {/* Search Input */}
               <div className="flex items-center border-b border-[#e8e6e3] p-4">
-                <Search className="mr-3 h-5 w-5 text-[#999]" />
+                <Search className="mr-3 h-5 w-5 text-[#999]" aria-hidden="true" />
                 <input
                   ref={inputRef}
-                  type="text"
+                  type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Ürün ara... (tabak, fincan, aslan, ottoman...)"
                   className="flex-1 bg-transparent text-lg outline-none placeholder:text-[#999]"
+                  aria-label="Ürün ara"
+                  aria-describedby="search-results-info"
                 />
                 <button
                   onClick={onClose}
                   className="ml-3 flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#666] hover:bg-[#e8e6e3]"
+                  aria-label="Aramayı kapat"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
 
@@ -128,13 +134,14 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
                 )}
 
                 {results.length > 0 && (
-                  <div className="p-2">
+                  <ul className="p-2" role="listbox" aria-label="Arama sonuçları">
                     {results.map((product) => (
-                      <button
-                        key={product.id}
-                        onClick={() => handleProductClick(product)}
-                        className="flex w-full items-center gap-4 rounded-xl p-3 text-left transition-colors hover:bg-[#faf8f5]"
-                      >
+                      <li key={product.id} role="option">
+                        <button
+                          onClick={() => handleProductClick(product)}
+                          className="flex w-full items-center gap-4 rounded-xl p-3 text-left transition-colors hover:bg-[#faf8f5]"
+                          aria-label={`${product.title} - ${product.price}`}
+                        >
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#f5f5f5]">
                           {product.images?.[0] && (
                             <Image
@@ -158,11 +165,12 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
                         </div>
                         <div className="shrink-0 text-right">
                           <p className="font-semibold text-[#0f3f44]">{product.price}</p>
-                          <ArrowRight className="ml-auto mt-1 h-4 w-4 text-[#999]" />
+                          <ArrowRight className="ml-auto mt-1 h-4 w-4 text-[#999]" aria-hidden="true" />
                         </div>
                       </button>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
 
                 {!query && (
@@ -186,8 +194,9 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
               {/* Footer */}
               <div className="border-t border-[#e8e6e3] bg-[#faf8f5] px-4 py-3">
                 <div className="flex items-center justify-between text-xs text-[#999]">
-                  <span>
+                  <span id="search-results-info" aria-live="polite">
                     {results.length > 0 && `${results.length} sonuç bulundu`}
+                    {query && results.length === 0 && 'Sonuç bulunamadı'}
                   </span>
                   <span className="hidden sm:block">
                     <kbd className="rounded bg-white px-1.5 py-0.5 font-mono shadow-sm">ESC</kbd>

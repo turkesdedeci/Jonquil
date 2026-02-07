@@ -45,6 +45,9 @@ function MobileNav({
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed right-0 top-0 z-50 h-full w-[85%] max-w-sm bg-white shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobil menü"
           >
             <div className="flex items-center justify-between border-b border-[#e8e6e3] p-6">
               <Image
@@ -54,11 +57,15 @@ function MobileNav({
                 height={40}
                 className="h-10 w-auto object-contain"
               />
-              <button onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-full text-[#1a1a1a] hover:bg-[#e8e6e3]">
-                <X className="h-5 w-5" />
+              <button
+                onClick={onClose}
+                className="flex h-10 w-10 items-center justify-center rounded-full text-[#1a1a1a] hover:bg-[#e8e6e3]"
+                aria-label="Menüyü kapat"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <nav className="p-6">
+            <nav className="p-6" aria-label="Mobil navigasyon">
               {/* Auth Section - Mobile */}
               <div className="mb-6 space-y-2">
                 <SignedOut>
@@ -251,9 +258,9 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-[#e8e6e3]/50 bg-white/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-[#e8e6e3]/50 bg-white/80 backdrop-blur-xl" role="banner">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-4">
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center" aria-label="Ana sayfa">
             <Image
               src={ASSETS.logo}
               alt={BRAND.name}
@@ -263,16 +270,27 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
             />
           </Link>
 
-          <nav className="relative ml-auto hidden items-center gap-1 md:flex">
-             {/* DÜZELTME: Ana linklere text-[#2a2a2a] eklendi */}
+          <nav className="relative ml-auto hidden items-center gap-1 md:flex" aria-label="Ana menü">
              <div className="relative">
-               <button ref={collectionsBtnRef} onClick={() => setCollectionsOpen(!collectionsOpen)} className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+               <button
+                 ref={collectionsBtnRef}
+                 onClick={() => setCollectionsOpen(!collectionsOpen)}
+                 className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]"
+                 aria-expanded={collectionsOpen}
+                 aria-haspopup="true"
+               >
                  Koleksiyonlar
                </button>
                <CollectionDropdown open={collectionsOpen} anchorRef={collectionsBtnRef} onClose={() => setCollectionsOpen(false)} />
              </div>
              <div className="relative">
-               <button ref={productsBtnRef} onClick={() => setProductsOpen(!productsOpen)} className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+               <button
+                 ref={productsBtnRef}
+                 onClick={() => setProductsOpen(!productsOpen)}
+                 className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]"
+                 aria-expanded={productsOpen}
+                 aria-haspopup="true"
+               >
                  Ürünler
                </button>
                <ProductsDropdown open={productsOpen} anchorRef={productsBtnRef} onClose={() => setProductsOpen(false)} />
@@ -285,26 +303,28 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
             <button
               onClick={() => setSearchOpen(true)}
               className="flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]"
+              aria-label="Ürün ara"
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-5 w-5" aria-hidden="true" />
             </button>
-            
+
             {/* Sepet */}
             <button
               onClick={handleCartClick}
               className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]"
+              aria-label={`Sepet${totalItems > 0 ? `, ${totalItems} ürün` : ''}`}
             >
-              <ShoppingBag className="h-5 w-5" />
+              <ShoppingBag className="h-5 w-5" aria-hidden="true" />
               {totalItems > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3f44] text-xs font-medium text-white">
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3f44] text-xs font-medium text-white" aria-hidden="true">
                   {totalItems}
                 </span>
               )}
             </button>
-            
+
             {/* Auth Buttons */}
             <SignedOut>
-              <SignInButton 
+              <SignInButton
                 mode="modal"
                 appearance={{
                   elements: {
@@ -316,19 +336,24 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
                   }
                 }}
               >
-                <button className="flex h-10 items-center gap-2 rounded-full bg-[#0f3f44] px-4 text-sm font-medium text-white hover:bg-[#0a2a2e]">
-                  <User className="h-4 w-4" />
+                <button className="flex h-10 items-center gap-2 rounded-full bg-[#0f3f44] px-4 text-sm font-medium text-white hover:bg-[#0a2a2e]" aria-label="Giriş yap">
+                  <User className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden lg:inline">Giriş Yap</span>
                 </button>
               </SignInButton>
             </SignedOut>
-            
+
             <SignedIn>
               <UserDropdown />
             </SignedIn>
-            
-            <button className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e8e6e3] text-[#2a2a2a] md:hidden" onClick={() => setMenuOpen(true)}>
-              <Menu className="h-5 w-5" />
+
+            <button
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e8e6e3] text-[#2a2a2a] md:hidden"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Menüyü aç"
+              aria-expanded={menuOpen}
+            >
+              <Menu className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </div>
