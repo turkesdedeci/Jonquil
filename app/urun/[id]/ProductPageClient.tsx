@@ -160,23 +160,23 @@ export default function ProductPageClient({
       {/* Navbar */}
       <Navbar />
 
-      <main className="flex-1 pt-20">
-        <div className="mx-auto max-w-7xl px-6 py-12">
+      <main className="flex-1 pt-16 lg:pt-20">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-12">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="group mb-8 inline-flex items-center gap-2 text-sm font-medium text-[#666] transition-colors hover:text-[#0f3f44]"
+            className="group mb-4 inline-flex items-center gap-2 text-sm font-medium text-[#666] transition-colors hover:text-[#0f3f44] sm:mb-8"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             Geri Dön
           </button>
 
-          <div className="grid gap-12 lg:grid-cols-2">
+          <div className="grid gap-6 lg:gap-12 lg:grid-cols-2">
             {/* LEFT: Image Gallery */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {/* Main Image */}
               <motion.div
-                className="relative aspect-[4/5] max-h-[60vh] overflow-hidden rounded-3xl bg-[#faf8f5] sm:aspect-square sm:max-h-none"
+                className="relative aspect-square overflow-hidden rounded-2xl bg-[#faf8f5] sm:rounded-3xl"
                 layoutId={`product-${product.id}`}
               >
                 {images.map((img: string, idx: number) => (
@@ -248,68 +248,69 @@ export default function ProductPageClient({
             </div>
 
             {/* RIGHT: Product Info */}
-            <div className="space-y-6">
+            <div className="min-w-0 space-y-4 sm:space-y-6">
               {/* Brand/Family */}
               <div className="text-xs font-light uppercase tracking-[0.2em] text-[#d4af7a]">
                 {product.family}
               </div>
 
               {/* Product Title */}
-              <h1 className="font-serif text-4xl font-light leading-tight text-[#1a1a1a]">
+              <h1 className="break-words font-serif text-2xl font-light leading-tight text-[#1a1a1a] sm:text-4xl">
                 {product.title}
               </h1>
 
               {/* Subtitle */}
-              <p className="text-sm text-[#666]">
+              <p className="break-words text-sm text-[#666]">
                 {currentVariant ? currentVariant.subtitle : product.subtitle}
               </p>
 
               {/* Price */}
-              <div className="text-3xl font-semibold text-[#0f3f44]">
+              <div className="text-2xl font-semibold text-[#0f3f44] sm:text-3xl">
                 {product.price}
               </div>
 
-              <div className="border-t border-[#e8e6e3] pt-6" />
-
-              {/* Color Selector */}
+              {/* Color Selector - Moved up for mobile visibility */}
               {hasVariants && (
-                <div>
-                  <div className="mb-3 text-sm font-semibold text-[#1a1a1a]">
-                    Renk Seçimi
+                <>
+                  <div className="border-t border-[#e8e6e3] pt-4 sm:pt-6" />
+                  <div>
+                    <div className="mb-3 text-sm font-semibold text-[#1a1a1a]">
+                      Renk Seçimi
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      {product.variants!.map((variant, index) => (
+                        <button
+                          key={variant.id}
+                          onClick={() => handleVariantChange(index)}
+                          className="group relative"
+                          title={variant.color}
+                        >
+                          <div
+                            style={getColorSwatchStyle(variant.color)}
+                            className={`h-10 w-10 rounded-full border-2 transition-all ${
+                              selectedVariantIndex === index
+                                ? 'border-[#0f3f44] ring-2 ring-[#0f3f44]/20'
+                                : 'border-white shadow-md hover:scale-110'
+                            }`}
+                          />
+                          <div className="pointer-events-none absolute -bottom-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                            {variant.color}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-3">
-                    {product.variants!.map((variant, index) => (
-                      <button
-                        key={variant.id}
-                        onClick={() => handleVariantChange(index)}
-                        className="group relative"
-                        title={variant.color}
-                      >
-                        <div
-                          style={getColorSwatchStyle(variant.color)}
-                          className={`h-10 w-10 rounded-full border-2 transition-all ${
-                            selectedVariantIndex === index
-                              ? 'border-[#0f3f44] ring-2 ring-[#0f3f44]/20'
-                              : 'border-white shadow-md hover:scale-110'
-                          }`}
-                        />
-                        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                          {variant.color}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                </>
               )}
 
-              <div className="border-t border-[#e8e6e3] pt-6" />
+              <div className="border-t border-[#e8e6e3] pt-4 sm:pt-6" />
 
               {/* Quantity Selector */}
               <div>
                 <div className="mb-3 text-sm font-semibold text-[#1a1a1a]">
                   Miktar
                 </div>
-                <div className="inline-flex items-center gap-4 rounded-full border border-[#e8e6e3] px-6 py-3">
+                <div className="inline-flex items-center gap-4 rounded-full border border-[#e8e6e3] px-4 py-2 sm:px-6 sm:py-3">
                   <button
                     onClick={decrementQuantity}
                     className="text-[#0f3f44] transition-colors hover:text-[#d4af7a]"
@@ -346,7 +347,7 @@ export default function ProductPageClient({
                 <button
                   onClick={handleAddToCart}
                   disabled={addedToCart || !inStock}
-                  className={`flex w-full items-center justify-center gap-3 rounded-full px-8 py-4 text-sm font-semibold transition-all active:scale-98 disabled:opacity-70 ${
+                  className={`flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all active:scale-98 disabled:opacity-70 sm:gap-3 sm:px-8 sm:py-4 ${
                     inStock
                       ? 'bg-[#0f3f44] text-white hover:bg-[#0a2a2e]'
                       : 'cursor-not-allowed bg-gray-300 text-gray-500'
@@ -373,7 +374,7 @@ export default function ProductPageClient({
                 <button
                   onClick={handleBuyNow}
                   disabled={!inStock}
-                  className={`flex w-full items-center justify-center gap-3 rounded-full border-2 px-8 py-4 text-sm font-semibold transition-all active:scale-98 ${
+                  className={`flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-sm font-semibold transition-all active:scale-98 sm:gap-3 sm:px-8 sm:py-4 ${
                     inStock
                       ? 'border-[#0f3f44] bg-transparent text-[#0f3f44] hover:bg-[#0f3f44] hover:text-white'
                       : 'cursor-not-allowed border-gray-300 bg-transparent text-gray-400'

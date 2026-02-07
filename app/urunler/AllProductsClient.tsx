@@ -121,7 +121,7 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
     <div className="flex min-h-screen flex-col bg-white">
       <Navbar />
 
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-16 lg:pt-20">
         {/* Hero Section */}
         <section className="relative bg-gradient-to-br from-[#0f3f44] via-[#1a5a5f] to-[#0f3f44] py-20 text-white">
           <div className="mx-auto max-w-7xl px-6">
@@ -142,18 +142,18 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
         </section>
 
         {/* Search and Filter Bar */}
-        <section className="sticky top-20 z-10 border-b border-[#e8e6e3] bg-[#faf8f5] shadow-sm">
-          <div className="mx-auto max-w-7xl px-6 py-4">
+        <section className="sticky top-16 z-10 border-b border-[#e8e6e3] bg-[#faf8f5] shadow-sm lg:top-20">
+          <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
             {/* Search */}
-            <div className="mb-4">
+            <div className="mb-3 sm:mb-4">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#999]" />
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[#999] sm:left-4" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Ürün ara..."
-                  className="w-full rounded-full border border-[#e8e6e3] bg-white py-3 pl-12 pr-12 text-sm text-[#1a1a1a] placeholder-[#999] focus:border-[#0f3f44] focus:outline-none focus:ring-2 focus:ring-[#0f3f44]/20"
+                  className="w-full rounded-full border border-[#e8e6e3] bg-white py-2.5 pl-10 pr-10 text-sm text-[#1a1a1a] placeholder-[#999] focus:border-[#0f3f44] focus:outline-none focus:ring-2 focus:ring-[#0f3f44]/20 sm:py-3 sm:pl-12 sm:pr-12"
                 />
                 {searchQuery && (
                   <button
@@ -167,33 +167,33 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
             </div>
 
             {/* Filters Row */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
               {/* Left: Product Count */}
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-[#666]">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className="text-xs text-[#666] sm:text-sm">
                   {filteredProducts.length} ürün
                 </span>
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="text-sm text-[#0f3f44] underline hover:text-[#d4af7a]"
+                    className="text-xs text-[#0f3f44] underline hover:text-[#d4af7a] sm:text-sm"
                   >
-                    Filtreleri Temizle
+                    Temizle
                   </button>
                 )}
               </div>
 
-              {/* Center: Filters */}
-              <div className="flex flex-wrap items-center gap-4">
+              {/* Center: Filters - Hide some on mobile */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                 {/* Collection Filter */}
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-[#999]" />
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <Filter className="hidden h-4 w-4 text-[#999] sm:block" />
                   <select
                     value={filterCollection}
                     onChange={(e) => setFilterCollection(e.target.value)}
-                    className="rounded-lg border border-[#e8e6e3] bg-white px-3 py-2 text-sm text-[#1a1a1a] focus:border-[#0f3f44] focus:outline-none"
+                    className="rounded-lg border border-[#e8e6e3] bg-white px-2 py-1.5 text-xs text-[#1a1a1a] focus:border-[#0f3f44] focus:outline-none sm:px-3 sm:py-2 sm:text-sm"
                   >
-                    <option value="all">Tüm Koleksiyonlar</option>
+                    <option value="all">Koleksiyon</option>
                     {collections.map((col) => (
                       <option key={col} value={col}>
                         {collectionNames[col] || col}
@@ -202,13 +202,13 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                   </select>
                 </div>
 
-                {/* Type Filter */}
+                {/* Type Filter - Hidden on very small screens */}
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="rounded-lg border border-[#e8e6e3] bg-white px-3 py-2 text-sm text-[#1a1a1a] focus:border-[#0f3f44] focus:outline-none"
+                  className="hidden rounded-lg border border-[#e8e6e3] bg-white px-2 py-1.5 text-xs text-[#1a1a1a] focus:border-[#0f3f44] focus:outline-none xs:block sm:px-3 sm:py-2 sm:text-sm"
                 >
-                  <option value="all">Tüm Kategoriler</option>
+                  <option value="all">Kategori</option>
                   {productTypes.map((type) => (
                     <option key={type} value={type}>
                       {type}
@@ -217,23 +217,23 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                 </select>
 
                 {/* Sort */}
-                <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="h-4 w-4 text-[#999]" />
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <SlidersHorizontal className="hidden h-4 w-4 text-[#999] sm:block" />
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="rounded-lg border border-[#e8e6e3] bg-white px-3 py-2 text-sm text-[#1a1a1a] focus:border-[#0f3f44] focus:outline-none"
+                    className="rounded-lg border border-[#e8e6e3] bg-white px-2 py-1.5 text-xs text-[#1a1a1a] focus:border-[#0f3f44] focus:outline-none sm:px-3 sm:py-2 sm:text-sm"
                   >
-                    <option value="default">Varsayılan</option>
-                    <option value="price-asc">Fiyat: Düşükten Yükseğe</option>
-                    <option value="price-desc">Fiyat: Yüksekten Düşüğe</option>
-                    <option value="name">İsim: A-Z</option>
+                    <option value="default">Sırala</option>
+                    <option value="price-asc">Fiyat ↑</option>
+                    <option value="price-desc">Fiyat ↓</option>
+                    <option value="name">A-Z</option>
                   </select>
                 </div>
               </div>
 
-              {/* Right: View Mode */}
-              <div className="flex items-center gap-2">
+              {/* Right: View Mode - Hide on mobile */}
+              <div className="hidden items-center gap-2 sm:flex">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`rounded-lg p-2 transition-colors ${
@@ -260,8 +260,8 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
         </section>
 
         {/* Products Grid */}
-        <section className="py-12">
-          <div className="mx-auto max-w-7xl px-6">
+        <section className="py-6 sm:py-12">
+          <div className="mx-auto max-w-7xl px-3 sm:px-6">
             {filteredProducts.length === 0 ? (
               <div className="rounded-2xl border border-[#e8e6e3] bg-[#faf8f5] p-12 text-center">
                 <p className="mb-4 text-lg text-[#666]">Ürün bulunamadı.</p>
@@ -273,7 +273,7 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                 </button>
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredProducts.map((product, index) => {
                   const inStock = isInStock(product.id);
                   const firstImage = product.images?.[0] || '/placeholder.jpg';

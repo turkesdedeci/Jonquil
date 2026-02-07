@@ -20,7 +20,18 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-// 1. MobileNav Bileşeni (Renkler düzeltildi)
+// Product categories for mobile nav
+const mobileCategories = [
+  { id: "tabaklar", label: "Tabaklar" },
+  { id: "fincanlar", label: "Fincanlar & Kupalar" },
+  { id: "mumluklar", label: "Mumluklar" },
+  { id: "kullukler", label: "Küllükler" },
+  { id: "tepsiler", label: "Tepsiler & Kutular" },
+  { id: "tekstil", label: "Tekstil" },
+  { id: "aksesuarlar", label: "Aksesuarlar" },
+];
+
+// 1. MobileNav Bileşeni (Submenu'ler eklendi)
 function MobileNav({
   open,
   onClose,
@@ -28,6 +39,9 @@ function MobileNav({
   open: boolean;
   onClose: () => void;
 }) {
+  const [productsOpen, setProductsOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+
   return (
     <AnimatePresence>
       {open && (
@@ -44,7 +58,7 @@ function MobileNav({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 z-50 h-full w-[85%] max-w-sm bg-white shadow-2xl"
+            className="fixed right-0 top-0 z-50 flex h-full w-[85%] max-w-sm flex-col bg-white shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-label="Mobil menü"
@@ -65,7 +79,7 @@ function MobileNav({
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <nav className="p-6" aria-label="Mobil navigasyon">
+            <nav className="flex-1 overflow-y-auto p-6" aria-label="Mobil navigasyon">
               {/* Auth Section - Mobile */}
               <div className="mb-6 space-y-2">
                 <SignedOut>
@@ -103,12 +117,94 @@ function MobileNav({
               </div>
 
               <div className="space-y-1">
-                <Link href="/urunler" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
-                  Ürünler <ChevronRight className="h-4 w-4 text-[#999]" />
-                </Link>
-                <Link href="/#koleksiyonlar" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
-                  Koleksiyonlar <ChevronRight className="h-4 w-4 text-[#999]" />
-                </Link>
+                {/* Products with submenu */}
+                <div>
+                  <button
+                    onClick={() => setProductsOpen(!productsOpen)}
+                    className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]"
+                    aria-expanded={productsOpen}
+                  >
+                    Ürünler
+                    <ChevronDown className={`h-4 w-4 text-[#999] transition-transform ${productsOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {productsOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="ml-4 space-y-1 border-l-2 border-[#e8e6e3] py-2 pl-4">
+                          <Link
+                            href="/urunler"
+                            onClick={onClose}
+                            className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-semibold text-[#0f3f44] hover:bg-[#faf8f5]"
+                          >
+                            Tüm Ürünler
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                          {mobileCategories.map((cat) => (
+                            <Link
+                              key={cat.id}
+                              href={`/kategori/${cat.id}`}
+                              onClick={onClose}
+                              className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm text-[#666] hover:bg-[#faf8f5] hover:text-[#2a2a2a]"
+                            >
+                              {cat.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Collections with submenu */}
+                <div>
+                  <button
+                    onClick={() => setCollectionsOpen(!collectionsOpen)}
+                    className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]"
+                    aria-expanded={collectionsOpen}
+                  >
+                    Koleksiyonlar
+                    <ChevronDown className={`h-4 w-4 text-[#999] transition-transform ${collectionsOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {collectionsOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="ml-4 space-y-1 border-l-2 border-[#e8e6e3] py-2 pl-4">
+                          <Link
+                            href="/koleksiyon/aslan"
+                            onClick={onClose}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#666] hover:bg-[#faf8f5] hover:text-[#2a2a2a]"
+                          >
+                            <div className="relative h-8 w-8 overflow-hidden rounded-md">
+                              <Image src={ASSETS.aslanCover} alt="Aslan" fill sizes="32px" className="object-cover" />
+                            </div>
+                            Aslan Koleksiyonu
+                          </Link>
+                          <Link
+                            href="/koleksiyon/ottoman"
+                            onClick={onClose}
+                            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#666] hover:bg-[#faf8f5] hover:text-[#2a2a2a]"
+                          >
+                            <div className="relative h-8 w-8 overflow-hidden rounded-md">
+                              <Image src={ASSETS.ottomanCover} alt="Ottoman" fill sizes="32px" className="object-cover" />
+                            </div>
+                            Ottoman Koleksiyonu
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 <Link href="/hakkimizda" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   Hakkımızda <ChevronRight className="h-4 w-4 text-[#999]" />
                 </Link>
