@@ -518,18 +518,18 @@ export default function ProductPageClient({
           </div>
 
           {/* Related Products Section */}
-          <section className="mt-20 border-t border-[#e8e6e3] pt-20">
-            <div className="mb-12">
-              <h2 className="mb-3 text-center font-serif text-3xl font-light text-[#1a1a1a]">
+          <section className="mt-12 border-t border-[#e8e6e3] pt-12 sm:mt-20 sm:pt-20">
+            <div className="mb-6 sm:mb-12">
+              <h2 className="mb-2 text-center font-serif text-2xl font-light text-[#1a1a1a] sm:mb-3 sm:text-3xl">
                 İlgili Ürünler
               </h2>
-              <p className="text-center text-sm text-[#666]">
+              <p className="text-center text-xs text-[#666] sm:text-sm">
                 Beğenebileceğiniz diğer ürünler
               </p>
             </div>
 
             {relatedProducts.length > 0 ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
                 {relatedProducts.slice(0, 4).map((relatedProduct) => {
                   const firstImage =
                     relatedProduct.images?.[0] || '/placeholder.jpg';
@@ -538,35 +538,27 @@ export default function ProductPageClient({
                     <Link
                       key={relatedProduct.id}
                       href={`/urun/${relatedProduct.id}`}
-                      className="group"
+                      className="group w-[160px] flex-shrink-0 sm:w-auto"
                     >
                       <motion.div
                         whileHover={{ y: -4 }}
-                        className="cursor-pointer overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-sm transition-all hover:shadow-xl"
+                        className="cursor-pointer overflow-hidden rounded-xl border border-[#e8e6e3] bg-white shadow-sm transition-all hover:shadow-xl sm:rounded-2xl"
                       >
                         <div className="relative aspect-square overflow-hidden bg-[#faf8f5]">
                           <Image
                             src={firstImage}
                             alt={relatedProduct.title}
                             fill
-                            sizes="(max-width: 640px) 50vw, 25vw"
+                            sizes="(max-width: 640px) 160px, (max-width: 1024px) 50vw, 25vw"
                             className="object-cover transition-transform duration-500 group-hover:scale-110"
                             loading="lazy"
                           />
-                          <div className="absolute left-3 top-3">
-                            <div className="rounded-full bg-white/90 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#0f3f44] shadow-sm backdrop-blur-sm">
-                              {relatedProduct.material}
-                            </div>
-                          </div>
                         </div>
-                        <div className="p-4">
-                          <div className="mb-1 text-xs font-light uppercase tracking-wider text-[#999]">
-                            {relatedProduct.family}
-                          </div>
-                          <h3 className="mb-2 line-clamp-2 text-sm font-medium leading-snug text-[#1a1a1a]">
+                        <div className="p-3 sm:p-4">
+                          <h3 className="mb-1 line-clamp-2 text-xs font-medium leading-snug text-[#1a1a1a] sm:mb-2 sm:text-sm">
                             {relatedProduct.title}
                           </h3>
-                          <div className="text-base font-semibold text-[#0f3f44]">
+                          <div className="text-sm font-semibold text-[#0f3f44] sm:text-base">
                             {relatedProduct.price}
                           </div>
                         </div>
