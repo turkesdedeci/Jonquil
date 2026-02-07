@@ -67,7 +67,11 @@ export function CollectionCard({
     <motion.div
       whileHover={{ y: -8 }}
       onClick={onClick}
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
       className="group relative cursor-pointer overflow-hidden rounded-3xl bg-white shadow-lg transition-all hover:shadow-2xl"
+      role="button"
+      tabIndex={0}
+      aria-label={`${title} koleksiyonunu görüntüle`}
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         <Image
@@ -79,13 +83,13 @@ export function CollectionCard({
           loading="lazy"
         />
       </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" aria-hidden="true" />
       <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
         <div className="mb-3 text-xs font-light uppercase tracking-[0.2em] text-[#d4af7a]">{badge}</div>
         <h3 className="text-2xl font-light tracking-wide">{title}</h3>
         <div className="mt-4 inline-flex items-center gap-2 text-sm font-medium">
           <span>Koleksiyonu Keşfet</span>
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </div>
       </div>
     </motion.div>
@@ -126,6 +130,10 @@ export function ProductCard({
         inStock ? 'border-[#e8e6e3]' : 'border-red-200'
       }`}
       onClick={onClick}
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
+      role="button"
+      tabIndex={0}
+      aria-label={`${product.title}${!inStock ? ' - Stokta yok' : ''}, ${product.price}`}
     >
       {/* Product Image */}
       <div className={`relative aspect-square overflow-hidden bg-[#faf8f5] ${!inStock ? 'grayscale' : ''}`}>
@@ -133,7 +141,7 @@ export function ProductCard({
           <Image
             key={idx}
             src={img || "/placeholder.jpg"}
-            alt={product.title}
+            alt={`${product.title} - Görsel ${idx + 1}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`object-cover transition-opacity duration-300 ${
@@ -150,14 +158,16 @@ export function ProductCard({
             <button
               onClick={prevImage}
               className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#0f3f44] opacity-100 shadow-md backdrop-blur-sm transition-all hover:scale-110 lg:opacity-0 lg:group-hover:opacity-100"
+              aria-label="Önceki görsel"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
               onClick={nextImage}
               className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#0f3f44] opacity-100 shadow-md backdrop-blur-sm transition-all hover:scale-110 lg:opacity-0 lg:group-hover:opacity-100"
+              aria-label="Sonraki görsel"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </>
         )}

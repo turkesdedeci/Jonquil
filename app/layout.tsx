@@ -3,6 +3,7 @@ import { ClerkWrapper } from '@/components/ClerkWrapper';
 import { CartProvider } from '@/contexts/CartContext';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { StockProvider } from '@/contexts/StockContext';
+import { RecentlyViewedProvider } from '@/contexts/RecentlyViewedContext';
 import { ProductsProvider } from '@/hooks/useProducts';
 import "./globals.css";
 
@@ -83,7 +84,9 @@ export default function RootLayout({
             <CartProvider>
               <FavoritesProvider>
                 <StockProvider>
-                  {children}
+                  <RecentlyViewedProvider>
+                    {children}
+                  </RecentlyViewedProvider>
                 </StockProvider>
               </FavoritesProvider>
             </CartProvider>
