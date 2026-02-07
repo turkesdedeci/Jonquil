@@ -36,7 +36,11 @@ export async function GET(request: NextRequest) {
       return handleDatabaseError(error);
     }
 
-    return NextResponse.json(data || []);
+    return NextResponse.json(data || [], {
+      headers: {
+        'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+      },
+    });
   } catch (error) {
     return safeErrorResponse(error, 'Favoriler yüklenemedi');
   }

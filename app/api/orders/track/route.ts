@@ -110,6 +110,10 @@ export async function POST(request: NextRequest) {
         items: items || [],
         statusHistory: statusHistory || []
       }
+    }, {
+      headers: {
+        'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+      },
     });
   } catch (error) {
     return safeErrorResponse(error, 'Bir hata oluştu. Lütfen tekrar deneyin.');
