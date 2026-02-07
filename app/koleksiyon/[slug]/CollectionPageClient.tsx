@@ -82,12 +82,9 @@ export default function CollectionPageClient({
     return result;
   }, [products, sortBy, filterType]);
 
-  // Dummy go function for Navbar compatibility
-  const dummyGo = () => {};
-
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <Navbar go={dummyGo} />
+      <Navbar />
 
       <main className="flex-1 pt-20">
         {/* Hero Section */}
