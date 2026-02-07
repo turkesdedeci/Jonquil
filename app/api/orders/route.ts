@@ -49,7 +49,11 @@ export async function GET(request: NextRequest) {
       return handleDatabaseError(ordersError);
     }
 
-    return NextResponse.json(orders || []);
+    return NextResponse.json(orders || [], {
+      headers: {
+        'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+      },
+    });
   } catch (error) {
     return safeErrorResponse(error, 'Siparişler yüklenemedi');
   }
