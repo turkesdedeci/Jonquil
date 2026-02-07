@@ -1,5 +1,11 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
+
+// Check if Clerk is configured
+const hasClerkConfig = !!(
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+  process.env.CLERK_SECRET_KEY
+);
 
 // Content Security Policy
 // Allows: self, Clerk auth, Supabase storage, iyzico payment
@@ -39,8 +45,20 @@ if (process.env.NODE_ENV === 'production') {
   securityHeaders['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload';
 }
 
-// Wrap clerkMiddleware with security headers
-export default clerkMiddleware(async (auth, request) => {
+// Simple middleware without Clerk
+function simpleMiddleware(request: NextRequest) {
+  const response = NextResponse.next();
+
+  // Add security headers to all responses
+  for (const [key, value] of Object.entries(securityHeaders)) {
+    response.headers.set(key, value);
+  }
+
+  return response;
+}
+
+// Wrap clerkMiddleware with security headers (only if Clerk is configured)
+const clerkMiddlewareHandler = clerkMiddleware(async (auth, request) => {
   const response = NextResponse.next();
 
   // Add security headers to all responses
@@ -50,6 +68,9 @@ export default clerkMiddleware(async (auth, request) => {
 
   return response;
 });
+
+// Export the appropriate middleware based on Clerk configuration
+export default hasClerkConfig ? clerkMiddlewareHandler : simpleMiddleware;
 
 export const config = {
   matcher: [
