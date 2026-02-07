@@ -1,7 +1,5 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useState, useEffect, useMemo } from 'react';
 import { useUser } from '@/hooks/useClerkUser';
 import { useRouter } from 'next/navigation';
