@@ -2,6 +2,7 @@
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { trTR } from '@clerk/localizations';
+import { AuthProvider } from '@/contexts/AuthContext';
 import React from 'react';
 
 // Error boundary for Clerk-related errors
@@ -34,15 +35,17 @@ export function ClerkWrapper({ children }: { children: React.ReactNode }) {
   // Check if Clerk publishable key exists
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-  // If no key, render children without ClerkProvider
+  // If no key, render children with fallback AuthProvider only
   if (!publishableKey) {
-    return <>{children}</>;
+    return <AuthProvider>{children}</AuthProvider>;
   }
 
   return (
-    <ClerkErrorBoundary fallback={<>{children}</>}>
+    <ClerkErrorBoundary fallback={<AuthProvider>{children}</AuthProvider>}>
       <ClerkProvider localization={trTR}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </ClerkProvider>
     </ClerkErrorBoundary>
   );
