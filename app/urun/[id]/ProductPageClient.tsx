@@ -156,11 +156,11 @@ export default function ProductPageClient({
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-white">
       {/* Navbar */}
       <Navbar />
 
-      <main className="flex-1 pt-16 lg:pt-20">
+      <main className="flex-1 overflow-x-hidden pt-16 lg:pt-20">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-12">
           {/* Back Button */}
           <button
@@ -173,10 +173,10 @@ export default function ProductPageClient({
 
           <div className="grid gap-6 lg:gap-12 lg:grid-cols-2">
             {/* LEFT: Image Gallery */}
-            <div className="space-y-3 sm:space-y-4">
+            <div className="min-w-0 space-y-3 sm:space-y-4">
               {/* Main Image */}
               <motion.div
-                className="relative aspect-square overflow-hidden rounded-2xl bg-[#faf8f5] sm:rounded-3xl"
+                className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#faf8f5] sm:rounded-3xl"
                 layoutId={`product-${product.id}`}
               >
                 {images.map((img: string, idx: number) => (
@@ -222,12 +222,12 @@ export default function ProductPageClient({
 
               {/* Thumbnail Gallery */}
               {images.length > 1 && (
-                <div className="flex gap-3 overflow-x-auto pb-2">
+                <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:gap-3 sm:px-0">
                   {images.map((img: string, index: number) => (
                     <button
                       key={index}
                       onClick={() => setActiveImageIndex(index)}
-                      className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
+                      className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all sm:h-20 sm:w-20 sm:rounded-xl ${
                         activeImageIndex === index
                           ? 'border-[#0f3f44] ring-2 ring-[#0f3f44]/20'
                           : 'border-transparent opacity-60 hover:opacity-100'
