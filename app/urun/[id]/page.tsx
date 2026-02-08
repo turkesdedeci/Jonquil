@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { getAllProductsServer, getProductByIdServer, ServerProduct } from '@/lib/products-server';
 import ProductPageClient from './ProductPageClient';
 
+export const dynamic = 'force-dynamic';
+
 // Types
 interface Product {
   id: string;
