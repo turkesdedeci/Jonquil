@@ -23,6 +23,7 @@ interface Product {
   tags: string[];
 }
 
+// Corrected Props interface for server components
 interface Props {
   params: { id: string };
 }
@@ -52,17 +53,30 @@ function normalizeProduct(product: ServerProduct): Product {
 // Generate static params for all products
 export async function generateStaticParams() {
   const allProducts = await getAllProductsServer();
+  console.log(`[generateStaticParams] Found ${allProducts.length} products.`);
+  // Log first 5 product IDs to check for undefined IDs
+  console.log(`[generateStaticParams] First 5 product IDs: ${JSON.stringify(allProducts.slice(0, 5).map(p => p.id))}`);
   return allProducts.map((product) => ({
-    id: product.id,
+    id: product.id, // Ensure this ID is always a string
   }));
 }
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  console.log(`[generateMetadata] Params received: ${JSON.stringify(params)}`);
   const { id } = params;
+  if (!id) {
+    console.error('[generateMetadata] ID is undefined, cannot generate metadata.');
+    return {
+      title: 'Ürün Bulunamadı | Jonquil',
+      description: 'Ürün bilgileri yüklenemedi.',
+    };
+  }
+  
   const product = await getProductByIdServer(id);
 
   if (!product) {
+    console.warn(`[generateMetadata] Product not found for ID: ${id}`);
     return {
       title: 'Ürün Bulunamadı | Jonquil',
     };
@@ -144,9 +158,17 @@ function generateJsonLd(product: Product) {
 
 export default async function ProductPage({ params }: Props) {
   const { id } = params;
+  console.log(`[ProductPage] Initial ID from params: ${id}`);
+  
+  if (!id) {
+    console.error('[ProductPage] ID is undefined, returning notFound.');
+    notFound();
+  }
+
   const product = await getProductByIdServer(id);
 
   if (!product) {
+    console.warn(`[ProductPage] Product not found for ID: ${id}`);
     notFound();
   }
 
