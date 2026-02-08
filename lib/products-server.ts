@@ -108,6 +108,11 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
 
 // Find a product by ID (server-side)
 export async function getProductByIdServer(productId: string): Promise<ServerProduct | null> {
+  if (!productId || productId === 'undefined') {
+    console.warn('[getProductByIdServer] Missing/invalid productId:', productId);
+    return null;
+  }
+
   if (supabase) {
     try {
       const { data, error } = await supabase

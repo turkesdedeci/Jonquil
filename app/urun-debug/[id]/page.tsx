@@ -10,7 +10,8 @@ interface Props {
 
 export default async function UrunDebugPage({ params }: Props) {
   const { id } = params;
-  const product = await getProductByIdServer(id);
+  const normalizedId = id && id !== 'undefined' ? id : null;
+  const product = normalizedId ? await getProductByIdServer(normalizedId) : null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -19,13 +20,15 @@ export default async function UrunDebugPage({ params }: Props) {
   const projectRef = urlHost ? urlHost.split('.')[0] : null;
 
   let directResult: { ok: boolean; title?: string; error?: string } = { ok: false };
-  if (supabaseUrl && supabaseKey) {
+  if (!normalizedId) {
+    directResult = { ok: false, error: 'invalid id' };
+  } else if (supabaseUrl && supabaseKey) {
     try {
       const supabase = createClient(supabaseUrl, supabaseKey);
       const { data, error } = await supabase
         .from('products')
         .select('id,title')
-        .eq('id', id)
+        .eq('id', normalizedId)
         .single();
       if (error || !data) {
         directResult = { ok: false, error: error?.message || 'not found' };
