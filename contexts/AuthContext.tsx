@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
 import {
   useUser as useClerkUser,
   useClerk as useClerkHook,
@@ -48,15 +48,22 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const { user, isLoaded, isSignedIn } = useClerkUser();
   const clerk = useClerkHook();
 
-  const value: AuthContextType = {
+  // Memoize callbacks to prevent unnecessary re-renders
+  const signOut = useCallback(() => clerk.signOut(), [clerk]);
+  const openSignIn = useCallback(() => clerk.openSignIn(), [clerk]);
+  const openSignUp = useCallback(() => clerk.openSignUp(), [clerk]);
+  const openUserProfile = useCallback(() => clerk.openUserProfile(), [clerk]);
+
+  // Memoize the context value to prevent re-renders
+  const value = useMemo<AuthContextType>(() => ({
     user: user as User | null,
     isLoaded,
     isSignedIn: isSignedIn ?? false,
-    signOut: () => clerk.signOut(),
-    openSignIn: () => clerk.openSignIn(),
-    openSignUp: () => clerk.openSignUp(),
-    openUserProfile: () => clerk.openUserProfile(),
-  };
+    signOut,
+    openSignIn,
+    openSignUp,
+    openUserProfile,
+  }), [user, isLoaded, isSignedIn, signOut, openSignIn, openSignUp, openUserProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
