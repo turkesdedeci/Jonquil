@@ -107,7 +107,17 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
 // Find a product by ID (server-side)
 export async function getProductByIdServer(productId: string): Promise<ServerProduct | null> {
   const allProducts = await getAllProductsServer();
-  return allProducts.find(p => p.id === productId) || null;
+  const foundProduct = allProducts.find(p => p.id === productId);
+  console.log(`[getProductByIdServer] Searching for ID: ${productId}, Found: ${!!foundProduct}`);
+  if (foundProduct) {
+    console.log('[getProductByIdServer] Found product:', foundProduct.title);
+  } else {
+    console.log('[getProductByIdServer] Product not found in allProducts for ID:', productId);
+    console.log('[getProductByIdServer] Total products fetched:', allProducts.length);
+    // Optionally, log a few product IDs to check if any are present
+    // console.log('[getProductByIdServer] Sample IDs:', allProducts.slice(0, 5).map(p => p.id));
+  }
+  return foundProduct || null;
 }
 
 // Get product price as number (server-side)
