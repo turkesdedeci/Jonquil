@@ -221,6 +221,20 @@ export default function AdminPage() {
     };
   }, []);
 
+    // Ürün filtreleme - combine static and database products
+  const allCombinedProducts = useMemo(() => {
+    // Transform dbProducts to match allProducts format
+    const transformedDbProducts = dbProducts.map(p => ({
+      ...p,
+      productType: p.product_type,
+      setSingle: p.set_single,
+      isFromDatabase: true,
+    }));
+    return [...transformedDbProducts, ...allProducts];
+  }, [dbProducts]);
+
+
+  
   // Determine which fields to show based on product type
   const fieldVisibility = useMemo(() => {
     const type = newProduct.product_type?.toLowerCase() || '';
@@ -591,18 +605,6 @@ export default function AdminPage() {
       `${order.customer_first_name} ${order.customer_last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-  // Ürün filtreleme - combine static and database products
-  const allCombinedProducts = useMemo(() => {
-    // Transform dbProducts to match allProducts format
-    const transformedDbProducts = dbProducts.map(p => ({
-      ...p,
-      productType: p.product_type,
-      setSingle: p.set_single,
-      isFromDatabase: true,
-    }));
-    return [...transformedDbProducts, ...allProducts];
-  }, [dbProducts]);
 
   const filteredProducts = allCombinedProducts
     .filter(p => productFilter === 'all' || p.collection === productFilter)
