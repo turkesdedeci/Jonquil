@@ -52,17 +52,6 @@ function normalizeProduct(product: ServerProduct): Product {
   };
 }
 
-// Generate static params for all products
-export async function generateStaticParams() {
-  const allProducts = await getAllProductsServer();
-  console.log(`[generateStaticParams] Found ${allProducts.length} products.`);
-  // Log first 5 product IDs to check for undefined IDs
-  console.log(`[generateStaticParams] First 5 product IDs: ${JSON.stringify(allProducts.slice(0, 5).map(p => p.id))}`);
-  return allProducts.map((product) => ({
-    id: product.id, // Ensure this ID is always a string
-  }));
-}
-
 // Generate metadata for SEO
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   console.log(`[generateMetadata] Params received: ${JSON.stringify(params)}`);
