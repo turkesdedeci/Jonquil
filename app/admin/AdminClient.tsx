@@ -238,16 +238,18 @@ export default function AdminPage() {
   }, [newProduct.product_type]);
 
   // Admin kontrolü - server-side'dan kontrol et
+  // user?.id kullanarak obje referans değişikliklerinden kaynaklanan re-render'ları önle
+  const userId = user?.id;
   useEffect(() => {
-    if (isLoaded && user) {
+    if (isLoaded && userId) {
       fetch('/api/admin/check')
         .then(res => res.json())
         .then(data => setIsAdmin(data.isAdmin))
         .catch(() => setIsAdmin(false));
-    } else if (isLoaded && !user) {
+    } else if (isLoaded && !userId) {
       setIsAdmin(false);
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, userId]);
 
   useEffect(() => {
     if (isAdmin === true) {
