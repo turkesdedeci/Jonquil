@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useUser } from '@/hooks/useClerkUser';
 import { useRouter } from 'next/navigation';
 
@@ -237,11 +237,20 @@ export default function AdminPage() {
     };
   }, [newProduct.product_type]);
 
+  // Ref to prevent duplicate admin check requests
+  const adminCheckRef = useRef(false);
+  const dataLoadedRef = useRef(false);
+
   // Admin kontrolü - server-side'dan kontrol et
   // user?.id kullanarak obje referans değişikliklerinden kaynaklanan re-render'ları önle
   const userId = user?.id;
+
   useEffect(() => {
+    // Prevent duplicate requests
+    if (adminCheckRef.current) return;
+
     if (isLoaded && userId) {
+      adminCheckRef.current = true;
       fetch('/api/admin/check')
         .then(res => res.json())
         .then(data => setIsAdmin(data.isAdmin))
@@ -251,15 +260,8 @@ export default function AdminPage() {
     }
   }, [isLoaded, userId]);
 
-  useEffect(() => {
-    if (isAdmin === true) {
-      loadOrders();
-      loadStockStatus();
-      loadDbProducts();
-    }
-  }, [isAdmin]);
-
-  const loadDbProducts = async () => {
+  // Load data functions with useCallback to prevent re-creation
+  const loadDbProducts = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/products/manage');
       if (res.ok) {
@@ -269,7 +271,46 @@ export default function AdminPage() {
     } catch (error) {
       console.error('DB ürünleri yüklenirken hata:', error);
     }
-  };
+  }, []);
+
+  const loadStockStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/products');
+      if (res.ok) {
+        const data = await res.json();
+        setStockStatus(data.stockStatus || {});
+        setStockTableExists(data.tableExists !== false);
+      }
+    } catch (error) {
+      console.error('Stok durumu yüklenirken hata:', error);
+      setStockTableExists(false);
+    }
+  }, []);
+
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/orders');
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data);
+      }
+    } catch (error) {
+      console.error('Siparişler yüklenirken hata:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load admin data when admin status is confirmed
+  useEffect(() => {
+    if (isAdmin === true && !dataLoadedRef.current) {
+      dataLoadedRef.current = true;
+      loadOrders();
+      loadStockStatus();
+      loadDbProducts();
+    }
+  }, [isAdmin, loadOrders, loadStockStatus, loadDbProducts]);
 
   const saveProduct = async () => {
     if (!newProduct.title || !newProduct.price) {
@@ -365,20 +406,6 @@ export default function AdminPage() {
     }
   };
 
-  const loadStockStatus = async () => {
-    try {
-      const res = await fetch('/api/admin/products');
-      if (res.ok) {
-        const data = await res.json();
-        setStockStatus(data.stockStatus || {});
-        setStockTableExists(data.tableExists !== false);
-      }
-    } catch (error) {
-      console.error('Stok durumu yüklenirken hata:', error);
-      setStockTableExists(false);
-    }
-  };
-
   const setupStockTable = async () => {
     setSettingUpTable(true);
     setSetupMessage(null);
@@ -421,21 +448,6 @@ export default function AdminPage() {
       console.error('Stok durumu güncellenirken hata:', error);
     } finally {
       setUpdatingStock(null);
-    }
-  };
-
-  const loadOrders = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/admin/orders');
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data);
-      }
-    } catch (error) {
-      console.error('Siparişler yüklenirken hata:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

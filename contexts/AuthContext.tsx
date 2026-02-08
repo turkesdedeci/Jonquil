@@ -45,8 +45,15 @@ const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 // Provider that uses Clerk hooks (only rendered when ClerkProvider is present)
 function ClerkAuthProvider({ children }: { children: ReactNode }) {
-  const { user, isLoaded, isSignedIn } = useClerkUser();
+  const { user: clerkUser, isLoaded, isSignedIn } = useClerkUser();
   const clerk = useClerkHook();
+
+  // Extract primitive values from user to create stable dependencies
+  const userId = clerkUser?.id;
+  const userEmail = clerkUser?.primaryEmailAddress?.emailAddress;
+  const userFirstName = clerkUser?.firstName;
+  const userLastName = clerkUser?.lastName;
+  const userImageUrl = clerkUser?.imageUrl;
 
   // Memoize callbacks to prevent unnecessary re-renders
   const signOut = useCallback(() => clerk.signOut(), [clerk]);
@@ -54,9 +61,21 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const openSignUp = useCallback(() => clerk.openSignUp(), [clerk]);
   const openUserProfile = useCallback(() => clerk.openUserProfile(), [clerk]);
 
+  // Create a stable user object from primitive values
+  const user = useMemo<User | null>(() => {
+    if (!userId) return null;
+    return {
+      id: userId,
+      primaryEmailAddress: userEmail ? { emailAddress: userEmail } : undefined,
+      firstName: userFirstName,
+      lastName: userLastName,
+      imageUrl: userImageUrl,
+    };
+  }, [userId, userEmail, userFirstName, userLastName, userImageUrl]);
+
   // Memoize the context value to prevent re-renders
   const value = useMemo<AuthContextType>(() => ({
-    user: user as User | null,
+    user,
     isLoaded,
     isSignedIn: isSignedIn ?? false,
     signOut,
