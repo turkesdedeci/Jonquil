@@ -232,8 +232,6 @@ export default function AdminPage() {
     }));
     return [...transformedDbProducts, ...allProducts];
   }, [dbProducts]);
-
-
   
   // Determine which fields to show based on product type
   const fieldVisibility = useMemo(() => {
