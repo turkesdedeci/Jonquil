@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import {
   checkRateLimitAsync,
@@ -146,6 +147,10 @@ export async function POST(request: NextRequest) {
         price: sanitizedData.price,
       },
     }, request);
+    
+    // Revalidate paths
+    revalidatePath('/urunler');
+    revalidatePath(`/urun/${product.id}`);
 
     return NextResponse.json({ success: true, product }, { status: 201 });
   } catch (error) {
@@ -234,6 +239,10 @@ export async function PATCH(request: NextRequest) {
         updated_fields: Object.keys(cleanData),
       },
     }, request);
+    
+    // Revalidate paths
+    revalidatePath('/urunler');
+    revalidatePath(`/urun/${id}`);
 
     return NextResponse.json({ success: true, product });
   } catch (error) {
@@ -286,6 +295,10 @@ export async function DELETE(request: NextRequest) {
       resource_id: id,
       details: {},
     }, request);
+
+    // Revalidate paths
+    revalidatePath('/urunler');
+    revalidatePath(`/urun/${id}`);
 
     return NextResponse.json({ success: true });
   } catch (error) {
