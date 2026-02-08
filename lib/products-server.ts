@@ -64,7 +64,7 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('in_stock', true);
+;
 
       if (!error && data) {
         dbProducts = data.map(transformDbProduct);
