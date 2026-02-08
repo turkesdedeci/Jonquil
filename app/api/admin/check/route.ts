@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { currentUser } from '@clerk/nextjs/server';
-
-// Admin emails from environment variable (comma-separated)
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+import { isAdmin, isClerkConfigured } from '@/lib/adminCheck';
 
 // No-cache headers for admin check
 const noCacheHeaders = {
@@ -10,20 +7,17 @@ const noCacheHeaders = {
 };
 
 export async function GET(request: NextRequest) {
+  // If Clerk is not configured, return false immediately with reason
+  if (!isClerkConfigured()) {
+    console.log('Admin check: Clerk not configured');
+    return NextResponse.json({ isAdmin: false, reason: 'auth_not_configured' }, { headers: noCacheHeaders });
+  }
+
   try {
-    const user = await currentUser();
-
-    if (!user) {
-      return NextResponse.json({ isAdmin: false }, { headers: noCacheHeaders });
-    }
-
-    const isAdmin = user.emailAddresses.some(
-      email => ADMIN_EMAILS.includes(email.emailAddress)
-    );
-
-    return NextResponse.json({ isAdmin }, { headers: noCacheHeaders });
+    const adminStatus = await isAdmin();
+    return NextResponse.json({ isAdmin: adminStatus }, { headers: noCacheHeaders });
   } catch (error) {
     console.error('Admin check error:', error);
-    return NextResponse.json({ isAdmin: false }, { headers: noCacheHeaders });
+    return NextResponse.json({ isAdmin: false, error: 'auth_error' }, { headers: noCacheHeaders });
   }
 }

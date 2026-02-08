@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { currentUser } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
 import {
   checkRateLimitAsync,
@@ -9,19 +8,7 @@ import {
   handleDatabaseError
 } from '@/lib/security';
 import { logAuditEvent } from '@/lib/audit';
-
-// Admin emails from environment variable (comma-separated)
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-
-// Admin kontrolü
-async function isAdmin() {
-  const user = await currentUser();
-  if (!user) return false;
-
-  return user.emailAddresses.some(
-    email => ADMIN_EMAILS.includes(email.emailAddress)
-  );
-}
+import { isAdmin } from '@/lib/adminCheck';
 
 // GET - Tüm siparişleri getir
 export async function GET(request: NextRequest) {
