@@ -28,6 +28,7 @@ interface Product {
 // Corrected Props interface for server components
 interface Props {
   params: { id: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 }
 
 // Helper to normalize product data from the server
@@ -147,7 +148,8 @@ function generateJsonLd(product: Product) {
   };
 }
 
-export default async function ProductPage({ params }: Props) {
+export default async function ProductPage({ params, searchParams }: Props) {
+  const debugMode = searchParams?.debug === '1';
   const { id } = params;
   console.log(`[ProductPage] Initial ID from params: ${id}`);
   
@@ -160,6 +162,14 @@ export default async function ProductPage({ params }: Props) {
 
   if (!product) {
     console.warn(`[ProductPage] Product not found for ID: ${id}`);
+    if (debugMode) {
+      return (
+        <div style={{ padding: 24, fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif' }}>
+          <h1>Product Debug</h1>
+          <pre>{JSON.stringify({ id, found: false }, null, 2)}</pre>
+        </div>
+      );
+    }
     notFound();
   }
 
