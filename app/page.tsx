@@ -1,137 +1,41 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft,
-  ArrowRight,
   BadgeCheck,
-  ChevronDown,
+  Gift,
+  Mail,
+  ShieldCheck,
+  Truck,
+  ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Gift,
   MapPin,
-  Menu,
-  Phone,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
-  Truck,
-  User,
-  X,
   Instagram,
-  Mail,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { allProducts } from "../data/products";
-import { BRAND, ASSETS } from "@/constants/brand";
+import { useProducts } from "@/hooks/useProducts";
+import { ASSETS } from "@/constants/brand";
 import { LuxuryBadge, FeatureCard, CollectionCard, ProductCard } from "@/components/Cards";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { CartDrawer } from "@/components/CartDrawer";
-import { groupProductsByVariants } from "@/utils/groupProducts";
-import ProductDetail from "@/components/ProductDetail";
+import { useMemo } from "react";
+import ProductDetail from "@/components/ProductDetail"; // This was missing in the original and is needed for ProductPage
 
-
-type Route =
-  | { name: "home" }
-  | { name: "about" }
-  | { name: "contact" }
-  | { name: "hesabim" }
-  | { name: "collections" }
-  | { name: "products" } // Tüm Ürünler
-  | { name: "category"; category: string } // Kategori bazlı (Tabaklar, Fincanlar vb.)
-  | { name: "collection"; slug: "aslan" | "ottoman" }
-  | { name: "product"; slug: "aslan" | "ottoman"; id: string };
+interface Route {
+  name: "home" | "collections" | "collection" | "product" | "about" | "contact" | "allProducts" | "category";
+  slug?: string;
+  id?: string;
+  category?: string;
+}
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-function setHash(route: Route) {
-  switch (route.name) {
-    case "home":
-      window.location.hash = "#";
-      return;
-    case "about":
-      window.location.hash = "#/hakkimizda";
-      return;
-    case "contact":
-      window.location.hash = "#/iletisim";
-      return;
-    case "collections":
-      window.location.hash = "#/koleksiyonlar";
-      return;
-    case "products":
-      window.location.hash = "#/urunler";
-      return;
-    case "category":
-      window.location.hash = `#/kategori/${route.category}`;
-      return;
-    case "collection":
-      window.location.hash = `#/koleksiyon/${route.slug}`;
-      return;
-    case "product":
-      window.location.hash = `#/urun/${route.slug}/${route.id}`;
-      return;
-    default:
-      window.location.hash = "#";
-      return;
-  }
-}
-
-function parseHash(): Route {
-  const raw = (window.location.hash || "#").replace(/^#/, "");
-  const parts = raw.split("/").filter(Boolean);
-
-  if (parts.length === 0) return { name: "home" };
-  if (parts[0] === "koleksiyonlar") return { name: "collections" };
-  if (parts[0] === "hakkimizda") return { name: "about" };
-  if (parts[0] === "iletisim") return { name: "contact" };
-  if (parts[0] === "urunler") return { name: "products" };
-  if (parts[0] === "hesabim") return { name: "hesabim" };
-  
-  if (parts[0] === "kategori" && parts[1]) {
-    return { name: "category", category: parts[1] };
-  }
-
-  if (parts[0] === "koleksiyon" && (parts[1] === "aslan" || parts[1] === "ottoman")) {
-    return { name: "collection", slug: parts[1] };
-  }
-
-  if (
-    parts[0] === "urun" &&
-    (parts[1] === "aslan" || parts[1] === "ottoman") &&
-    typeof parts[2] === "string" &&
-    parts[2].length
-  ) {
-    return { name: "product", slug: parts[1], id: parts[2] };
-  }
-
-  return { name: "home" };
-}
-
-function useRoute() {
-  const [route, setRoute] = useState<Route>(() => 
-    (typeof window === "undefined" ? { name: "home" } : parseHash())
-  );
-
-  useEffect(() => {
-    const onChange = () => setRoute(parseHash());
-    window.addEventListener("hashchange", onChange);
-    return () => window.removeEventListener("hashchange", onChange);
-  }, []);
-
-  const go = (r: Route) => setHash(r);
-
-  return { route, go };
-}
-
-
-
-// Homepage component
-function Home({ onGo }: { onGo: (r: Route) => void }) {
+export default function Page() {
+  const { products: allProducts } = useProducts();
   const [currentSlide, setCurrentSlide] = useState(0);
   const slides = [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3];
 
@@ -142,6 +46,82 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
     return () => clearInterval(interval);
   }, [slides.length]);
 
+  const [route, setRoute] = useState<Route>({ name: "home" });
+
+  const onGo = (newRoute: Route) => {
+    setRoute(newRoute);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  let content;
+  switch (route.name) {
+    case "collections":
+      content = <CollectionsPage onGo={onGo} products={allProducts} />;
+      break;
+    case "collection":
+      content = (
+        <CollectionPage
+          slug={route.slug as "aslan" | "ottoman"}
+          products={allProducts.filter((p) => p.collection === route.slug)}
+          onGo={onGo}
+        />
+      );
+      break;
+    case "product":
+      const product = allProducts.find((p) => p.id === route.id);
+      if (!product) {
+        content = <NotFoundPage onGo={onGo} />;
+      } else {
+        content = <ProductPage product={product} onGo={onGo} allProducts={allProducts} />;
+      }
+      break;
+    case "about":
+      content = <AboutPage onGo={onGo} />;
+      break;
+    case "contact":
+      content = <ContactPage onGo={onGo} />;
+      break;
+    case "allProducts":
+      content = <AllProductsPage products={allProducts} onGo={onGo} />;
+      break;
+    case "category":
+      content = <CategoryPage category={route.category as string} products={allProducts} onGo={onGo} />;
+      break;
+    case "home":
+    default:
+      content = (
+        <Homepage
+          onGo={onGo}
+          allProducts={allProducts} // Pass allProducts to Homepage
+          currentSlide={currentSlide}
+          setCurrentSlide={setCurrentSlide}
+          slides={slides}
+        />
+      );
+  }
+
+  return (
+    <PageShell>
+      {content}
+      <Footer />
+    </PageShell>
+  );
+}
+
+// Homepage Component (extracted from Page for clarity and reusability)
+function Homepage({
+  onGo,
+  allProducts,
+  currentSlide,
+  setCurrentSlide,
+  slides,
+}: {
+  onGo: (r: Route) => void;
+  allProducts: any[];
+  currentSlide: number;
+  setCurrentSlide: React.Dispatch<React.SetStateAction<number>>;
+  slides: string[];
+}) {
   return (
     <main>
       {/* Hero Section - Full Screen with Carousel */}
@@ -187,18 +167,18 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <button
-                onClick={() => onGo({ name: "collections" })}
+              <Link
+                href="/urunler"
                 className="rounded-full bg-white px-8 py-4 text-[14px] font-semibold tracking-wide text-[#0f3f44] transition-all hover:bg-[#d4af7a] hover:text-white"
               >
                 Koleksiyonları Keşfet
-              </button>
-              <button
-                onClick={() => onGo({ name: "about" })}
+              </Link>
+              <Link
+                href="/hakkimizda"
                 className="rounded-full border-2 border-white bg-transparent px-8 py-4 text-[14px] font-semibold tracking-wide text-white transition-all hover:bg-white hover:text-[#0f3f44]"
               >
                 Hikayemiz
-              </button>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -232,7 +212,7 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
       </section>
 
       {/* Collections Grid */}
-      <section className="bg-white py-20">
+      <section id="koleksiyonlar" className="bg-white py-20">
         <div className="mx-auto max-w-7xl px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -251,20 +231,24 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
           </motion.div>
 
           <div className="grid gap-8 md:grid-cols-2">
-            <CollectionCard
-              image={ASSETS.aslanCover}
-              badge="CLASSIC DESIGN"
-              title="Aslan Koleksiyonu"
-              desc="El yapımı porselen aslan figürlü klasik tasarım"
-              onClick={() => onGo({ name: "collection", slug: "aslan" })}
-            />
-            <CollectionCard
-              image={ASSETS.ottomanCover}
-              badge="COLORFUL PATTERNS"
-              title="Ottoman Koleksiyonu"
-              desc="Geleneksel Osmanlı motifleriyle bezeli renkli desenler"
-              onClick={() => onGo({ name: "collection", slug: "ottoman" })}
-            />
+            <Link href="/koleksiyon/aslan">
+              <CollectionCard
+                image={ASSETS.aslanCover}
+                badge="CLASSIC DESIGN"
+                title="Aslan Koleksiyonu"
+                desc="El yapımı porselen aslan figürlü klasik tasarım"
+                onClick={() => {}}
+              />
+            </Link>
+            <Link href="/koleksiyon/ottoman">
+              <CollectionCard
+                image={ASSETS.ottomanCover}
+                badge="COLORFUL PATTERNS"
+                title="Ottoman Koleksiyonu"
+                desc="Geleneksel Osmanlı motifleriyle bezeli renkli desenler"
+                onClick={() => {}}
+              />
+            </Link>
           </div>
         </div>
       </section>
@@ -327,13 +311,111 @@ function Home({ onGo }: { onGo: (r: Route) => void }) {
             <p className="mb-10 text-lg font-light text-white/80">
               Jonquil ile sofranız bir galeri haline gelir
             </p>
-            <button
-              onClick={() => onGo({ name: "about" })}
-              className="rounded-full border-2 border-white bg-transparent px-8 py-6 text-sm font-semibold tracking-wide text-white transition-all hover:bg-white hover:text-[#0f3f44]"
+            <Link
+              href="/hakkimizda"
+              className="inline-block rounded-full border-2 border-white bg-transparent px-8 py-6 text-sm font-semibold tracking-wide text-white transition-all hover:bg-white hover:text-[#0f3f44]"
             >
               Hikayemizi Keşfedin
-            </button>
+            </Link>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Best Sellers Section */}
+      <section className="bg-white py-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16 text-center"
+          >
+            <div className="mb-4 font-light tracking-widest text-[#d4af7a]">EN SEVİLENLER</div>
+            <h2 className="mb-4 font-serif text-4xl font-light text-[#1a1a1a] md:text-5xl">
+              Çok Satanlar
+            </h2>
+            <p className="mx-auto max-w-2xl text-[#666]">
+              Müşterilerimizin favorisi olan en popüler ürünlerimize göz atın.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+            {allProducts.slice(0, 4).map((product, i) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Link href={`/urun/${product.id}`}>
+                  <ProductCard
+                    product={product}
+                    onClick={() => {}}
+                  />
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Photo Gallery Section */}
+      <section className="bg-gradient-to-b from-[#faf8f5] to-white py-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16 text-center"
+          >
+            <div className="mb-4 font-light tracking-widest text-[#d4af7a]">GÖZ ATIN</div>
+            <h2 className="mb-4 font-serif text-4xl font-light text-[#1a1a1a] md:text-5xl">
+              Fotoğraf Galerisi
+            </h2>
+            <p className="mx-auto max-w-2xl text-[#666]">
+              Jonquil dünyasından ilham verici anlar ve detaylar.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <motion.div
+              className="col-span-2 row-span-2 overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <img src="/images/products/GENEL FOTOLAR/Header-1.jpg" alt="Gallery image 1" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </motion.div>
+            <motion.div
+              className="overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <img src="/images/products/GENEL FOTOLAR/Header-2.jpg" alt="Gallery image 2" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </motion.div>
+            <motion.div
+              className="overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <img src="/images/products/GENEL FOTOLAR/Header-3.jpg" alt="Gallery image 3" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </motion.div>
+            <motion.div
+              className="overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+            >
+              <img src="/images/products/GENEL FOTOLAR/Header-4.jpg" alt="Gallery image 4" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -991,6 +1073,38 @@ function CategoryPage({
                   </>
                 )}
 
+                {/* Product Type Filter */}
+                {filterOptions.productTypes.length > 0 && (
+                  <div>
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-[#1a1a1a]">Ürün Tipi</h3>
+                      {filters.productTypes.length > 0 && (
+                        <button
+                          onClick={() => setFilters(prev => ({ ...prev, productTypes: [] }))}
+                          className="text-xs text-[#666] hover:text-[#0f3f44]"
+                        >
+                          Temizle
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {filterOptions.productTypes.map((type) => (
+                        <label key={type} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filters.productTypes.includes(type)}
+                            onChange={() => toggleFilter('productTypes', type)}
+                            className="h-4 w-4 rounded border-[#e8e6e3] text-[#0f3f44] focus:ring-[#0f3f44]"
+                          />
+                          <span className="text-sm text-[#666]">{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="border-t border-[#e8e6e3] pt-6" />
+
                 {/* Size/Set Filter */}
                 {filterOptions.sizes.length > 0 && (
                   <div>
@@ -1020,432 +1134,6 @@ function CategoryPage({
                     </div>
                   </div>
                 )}
-              </div>
-            </aside>
-
-            {/* Products Grid */}
-            <div className="flex-1">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {displayedProducts.map((product, index) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onClick={() => onGo({ name: "product", slug: product.collection, id: product.id })}
-                  />
-                ))}
-              </div>
-
-              {/* No results */}
-              {filteredProducts.length === 0 && (
-                <div className="py-20 text-center">
-                  <p className="text-[#666]">Filtrelerinize uygun ürün bulunamadı.</p>
-                  <button
-                    onClick={() => {
-                      setFilters({
-                        priceRange: [0, 5000],
-                        materials: [],
-                        colors: [],
-                        sizes: [],
-                        collections: [],
-                        inStock: true,
-                      });
-                      setCurrentPage(1);
-                    }}
-                    className="mt-4 rounded-full bg-[#0f3f44] px-6 py-3 text-sm font-medium text-white hover:opacity-90"
-                  >
-                    Filtreleri Temizle
-                  </button>
-                </div>
-              )}
-
-              {/* Pagination */}
-              {filteredProducts.length > 0 && totalPages > 1 && (
-                <div className="mt-12 flex items-center justify-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className={cx(
-                      "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
-                      currentPage === 1 ? "cursor-not-allowed text-[#ccc]" : "text-[#666] hover:bg-[#e8e6e3]"
-                    )}
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={cx(
-                        "flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-colors",
-                        currentPage === page ? "bg-[#0f3f44] text-white" : "text-[#666] hover:bg-[#e8e6e3]"
-                      )}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className={cx(
-                      "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
-                      currentPage === totalPages ? "cursor-not-allowed text-[#ccc]" : "text-[#666] hover:bg-[#e8e6e3]"
-                    )}
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
-}
-
-// Collection detail page with filters
-function CollectionPage({
-  slug,
-  products,
-  onGo,
-}: {
-  slug: "aslan" | "ottoman";
-  products: any[];
-  onGo: (r: Route) => void;
-}) {
-  const collectionData = {
-    aslan: {
-      title: "Aslan Koleksiyonu",
-      subtitle: "CLASSIC DESIGN",
-      description:
-        "Zamansız çizgiler ve klasik tasarımlarla sofranıza zarafet katın. Aslan koleksiyonu, modern minimalizmi geleneksel el işçiliğiyle buluşturuyor.",
-      cover: ASSETS.aslanCover,
-    },
-    ottoman: {
-      title: "Ottoman Koleksiyonu",
-      subtitle: "COLORFUL PATTERNS",
-      description:
-        "Zengin renkler ve desenlerle Osmanlı sanatını yeniden yorumlayan koleksiyon. Her parça, kültürel mirasa modern bir bakış açısı sunuyor.",
-      cover: ASSETS.ottomanCover,
-    },
-  };
-
-  const collection = collectionData[slug];
-
-  // Filter states
-  const [filters, setFilters] = useState({
-    priceRange: [0, 5000],
-    materials: [] as string[],
-    colors: [] as string[],
-    productTypes: [] as string[],
-    sizes: [] as string[],
-    inStock: true,
-  });
-
-  const [sortBy, setSortBy] = useState("recommended");
-  const [itemsPerPage, setItemsPerPage] = useState(24);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(true);
-
-  // Get unique filter options
-  const filterOptions = useMemo(() => {
-    return {
-      materials: [...new Set(products.map(p => p.material))].filter(Boolean),
-      colors: [...new Set(products.map(p => p.color))].filter(Boolean),
-      productTypes: [...new Set(products.map(p => p.productType))].filter(Boolean),
-      sizes: [...new Set(products.map(p => p.setSingle))].filter(Boolean),
-    };
-  }, [products]);
-
-  // Apply filters
-  const filteredProducts = useMemo(() => {
-    let filtered = [...products];
-
-    // Price filter
-    filtered = filtered.filter(p => {
-      const price = parseInt(p.price.replace(/[^0-9]/g, ''));
-      return price >= filters.priceRange[0] && price <= filters.priceRange[1];
-    });
-
-    // Material filter
-    if (filters.materials.length > 0) {
-      filtered = filtered.filter(p => filters.materials.includes(p.material));
-    }
-
-    // Color filter
-    if (filters.colors.length > 0) {
-      filtered = filtered.filter(p => filters.colors.includes(p.color));
-    }
-
-    // Product type filter
-    if (filters.productTypes.length > 0) {
-      filtered = filtered.filter(p => filters.productTypes.includes(p.productType));
-    }
-
-    // Size filter
-    if (filters.sizes.length > 0) {
-      filtered = filtered.filter(p => filters.sizes.includes(p.setSingle));
-    }
-
-    // Sort
-    if (sortBy === "price-low") {
-      filtered.sort((a, b) => {
-        const priceA = parseInt(a.price.replace(/[^0-9]/g, ''));
-        const priceB = parseInt(b.price.replace(/[^0-9]/g, ''));
-        return priceA - priceB;
-      });
-    } else if (sortBy === "price-high") {
-      filtered.sort((a, b) => {
-        const priceA = parseInt(a.price.replace(/[^0-9]/g, ''));
-        const priceB = parseInt(b.price.replace(/[^0-9]/g, ''));
-        return priceB - priceA;
-      });
-    } else if (sortBy === "newest") {
-      // Newest sort logic (can be customized)
-    } else {
-      // Default "recommended" sort: Multi-color products first
-      filtered.sort((a, b) => {
-        const variantsA = a.variants?.length || 1;
-        const variantsB = b.variants?.length || 1;
-        // More variants = higher priority (shown first)
-        return variantsB - variantsA;
-      });
-    }
-
-    return filtered;
-  }, [products, filters, sortBy]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const displayedProducts = filteredProducts.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filters, sortBy]);
-
-  const toggleFilter = (category: keyof typeof filters, value: any) => {
-    setFilters(prev => {
-      const current = prev[category] as any[];
-      if (current.includes(value)) {
-        return { ...prev, [category]: current.filter(v => v !== value) };
-      } else {
-        return { ...prev, [category]: [...current, value] };
-      }
-    });
-  };
-
-  return (
-    <main className="bg-[#faf8f5] min-h-screen">
-      {/* Collection Hero */}
-      <section className="relative h-[50vh] overflow-hidden bg-[#0f3f44]">
-        <img
-          src={collection.cover}
-          alt={collection.title}
-          className="h-full w-full object-cover opacity-60"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-        
-        <div className="absolute bottom-0 left-0 right-0 z-10">
-          <div className="mx-auto max-w-[1400px] px-6 pb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <button
-                onClick={() => onGo({ name: "collections" })}
-                className="group mb-6 inline-flex items-center gap-2 text-sm font-medium text-white/80 hover:text-white"
-              >
-                <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-                Koleksiyonlar
-              </button>
-
-              <div className="mb-3 text-sm font-light tracking-widest text-[#d4af7a]">
-                {collection.subtitle}
-              </div>
-              <h1 className="mb-4 font-serif text-5xl font-light text-white md:text-6xl">
-                {collection.title}
-              </h1>
-              <p className="max-w-2xl text-lg font-light text-white/90">
-                {collection.description}
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Products Section with Sidebar */}
-      <section className="py-12">
-        <div className="mx-auto max-w-[1400px] px-6">
-          {/* Top bar */}
-          <div className="mb-8 flex items-center justify-between">
-            <div className="text-sm text-[#666]">
-              {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} arası gösteriliyor (toplam {filteredProducts.length} ürün)
-            </div>
-
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="text-sm font-medium text-[#0f3f44] hover:underline md:hidden"
-              >
-                {showFilters ? "Filtreleri Gizle" : "Filtreleri Göster"}
-              </button>
-
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm outline-none focus:border-[#0f3f44]"
-              >
-                <option value="recommended">Önerilen</option>
-                <option value="price-low">Fiyat: Düşükten Yükseğe</option>
-                <option value="price-high">Fiyat: Yüksekten Düşüğe</option>
-                <option value="newest">Yeni Ürünler</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-8 md:flex-row">
-            {/* Sidebar Filters */}
-            <aside className={cx(
-              "w-full space-y-6 md:w-64 md:shrink-0",
-              showFilters ? "block" : "hidden md:block"
-            )}>
-              {/* Price Range */}
-              <div>
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-[#1a1a1a]">Fiyat</h3>
-                  <button
-                    onClick={() => setFilters(prev => ({ ...prev, priceRange: [0, 5000] }))}
-                    className="text-xs text-[#666] hover:text-[#0f3f44]"
-                  >
-                    Temizle
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      value={filters.priceRange[0]}
-                      onChange={(e) => setFilters(prev => ({ 
-                        ...prev, 
-                        priceRange: [parseInt(e.target.value) || 0, prev.priceRange[1]] 
-                      }))}
-                      className="w-full rounded-lg border border-[#e8e6e3] px-3 py-2 text-sm text-[#1a1a1a]"
-                      placeholder="Min"
-                    />
-                    <span className="text-[#999]">-</span>
-                    <input
-                      type="number"
-                      value={filters.priceRange[1]}
-                      onChange={(e) => setFilters(prev => ({ 
-                        ...prev, 
-                        priceRange: [prev.priceRange[0], parseInt(e.target.value) || 5000] 
-                      }))}
-                      className="w-full rounded-lg border border-[#e8e6e3] px-3 py-2 text-sm text-[#1a1a1a]"
-                      placeholder="Max"
-                    />
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="5000"
-                    step="50"
-                    value={filters.priceRange[1]}
-                    onChange={(e) => setFilters(prev => ({ 
-                      ...prev, 
-                      priceRange: [prev.priceRange[0], parseInt(e.target.value)] 
-                    }))}
-                    className="w-full accent-[#0f3f44]"
-                    style={{
-                      background: `linear-gradient(to right, #e8e6e3 0%, #e8e6e3 ${(filters.priceRange[0] / 5000) * 100}%, #0f3f44 ${(filters.priceRange[0] / 5000) * 100}%, #0f3f44 ${(filters.priceRange[1] / 5000) * 100}%, #e8e6e3 ${(filters.priceRange[1] / 5000) * 100}%, #e8e6e3 100%)`
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="border-t border-[#e8e6e3] pt-6" />
-
-              {/* Material Filter */}
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-[#1a1a1a]">Malzeme</h3>
-                <div className="space-y-2">
-                  {filterOptions.materials.map((material) => (
-                    <label key={material} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filters.materials.includes(material)}
-                        onChange={() => toggleFilter('materials', material)}
-                        className="h-4 w-4 rounded border-[#e8e6e3] text-[#0f3f44] focus:ring-[#0f3f44]"
-                      />
-                      <span className="text-sm text-[#666]">{material}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-[#e8e6e3] pt-6" />
-
-              {/* Color Filter */}
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-[#1a1a1a]">Renk</h3>
-                <div className="space-y-2">
-                  {filterOptions.colors.map((color) => (
-                    <label key={color} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filters.colors.includes(color)}
-                        onChange={() => toggleFilter('colors', color)}
-                        className="h-4 w-4 rounded border-[#e8e6e3] text-[#0f3f44] focus:ring-[#0f3f44]"
-                      />
-                      <span className="text-sm text-[#666]">{color}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-[#e8e6e3] pt-6" />
-
-              {/* Product Type Filter */}
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-[#1a1a1a]">Ürün Tipi</h3>
-                <div className="space-y-2">
-                  {filterOptions.productTypes.map((type) => (
-                    <label key={type} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filters.productTypes.includes(type)}
-                        onChange={() => toggleFilter('productTypes', type)}
-                        className="h-4 w-4 rounded border-[#e8e6e3] text-[#0f3f44] focus:ring-[#0f3f44]"
-                      />
-                      <span className="text-sm text-[#666]">{type}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-[#e8e6e3] pt-6" />
-
-              {/* Size/Set Filter */}
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-[#1a1a1a]">Takım/Tek</h3>
-                <div className="space-y-2">
-                  {filterOptions.sizes.map((size) => (
-                    <label key={size} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={filters.sizes.includes(size)}
-                        onChange={() => toggleFilter('sizes', size)}
-                        className="h-4 w-4 rounded border-[#e8e6e3] text-[#0f3f44] focus:ring-[#0f3f44]"
-                      />
-                      <span className="text-sm text-[#666]">{size}</span>
-                    </label>
-                  ))}
-                </div>
               </div>
             </aside>
 
@@ -1822,60 +1510,6 @@ function ContactPage({ onGo }: { onGo: (r: Route) => void }) {
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {children}
-    </div>
-  );
-}
-
-// Main exported component
-export default function JonquilHomepage() {
-  const { route, go } = useRoute();
-  const [cartOpen, setCartOpen] = useState(false);
-
-  // Use all products directly (no grouping)
-  const aslanProducts = useMemo(
-    () => allProducts.filter((p) => p.collection === "aslan"),
-    []
-  );
-
-  const ottomanProducts = useMemo(
-    () => allProducts.filter((p) => p.collection === "ottoman"),
-    []
-  );
-
-  const currentProduct = useMemo(() => {
-    if (route.name !== "product") return null;
-    
-    // Find product by ID (no grouping)
-    const product = allProducts.find(p => p.id === route.id);
-    if (!product) return null;
-    
-    // Find all variants of this product (same title, different colors)
-    const variants = allProducts.filter(p => 
-      p.title === product.title && p.collection === product.collection
-    );
-    
-    // If multiple variants exist, add them to the product
-    if (variants.length > 1) {
-      return {
-        ...product,
-        variants: variants.map(v => ({
-          id: v.id,
-          color: v.color,
-          subtitle: v.subtitle,
-          code: v.code,
-          images: v.images,
-          tags: v.tags || [],
-        })),
-        selectedVariantIndex: variants.findIndex(v => v.id === product.id),
-      };
-    }
-    
-    return product;
-  }, [route]);
-
-  return (
-    <PageShell>
       {/* Ambient background */}
       <div
         className="pointer-events-none fixed inset-0 -z-10"
@@ -1885,49 +1519,35 @@ export default function JonquilHomepage() {
         }}
       />
 
-      <Navbar go={go} onCartClick={() => setCartOpen(true)} />
+      <Navbar />
 
-      {/* Route rendering */}
-      {route.name === "home" ? <Home onGo={go} /> : null}
-      {route.name === "collections" ? <CollectionsPage onGo={go} products={allProducts} /> : null}
-      {route.name === "products" ? <AllProductsPage products={allProducts} onGo={go} /> : null}
-      {route.name === "category" ? (
-        <CategoryPage category={route.category} products={allProducts} onGo={go} />
-      ) : null}
-      {route.name === "about" ? <AboutPage onGo={go} /> : null}
-      {route.name === "contact" ? <ContactPage onGo={go} /> : null}
-      {route.name === "hesabim" ? (
-        <div className="min-h-screen bg-[#faf8f5] py-12">
-          <div className="mx-auto max-w-4xl px-6">
-            <h1 className="mb-8 font-serif text-4xl font-light text-[#1a1a1a]">Hesabım</h1>
-            <div className="text-center text-[#666]">
-              <p>Hesap sayfası yükleniyor...</p>
-              <p className="mt-2 text-sm">Bu sayfa Clerk authentication ile çalışmaktadır.</p>
-            </div>
-          </div>
+      <main>
+        {children}
+      </main>
+    </div>
+  );
+}
+
+// Not Found Page
+function NotFoundPage({ onGo }: { onGo: (r: Route) => void }) {
+  return (
+    <main className="grid min-h-full place-items-center bg-white px-6 py-24 sm:py-32 lg:px-8">
+      <div className="text-center">
+        <p className="text-base font-semibold text-[#d4af7a]">404</p>
+        <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">Sayfa bulunamadı</h1>
+        <p className="mt-6 text-base leading-7 text-gray-600">Üzgünüz, aradığınız sayfayı bulamadık.</p>
+        <div className="mt-10 flex items-center justify-center gap-x-6">
+          <button
+            onClick={() => onGo({ name: "home" })}
+            className="rounded-md bg-[#0f3f44] px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#d4af7a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f3f44]"
+          >
+            Ana sayfaya dön
+          </button>
+          <a href="/iletisim" className="text-sm font-semibold text-gray-900">
+            Destek ile iletişime geçin <span aria-hidden="true">&rarr;</span>
+          </a>
         </div>
-      ) : null}
-      {route.name === "collection" ? (
-        <CollectionPage
-          slug={route.slug}
-          products={route.slug === "aslan" ? aslanProducts : ottomanProducts}
-          onGo={go}
-        />
-      ) : null}
-      {route.name === "product" && currentProduct ? (
-        <ProductPage product={currentProduct} onGo={go} allProducts={allProducts} />
-      ) : null}
-
-      <CartDrawer 
-        open={cartOpen}
-        onClose={() => setCartOpen(false)}
-        onCheckout={() => {
-          setCartOpen(false);
-          window.location.href = '/odeme';
-        }}
-      />
-
-      <Footer onGo={go} />
-    </PageShell>
+      </div>
+    </main>
   );
 }

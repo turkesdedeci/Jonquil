@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
-import { ShoppingBag, Check } from 'lucide-react';
+import { useStock } from '@/contexts/StockContext';
+import { ShoppingBag, Check, XCircle } from 'lucide-react';
 
 interface AddToCartButtonProps {
   product: {
@@ -19,16 +20,21 @@ interface AddToCartButtonProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function AddToCartButton({ 
-  product, 
+export function AddToCartButton({
+  product,
   quantity = 1,
   variant = 'primary',
   size = 'md'
 }: AddToCartButtonProps) {
   const { addToCart } = useCart();
+  const { isInStock } = useStock();
   const [added, setAdded] = useState(false);
 
+  const inStock = isInStock(product.id);
+
   const handleClick = () => {
+    if (!inStock) return;
+
     addToCart({
       id: product.id,
       productId: product.id,
@@ -51,22 +57,31 @@ export function AddToCartButton({
   };
 
   const variantClasses = {
-    primary: 'bg-[#0f3f44] text-white hover:bg-[#0a2a2e]',
-    secondary: 'border-2 border-[#0f3f44] text-[#0f3f44] hover:bg-[#0f3f44] hover:text-white',
+    primary: inStock
+      ? 'bg-[#0f3f44] text-white hover:bg-[#0a2a2e]'
+      : 'bg-gray-300 text-gray-500 cursor-not-allowed',
+    secondary: inStock
+      ? 'border-2 border-[#0f3f44] text-[#0f3f44] hover:bg-[#0f3f44] hover:text-white'
+      : 'border-2 border-gray-300 text-gray-400 cursor-not-allowed',
   };
 
   return (
     <button
       onClick={handleClick}
-      disabled={added}
+      disabled={added || !inStock}
       className={`
         flex items-center justify-center gap-2 rounded-lg font-medium
-        transition-all disabled:opacity-50
+        transition-all disabled:opacity-70
         ${sizeClasses[size]}
         ${variantClasses[variant]}
       `}
     >
-      {added ? (
+      {!inStock ? (
+        <>
+          <XCircle className="h-5 w-5" />
+          Stokta Yok
+        </>
+      ) : added ? (
         <>
           <Check className="h-5 w-5" />
           Sepete Eklendi

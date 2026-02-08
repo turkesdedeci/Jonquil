@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check, XCircle } from "lucide-react";
 import { getColorSwatchStyle } from "@/utils/groupProducts";
 import { useCart } from "@/contexts/CartContext";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import { useStock } from "@/contexts/StockContext";
 
 interface ProductDetailProps {
   product: any;
@@ -11,14 +14,19 @@ interface ProductDetailProps {
   onProductClick?: (productId: string) => void; // Navigate to another product
 }
 
-export default function ProductDetail({ 
-  product, 
-  onGoBack, 
+export default function ProductDetail({
+  product,
+  onGoBack,
   relatedProducts = [],
-  onProductClick 
+  onProductClick
 }: ProductDetailProps) {
   const { addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const { isInStock } = useStock();
   const [quantity, setQuantity] = useState(1);
+
+  // Check stock status for current product
+  const inStock = isInStock(product.id);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(
     product.selectedVariantIndex || 0
   );
@@ -52,6 +60,8 @@ export default function ProductDetail({
 
   // Add to cart handler
   const handleAddToCart = () => {
+    if (!inStock) return;
+
     const currentProduct = hasVariants ? {
       ...product,
       ...product.variants[selectedVariantIndex],
@@ -73,6 +83,20 @@ export default function ProductDetail({
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
+  // Buy Now handler
+  const handleBuyNow = () => {
+    if (!inStock) return;
+
+    // 1. Add to cart
+    handleAddToCart();
+
+    // 2. Redirect to checkout
+    // A small delay to ensure cart context is updated before redirect
+    setTimeout(() => {
+      window.location.href = '/odeme';
+    }, 100);
+  };
+
   return (
     <main className="bg-white min-h-screen">
       <div className="mx-auto max-w-7xl px-6 py-12">
@@ -89,22 +113,24 @@ export default function ProductDetail({
           {/* LEFT: Image Gallery */}
           <div className="space-y-4">
             {/* Main Image */}
-            <motion.div 
-              className="relative aspect-square overflow-hidden rounded-3xl bg-[#faf8f5]"
+            <motion.div
+              className="relative aspect-[4/5] sm:aspect-square overflow-hidden rounded-3xl bg-[#faf8f5] max-h-[60vh] sm:max-h-none"
               layoutId={`product-${product.id}`}
             >
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={`${selectedVariantIndex}-${activeImageIndex}`}
-                  src={images[activeImageIndex]}
+              {images.map((img: string, idx: number) => (
+                <Image
+                  key={`${selectedVariantIndex}-${idx}`}
+                  src={img}
                   alt={product.title}
-                  className="h-full w-full object-cover"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className={`object-cover transition-opacity duration-300 ${
+                    idx === activeImageIndex ? "opacity-100" : "opacity-0"
+                  }`}
+                  priority={idx === 0}
+                  loading={idx === 0 ? "eager" : "lazy"}
                 />
-              </AnimatePresence>
+              ))}
 
               {/* Image Navigation Arrows */}
               {images.length > 1 && (
@@ -145,7 +171,7 @@ export default function ProductDetail({
                         : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    <Image src={img} alt="" fill sizes="80px" className="object-cover" loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -234,14 +260,34 @@ export default function ProductDetail({
               </div>
             </div>
 
+            {/* Out of Stock Warning */}
+            {!inStock && (
+              <div className="flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 p-4">
+                <XCircle className="h-6 w-6 text-red-500 shrink-0" />
+                <div>
+                  <p className="font-semibold text-red-700">Bu ürün şu an stokta yok</p>
+                  <p className="text-sm text-red-600">Stok durumu için bizimle iletişime geçebilirsiniz.</p>
+                </div>
+              </div>
+            )}
+
             {/* Add to Cart Buttons */}
             <div className="space-y-3">
-              <button 
+              <button
                 onClick={handleAddToCart}
-                disabled={addedToCart}
-                className="flex w-full items-center justify-center gap-3 rounded-full bg-[#0f3f44] px-8 py-4 text-sm font-semibold text-white transition-all hover:bg-[#0a2a2e] active:scale-98 disabled:opacity-70"
+                disabled={addedToCart || !inStock}
+                className={`flex w-full items-center justify-center gap-3 rounded-full px-8 py-4 text-sm font-semibold transition-all active:scale-98 disabled:opacity-70 ${
+                  inStock
+                    ? 'bg-[#0f3f44] text-white hover:bg-[#0a2a2e]'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                {addedToCart ? (
+                {!inStock ? (
+                  <>
+                    <XCircle className="h-5 w-5" />
+                    Stokta Yok
+                  </>
+                ) : addedToCart ? (
                   <>
                     <Check className="h-5 w-5" />
                     Sepete Eklendi!
@@ -253,14 +299,29 @@ export default function ProductDetail({
                   </>
                 )}
               </button>
-              
-              <button className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[#0f3f44] bg-transparent px-8 py-4 text-sm font-semibold text-[#0f3f44] transition-all hover:bg-[#0f3f44] hover:text-white active:scale-98">
-                Hemen Satın Al
+
+              <button
+                onClick={handleBuyNow}
+                disabled={!inStock}
+                className={`flex w-full items-center justify-center gap-3 rounded-full border-2 px-8 py-4 text-sm font-semibold transition-all active:scale-98 ${
+                  inStock
+                    ? 'border-[#0f3f44] bg-transparent text-[#0f3f44] hover:bg-[#0f3f44] hover:text-white'
+                    : 'border-gray-300 bg-transparent text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {inStock ? 'Hemen Satın Al' : 'Satın Alınamaz'}
               </button>
 
-              <button className="flex w-full items-center justify-center gap-2 text-sm font-medium text-[#666] transition-colors hover:text-[#0f3f44]">
-                <Heart className="h-5 w-5" />
-                Favorilere Ekle
+              <button
+                onClick={() => toggleFavorite(product.id)}
+                className={`flex w-full items-center justify-center gap-2 text-sm font-medium transition-colors ${
+                  isFavorite(product.id)
+                    ? 'text-red-500 hover:text-red-600'
+                    : 'text-[#666] hover:text-[#0f3f44]'
+                }`}
+              >
+                <Heart className={`h-5 w-5 ${isFavorite(product.id) ? 'fill-current' : ''}`} />
+                {isFavorite(product.id) ? 'Favorilerde' : 'Favorilere Ekle'}
               </button>
             </div>
 
@@ -376,8 +437,8 @@ export default function ProductDetail({
           </div>
 
           {relatedProducts.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {relatedProducts.slice(0, 4).map((relatedProduct) => {
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedProducts.slice(0, 3).map((relatedProduct) => {
                 const firstImage = relatedProduct.variants?.[0]?.images?.[0] || relatedProduct.images?.[0];
                 
                 return (
@@ -389,10 +450,13 @@ export default function ProductDetail({
                   >
                     {/* Product Image */}
                     <div className="relative aspect-square overflow-hidden bg-[#faf8f5]">
-                      <img
+                      <Image
                         src={firstImage}
                         alt={relatedProduct.title}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        fill
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        loading="lazy"
                       />
                       
                       {/* Material Badge */}

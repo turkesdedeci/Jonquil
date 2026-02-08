@@ -1,19 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+// Force dynamic rendering to prevent build-time prerendering with Clerk
+export const dynamic = 'force-dynamic';
+
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import Image from 'next/image';
+import { useUser, useClerk, SignInButton } from '@/hooks/useClerkUser';
 import { useCart } from '@/contexts/CartContext';
+import { useAlert } from '@/components/AlertModal';
 import { motion } from 'framer-motion';
-import { 
-  MapPin, 
-  ShoppingBag, 
-  CreditCard, 
+import {
+  MapPin,
+  ShoppingBag,
+  CreditCard,
   Truck,
   ChevronRight,
   Plus,
-  Edit,
-  Check
+  Check,
+  Shield,
+  Lock
 } from 'lucide-react';
 
 interface Address {
@@ -32,7 +38,8 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useUser();
   const { items, totalPrice, clearCart } = useCart();
-  
+  const { showError, showWarning, AlertComponent } = useAlert();
+
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank'>('card');
@@ -40,8 +47,11 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [iyzicoFormContent, setIyzicoFormContent] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const iyzicoFormRef = useRef<HTMLDivElement>(null);
 
-  const shippingCost = 50; // Sabit kargo ücreti - dinamik yapılabilir
+  const shippingCost = totalPrice >= 500 ? 0 : 49.90; // 500 TL üzeri ücretsiz kargo
   const grandTotal = totalPrice + shippingCost;
 
   // Adresleri yükle
@@ -76,18 +86,26 @@ export default function CheckoutPage() {
   // Sipariş oluştur
   const handleSubmitOrder = async () => {
     if (!selectedAddressId) {
-      alert('Lütfen bir teslimat adresi seçin');
+      showWarning('Lütfen bir teslimat adresi seçin', 'Adres Gerekli');
       return;
     }
 
     if (items.length === 0) {
-      alert('Sepetiniz boş');
+      showWarning('Sepetiniz boş', 'Sepet Boş');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      showWarning('Lütfen satış sözleşmesini kabul edin', 'Sözleşme Onayı');
       return;
     }
 
     setSubmitting(true);
 
     try {
+      // Seçili adresi bul
+      const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+
       // Sipariş verilerini hazırla
       const orderData = {
         user_id: user?.id,
@@ -108,43 +126,170 @@ export default function CheckoutPage() {
         total_amount: grandTotal,
       };
 
-      // Sipariş API'sine gönder
+      // Önce siparişi oluştur
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData),
       });
 
-      if (res.ok) {
-        const order = await res.json();
-        
-        // Sepeti temizle
-        clearCart();
-        
-        // Başarı sayfasına yönlendir
-        router.push(`/siparis-basarili?order_id=${order.id}`);
+      if (!res.ok) {
+        showError('Sipariş oluşturulurken hata oluştu', 'Sipariş Hatası');
+        return;
+      }
+
+      const order = await res.json();
+
+      // Kredi kartı ödemesi için iyzico'yu başlat
+      if (paymentMethod === 'card') {
+        const nameParts = (selectedAddress?.full_name || 'Misafir Kullanıcı').split(' ');
+        const firstName = nameParts[0] || 'Misafir';
+        const lastName = nameParts.slice(1).join(' ') || 'Kullanıcı';
+
+        const iyzicoRes = await fetch('/api/iyzico/initialize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: order.id,
+            items: items.map(item => ({
+              id: item.productId,
+              title: item.title,
+              category: 'Porselen',
+              material: item.material || 'Porselen',
+              price: item.price,
+            })),
+            buyer: {
+              id: user?.id || `guest_${Date.now()}`,
+              firstName,
+              lastName,
+              email: user?.emailAddresses?.[0]?.emailAddress || 'guest@jonquil.com',
+              phone: selectedAddress?.phone || '+905000000000',
+            },
+            shippingAddress: {
+              address: selectedAddress?.address_line || '',
+              city: selectedAddress?.city || 'İstanbul',
+              zipCode: selectedAddress?.postal_code || '34000',
+            },
+            totalPrice: grandTotal.toFixed(2),
+          }),
+        });
+
+        const iyzicoData = await iyzicoRes.json();
+
+        if (iyzicoData.success && iyzicoData.checkoutFormContent) {
+          setIyzicoFormContent(iyzicoData.checkoutFormContent);
+          // Scroll to iyzico form
+          setTimeout(() => {
+            iyzicoFormRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        } else {
+          showError(iyzicoData.error || 'Ödeme başlatılamadı', 'Ödeme Hatası');
+        }
       } else {
-        alert('Sipariş oluşturulurken hata oluştu');
+        // Havale/EFT için doğrudan başarı sayfasına git
+        clearCart();
+        router.push(`/siparis-basarili?order_id=${order.id}`);
       }
     } catch (error) {
       console.error('Sipariş hatası:', error);
-      alert('Bir hata oluştu. Lütfen tekrar deneyin.');
+      showError('Bir hata oluştu. Lütfen tekrar deneyin.', 'Hata');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (!user) {
+  // iyzico form içeriğini render et
+  useEffect(() => {
+    if (iyzicoFormContent && iyzicoFormRef.current) {
+      iyzicoFormRef.current.innerHTML = iyzicoFormContent;
+      // Execute any scripts in the form
+      const scripts = iyzicoFormRef.current.querySelectorAll('script');
+      scripts.forEach(script => {
+        const newScript = document.createElement('script');
+        Array.from(script.attributes).forEach(attr => {
+          newScript.setAttribute(attr.name, attr.value);
+        });
+        newScript.textContent = script.textContent;
+        script.parentNode?.replaceChild(newScript, script);
+      });
+    }
+  }, [iyzicoFormContent]);
+
+  // Show login modal overlay when not logged in
+  const showLoginModal = !user;
+
+  if (showLoginModal) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="mb-4 text-lg text-[#666]">Ödeme yapmak için giriş yapmalısınız</p>
-          <button
-            onClick={() => router.push('/')}
-            className="rounded-full bg-[#0f3f44] px-6 py-3 text-white hover:bg-[#0a2a2e]"
+      <div className="relative min-h-screen">
+        {/* Blurred background - checkout preview */}
+        <div className="pointer-events-none blur-sm">
+          <div className="min-h-screen bg-[#faf8f5] py-12">
+            <div className="mx-auto max-w-7xl px-6">
+              <div className="mb-8">
+                <h1 className="mb-2 font-serif text-4xl font-light text-[#1a1a1a]">
+                  Ödeme
+                </h1>
+                <p className="text-[#666]">Siparişinizi tamamlamak için bilgilerinizi kontrol edin</p>
+              </div>
+              <div className="grid gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6 h-64" />
+                  <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6 h-48" />
+                </div>
+                <div className="lg:col-span-1">
+                  <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6 h-96" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Login Modal Overlay */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl"
           >
-            Ana Sayfaya Dön
-          </button>
+            <div className="mb-6 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#0f3f44]/10">
+                <Lock className="h-8 w-8 text-[#0f3f44]" />
+              </div>
+              <h2 className="mb-2 font-serif text-2xl font-light text-[#1a1a1a]">
+                Giriş Yapın
+              </h2>
+              <p className="text-sm text-[#666]">
+                Ödeme işlemine devam etmek için hesabınıza giriş yapmalısınız
+              </p>
+            </div>
+
+            <SignInButton
+              mode="modal"
+              appearance={{
+                elements: {
+                  rootBox: "w-full",
+                  card: "rounded-2xl shadow-2xl",
+                  socialButtonsBlockButton: "border border-[#e8e6e3] hover:bg-[#faf8f5]",
+                  formButtonPrimary: "bg-[#0f3f44] hover:bg-[#0a2a2e]",
+                  footerActionLink: "text-[#0f3f44]",
+                }
+              }}
+            >
+              <button className="flex w-full items-center justify-center gap-2 rounded-full bg-[#0f3f44] px-6 py-4 text-base font-semibold text-white transition-all hover:bg-[#0a2a2e]">
+                <Lock className="h-5 w-5" />
+                Giriş Yap veya Hesap Oluştur
+              </button>
+            </SignInButton>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => router.push('/')}
+                className="text-sm text-[#666] hover:text-[#0f3f44] hover:underline"
+              >
+                ← Alışverişe devam et
+              </button>
+            </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -169,13 +314,46 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#faf8f5] py-12">
+      <AlertComponent />
       <div className="mx-auto max-w-7xl px-6">
         {/* Header */}
         <div className="mb-8">
+          <div className="mb-4 flex items-center gap-2">
+            <button
+              onClick={() => router.push('/')}
+              className="text-sm text-[#0f3f44] hover:underline"
+            >
+              ← Alışverişe Devam Et
+            </button>
+          </div>
           <h1 className="mb-2 font-serif text-4xl font-light text-[#1a1a1a]">
             Ödeme
           </h1>
           <p className="text-[#666]">Siparişinizi tamamlamak için bilgilerinizi kontrol edin</p>
+
+          {/* Progress Steps */}
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0f3f44] text-sm font-bold text-white">
+                1
+              </div>
+              <span className="hidden text-sm font-medium text-[#0f3f44] sm:inline">Adres Seçimi</span>
+            </div>
+            <div className="h-0.5 w-8 bg-[#e8e6e3]" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0f3f44] text-sm font-bold text-white">
+                2
+              </div>
+              <span className="hidden text-sm font-medium text-[#0f3f44] sm:inline">Ödeme</span>
+            </div>
+            <div className="h-0.5 w-8 bg-[#e8e6e3]" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8e6e3] text-sm font-bold text-[#666]">
+                3
+              </div>
+              <span className="hidden text-sm font-medium text-[#666] sm:inline">Onay</span>
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
@@ -271,7 +449,7 @@ export default function CheckoutPage() {
 
               <div className="space-y-3">
                 <button
-                  onClick={() => setPaymentMethod('card')}
+                  onClick={() => { setPaymentMethod('card'); setIyzicoFormContent(null); }}
                   className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
                     paymentMethod === 'card'
                       ? 'border-[#0f3f44] bg-[#0f3f44]/5'
@@ -279,13 +457,28 @@ export default function CheckoutPage() {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="mb-1 font-semibold text-[#1a1a1a]">
-                        Kredi/Banka Kartı
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <div className="mb-1 flex items-center gap-2 font-semibold text-[#1a1a1a]">
+                          <CreditCard className="h-5 w-5" />
+                          Kredi/Banka Kartı
+                        </div>
+                        <p className="text-sm text-[#666]">
+                          iyzico güvenli ödeme ile anında onay
+                        </p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="flex h-6 items-center rounded bg-white px-2 text-xs font-bold shadow-sm">
+                            iyzico
+                          </div>
+                          <div className="flex h-6 items-center rounded bg-white px-2 text-xs font-bold text-[#1a1f71] shadow-sm">
+                            VISA
+                          </div>
+                          <div className="flex h-6 items-center rounded bg-white px-2 shadow-sm">
+                            <span className="text-xs font-bold text-[#eb001b]">Master</span>
+                            <span className="text-xs font-bold text-[#f79e1b]">card</span>
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-sm text-[#666]">
-                        Güvenli ödeme ile anında onay
-                      </p>
                     </div>
                     {paymentMethod === 'card' && (
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0f3f44]">
@@ -296,7 +489,7 @@ export default function CheckoutPage() {
                 </button>
 
                 <button
-                  onClick={() => setPaymentMethod('bank')}
+                  onClick={() => { setPaymentMethod('bank'); setIyzicoFormContent(null); }}
                   className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
                     paymentMethod === 'bank'
                       ? 'border-[#0f3f44] bg-[#0f3f44]/5'
@@ -320,7 +513,24 @@ export default function CheckoutPage() {
                   </div>
                 </button>
               </div>
+
+              {/* Güvenlik Bilgisi */}
+              <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-800">
+                <Shield className="h-5 w-5" />
+                <span>256-bit SSL şifreleme ile güvenli ödeme</span>
+              </div>
             </div>
+
+            {/* iyzico Ödeme Formu */}
+            {iyzicoFormContent && (
+              <div ref={iyzicoFormRef} className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-[#0f3f44]" />
+                  <span className="font-semibold text-[#1a1a1a]">Güvenli Ödeme</span>
+                </div>
+                {/* iyzico form buraya inject edilecek */}
+              </div>
+            )}
 
             {/* Sipariş Notu */}
             <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
@@ -353,11 +563,13 @@ export default function CheckoutPage() {
               <div className="mb-6 space-y-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-3">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#faf8f5]">
-                      <img
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#faf8f5]">
+                      <Image
                         src={item.image}
                         alt={item.title}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="64px"
+                        className="object-cover"
                       />
                     </div>
                     <div className="flex-1">
@@ -409,14 +621,42 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="mt-6">
+              {/* Sözleşme Onayı */}
+              <div className="mt-6 space-y-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-[#e8e6e3] text-[#0f3f44] focus:ring-[#0f3f44]"
+                  />
+                  <span className="text-xs text-[#666]">
+                    <a href="/mesafeli-satis-sozlesmesi" target="_blank" className="text-[#0f3f44] hover:underline">
+                      Mesafeli Satış Sözleşmesi
+                    </a>
+                    'ni ve{' '}
+                    <a href="/gizlilik-politikasi" target="_blank" className="text-[#0f3f44] hover:underline">
+                      Gizlilik Politikası
+                    </a>
+                    'nı okudum ve kabul ediyorum.
+                  </span>
+                </label>
+
                 <button
                   onClick={handleSubmitOrder}
-                  disabled={submitting || !selectedAddressId}
+                  disabled={submitting || !selectedAddressId || !acceptedTerms}
                   className="flex w-full items-center justify-center gap-2 rounded-full bg-[#0f3f44] py-4 font-semibold text-white transition-all hover:bg-[#0a2a2e] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {submitting ? (
-                    'İşleniyor...'
+                    <>
+                      <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      İşleniyor...
+                    </>
+                  ) : paymentMethod === 'card' ? (
+                    <>
+                      <Lock className="h-5 w-5" />
+                      Ödemeye Geç
+                    </>
                   ) : (
                     <>
                       Siparişi Onayla
@@ -425,12 +665,10 @@ export default function CheckoutPage() {
                   )}
                 </button>
 
-                <p className="mt-3 text-center text-xs text-[#666]">
-                  Siparişinizi onaylayarak{' '}
-                  <a href="#" className="text-[#0f3f44] hover:underline">
-                    Kullanım Koşulları
+                <p className="text-center text-xs text-[#666]">
+                  <a href="/teslimat-iade" target="_blank" className="text-[#0f3f44] hover:underline">
+                    Teslimat ve İade Koşulları
                   </a>
-                  'nı kabul etmiş olursunuz
                 </p>
               </div>
             </div>
