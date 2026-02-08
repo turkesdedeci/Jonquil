@@ -38,35 +38,35 @@
    }));
  }
  
--// Helper to get product by ID
--function getProduct(id: string): Product | undefined {
--  return allProducts.find((p) => p.id === id) as Product | undefined;
-+function normalizeProduct(product: ServerProduct): Product {
-+  return {
-+    id: product.id,
-+    collection: product.collection,
-+    family: product.family || product.collection?.toUpperCase() || '',
-+    images: product.images || [],
-+    title: product.title,
-+    subtitle: product.subtitle || '',
-+    color: product.color || '',
-+    code: product.code || '',
-+    size: product.size || '',
-+    price: product.price,
-+    material: product.material || 'Porselen',
-+    productType: product.productType || '',
-+    usage: product.usage || '',
-+    capacity: product.capacity || null,
-+    setSingle: product.setSingle || 'Tek Parça',
-+    tags: product.tags || [],
-+  };
+ // Helper to get product by ID
+ function getProduct(id: string): Product | undefined {
+   return allProducts.find((p) => p.id === id) as Product | undefined;
+ function normalizeProduct(product: ServerProduct): Product {
+   return {
+     id: product.id,
+     collection: product.collection,
+     family: product.family || product.collection?.toUpperCase() || '',
+     images: product.images || [],
+     title: product.title,
+     subtitle: product.subtitle || '',
+     color: product.color || '',
+     code: product.code || '',
+     size: product.size || '',
+     price: product.price,
+     material: product.material || 'Porselen',
+     productType: product.productType || '',
+     usage: product.usage || '',
+     capacity: product.capacity || null,
+     setSingle: product.setSingle || 'Tek Parça',
+     tags: product.tags || [],
+   };
  }
  
  // Generate metadata for SEO
  export async function generateMetadata({ params }: Props): Promise<Metadata> {
    const { id } = await params;
--  const product = getProduct(id);
-+  const product = await getProductByIdServer(id);
+   const product = getProduct(id);
+   const product = await getProductByIdServer(id);
  
    if (!product) {
      return {
@@ -74,13 +74,13 @@
      };
    }
  
--  const title = `${product.title} - ${product.subtitle} | Jonquil`;
--  const description = `${product.title} ${product.subtitle}. ${product.material}, ${product.size}. El yapımı Türk porselen ürünleri. Jonquil koleksiyonundan ${product.family} serisi.`;
--  const imageUrl = product.images?.[0] || '/images/og-default.jpg';
-+  const normalizedProduct = normalizeProduct(product);
-+  const title = `${normalizedProduct.title} - ${normalizedProduct.subtitle} | Jonquil`;
-+  const description = `${normalizedProduct.title} ${normalizedProduct.subtitle}. ${normalizedProduct.material}, ${normalizedProduct.size}. El yapımı Türk porselen ürünleri. Jonquil koleksiyonundan ${normalizedProduct.family} serisi.`;
-+  const imageUrl = normalizedProduct.images?.[0] || '/images/og-default.jpg';
+   const title = `${product.title} - ${product.subtitle} | Jonquil`;
+   const description = `${product.title} ${product.subtitle}. ${product.material}, ${product.size}. El yapımı Türk porselen ürünleri. Jonquil koleksiyonundan ${product.family} serisi.`;
+   const imageUrl = product.images?.[0] || '/images/og-default.jpg';
+   const normalizedProduct = normalizeProduct(product);
+   const title = `${normalizedProduct.title} - ${normalizedProduct.subtitle} | Jonquil`;
+   const description = `${normalizedProduct.title} ${normalizedProduct.subtitle}. ${normalizedProduct.material}, ${normalizedProduct.size}. El yapımı Türk porselen ürünleri. Jonquil koleksiyonundan ${normalizedProduct.family} serisi.`;
+   const imageUrl = normalizedProduct.images?.[0] || '/images/og-default.jpg';
  
    return {
      title,
@@ -132,21 +132,21 @@
  
  export default async function ProductPage({ params }: Props) {
    const { id } = await params;
--  const product = getProduct(id);
-+  const product = await getProductByIdServer(id);
+   const product = getProduct(id);
+   const product = await getProductByIdServer(id);
  
    if (!product) {
      notFound();
    }
  
--  const jsonLd = generateJsonLd(product);
-+  const normalizedProduct = normalizeProduct(product);
-+  const jsonLd = generateJsonLd(normalizedProduct);
-+  const allProductsServer = await getAllProductsServer();
+  const jsonLd = generateJsonLd(product);
+  const normalizedProduct = normalizeProduct(product);
+  const jsonLd = generateJsonLd(normalizedProduct);
+  const allProductsServer = await getAllProductsServer();
  
    // Get related products (same collection, different product)
--  const relatedProducts = allProducts
-+  const relatedProducts = allProductsServer
+  const relatedProducts = allProducts
+  const relatedProducts = allProductsServer
      .filter(
        (p) =>
          p.collection === product.collection &&
@@ -157,8 +157,8 @@
  
    // If not enough related products, add from same collection
    if (relatedProducts.length < 4) {
--    const moreRelated = allProducts
-+    const moreRelated = allProductsServer
+    const moreRelated = allProducts
+    const moreRelated = allProductsServer
        .filter(
          (p) =>
            p.collection === product.collection &&
@@ -168,9 +168,8 @@
        .slice(0, 4 - relatedProducts.length) as Product[];
      relatedProducts.push(...moreRelated);
    }
- 
-+  const normalizedRelatedProducts = relatedProducts.map(normalizeProduct);
-+
+   const normalizedRelatedProducts = relatedProducts.map(normalizeProduct);
+
    return (
      <>
        {/* JSON-LD Structured Data */}
@@ -181,10 +180,10 @@
  
        {/* Client Component for Interactivity */}
        <ProductPageClient
--        product={product}
--        relatedProducts={relatedProducts}
-+        product={normalizedProduct}
-+        relatedProducts={normalizedRelatedProducts}
+        product={product}
+        relatedProducts={relatedProducts}
+        product={normalizedProduct}
+        relatedProducts={normalizedRelatedProducts}
        />
      </>
    );
