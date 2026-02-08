@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { currentUser } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 import {
   checkRateLimitAsync,
@@ -9,9 +8,7 @@ import {
   handleDatabaseError
 } from '@/lib/security';
 import { logAuditEvent } from '@/lib/audit';
-
-// Admin emails from environment variable
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+import { isAdmin } from '@/lib/adminCheck';
 
 // Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -20,14 +17,6 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
-
-async function isAdmin() {
-  const user = await currentUser();
-  if (!user) return false;
-  return user.emailAddresses.some(
-    email => ADMIN_EMAILS.includes(email.emailAddress)
-  );
-}
 
 // Input validation
 function validateProduct(data: any): { valid: boolean; error?: string } {
