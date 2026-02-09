@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Mail, Phone, MapPin, Clock, Building2, FileText } from "lucide-react";
 import ContactForm from "@/components/ContactForm";
 
@@ -148,7 +149,9 @@ export default function IletisimPage() {
       {/* İletişim Formu */}
       <div className="mt-12">
         <h2 className="mb-6 text-lg font-semibold text-neutral-900">Bize Yazın</h2>
-        <ContactForm />
+        <Suspense fallback={<div className="rounded-xl border border-[#e8e6e3] bg-white p-6 text-sm text-neutral-500">Form yükleniyor...</div>}>
+          <ContactForm />
+        </Suspense>
       </div>
     </div>
   );
