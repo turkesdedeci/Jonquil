@@ -46,6 +46,11 @@ async function getIdFromHeaders(): Promise<string | undefined> {
     ].filter(Boolean) as string[];
 
     for (const raw of candidates) {
+      if (!raw) continue;
+      // If header already is a plain id (e.g., x-debug-product-id)
+      if (!raw.includes('/') && !raw.includes('?')) {
+        return raw;
+      }
       const url = new URL(raw, 'https://example.com');
       const fromQuery = url.searchParams.get('id');
       if (fromQuery) return fromQuery;
