@@ -37,6 +37,9 @@ export function UserDropdown() {
   }, [isOpen]);
 
   if (!user) return null;
+  const emailAddress = user.emailAddresses?.[0]?.emailAddress;
+  const fallbackInitial = emailAddress ? emailAddress[0].toUpperCase() : '?';
+  const userInitial = user.firstName?.[0] || fallbackInitial;
 
   const menuItems = [
     {
@@ -89,7 +92,7 @@ export function UserDropdown() {
         className="flex items-center gap-2 rounded-full transition-all hover:opacity-80"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#0f3f44] bg-[#0f3f44] text-white font-semibold">
-          {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress[0].toUpperCase()}
+          {userInitial}
         </div>
         <ChevronDown 
           className={`h-4 w-4 text-[#1a1a1a] transition-transform ${
@@ -120,14 +123,14 @@ export function UserDropdown() {
               <div className="border-b border-[#e8e6e3] bg-gradient-to-br from-[#0f3f44] to-[#0a2a2e] p-4 text-white">
                 <div className="mb-2 flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-lg font-semibold backdrop-blur-sm">
-                    {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress[0].toUpperCase()}
+                    {userInitial}
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <div className="truncate font-semibold">
                       {user.firstName} {user.lastName}
                     </div>
                     <div className="truncate text-xs text-white/80">
-                      {user.emailAddresses[0]?.emailAddress}
+                      {emailAddress}
                     </div>
                   </div>
                 </div>
