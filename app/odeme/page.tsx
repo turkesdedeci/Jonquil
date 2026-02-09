@@ -6,10 +6,9 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useUser, useClerk, SignInButton } from '@/hooks/useClerkUser';
+import { useUser } from '@/hooks/useClerkUser';
 import { useCart } from '@/contexts/CartContext';
 import { useAlert } from '@/components/AlertModal';
-import { motion } from 'framer-motion';
 import {
   MapPin,
   ShoppingBag,
@@ -50,6 +49,16 @@ export default function CheckoutPage() {
   const [iyzicoFormContent, setIyzicoFormContent] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const iyzicoFormRef = useRef<HTMLDivElement>(null);
+  const isGuest = !user;
+
+  const [guestFirstName, setGuestFirstName] = useState('');
+  const [guestLastName, setGuestLastName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+  const [guestAddress, setGuestAddress] = useState('');
+  const [guestCity, setGuestCity] = useState('');
+  const [guestDistrict, setGuestDistrict] = useState('');
+  const [guestPostalCode, setGuestPostalCode] = useState('');
 
   const shippingCost = totalPrice >= 500 ? 0 : 49.90; // 500 TL üzeri ücretsiz kargo
   const grandTotal = totalPrice + shippingCost;
@@ -58,6 +67,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (user) {
       loadAddresses();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -85,9 +96,15 @@ export default function CheckoutPage() {
 
   // Sipariş oluştur
   const handleSubmitOrder = async () => {
-    if (!selectedAddressId) {
+    if (!selectedAddressId && !isGuest) {
       showWarning('Lütfen bir teslimat adresi seçin', 'Adres Gerekli');
       return;
+    }
+    if (isGuest) {
+      if (!guestFirstName || !guestLastName || !guestEmail || !guestPhone || !guestAddress || !guestCity) {
+        showWarning('Lütfen misafir bilgilerini doldurun', 'Eksik Bilgi');
+        return;
+      }
     }
 
     if (items.length === 0) {
@@ -122,11 +139,17 @@ export default function CheckoutPage() {
           total_price: parseFloat(item.price.replace(/[^0-9]/g, '')) * item.quantity,
         })),
         customer: {
-          first_name: user?.firstName,
-          last_name: user?.lastName,
-          email: user?.emailAddresses?.[0]?.emailAddress,
-          phone: selectedAddress?.phone,
+          first_name: user?.firstName || guestFirstName,
+          last_name: user?.lastName || guestLastName,
+          email: user?.emailAddresses?.[0]?.emailAddress || guestEmail,
+          phone: selectedAddress?.phone || guestPhone,
         },
+        shipping_address: isGuest ? {
+          address_line: guestAddress,
+          city: guestCity,
+          district: guestDistrict,
+          postal_code: guestPostalCode,
+        } : undefined,
       };
 
       // Önce siparişi oluştur
@@ -145,7 +168,7 @@ export default function CheckoutPage() {
 
       // Kredi kartı ödemesi için iyzico'yu başlat
       if (paymentMethod === 'card') {
-        const nameParts = (selectedAddress?.full_name || 'Misafir Kullanıcı').split(' ');
+        const nameParts = (selectedAddress?.full_name || `${guestFirstName} ${guestLastName}` || 'Misafir Kullanıcı').split(' ');
         const firstName = nameParts[0] || 'Misafir';
         const lastName = nameParts.slice(1).join(' ') || 'Kullanıcı';
 
@@ -166,13 +189,13 @@ export default function CheckoutPage() {
               id: user?.id || `guest_${Date.now()}`,
               firstName,
               lastName,
-              email: user?.emailAddresses?.[0]?.emailAddress || 'guest@jonquil.com',
-              phone: selectedAddress?.phone || '+905000000000',
+              email: user?.emailAddresses?.[0]?.emailAddress || guestEmail || 'guest@jonquil.com',
+              phone: selectedAddress?.phone || guestPhone || '+905000000000',
             },
             shippingAddress: {
-              address: selectedAddress?.address_line || '',
-              city: selectedAddress?.city || 'İstanbul',
-              zipCode: selectedAddress?.postal_code || '34000',
+              address: selectedAddress?.address_line || guestAddress || '',
+              city: selectedAddress?.city || guestCity || 'İstanbul',
+              zipCode: selectedAddress?.postal_code || guestPostalCode || '34000',
             },
             totalPrice: grandTotal.toFixed(2),
           }),
@@ -219,85 +242,7 @@ export default function CheckoutPage() {
     }
   }, [iyzicoFormContent]);
 
-  // Show login modal overlay when not logged in
-  const showLoginModal = !user;
-
-  if (showLoginModal) {
-    return (
-      <div className="relative min-h-screen">
-        {/* Blurred background - checkout preview */}
-        <div className="pointer-events-none blur-sm">
-          <div className="min-h-screen bg-[#faf8f5] py-12">
-            <div className="mx-auto max-w-7xl px-6">
-              <div className="mb-8">
-                <h1 className="mb-2 font-serif text-4xl font-light text-[#1a1a1a]">
-                  Ödeme
-                </h1>
-                <p className="text-[#666]">Siparişinizi tamamlamak için bilgilerinizi kontrol edin</p>
-              </div>
-              <div className="grid gap-8 lg:grid-cols-3">
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6 h-64" />
-                  <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6 h-48" />
-                </div>
-                <div className="lg:col-span-1">
-                  <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6 h-96" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Login Modal Overlay */}
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl"
-          >
-            <div className="mb-6 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#0f3f44]/10">
-                <Lock className="h-8 w-8 text-[#0f3f44]" />
-              </div>
-              <h2 className="mb-2 font-serif text-2xl font-light text-[#1a1a1a]">
-                Giriş Yapın
-              </h2>
-              <p className="text-sm text-[#666]">
-                Ödeme işlemine devam etmek için hesabınıza giriş yapmalısınız
-              </p>
-            </div>
-
-            <SignInButton
-              mode="modal"
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  card: "rounded-2xl shadow-2xl",
-                  socialButtonsBlockButton: "border border-[#e8e6e3] hover:bg-[#faf8f5]",
-                  formButtonPrimary: "bg-[#0f3f44] hover:bg-[#0a2a2e]",
-                  footerActionLink: "text-[#0f3f44]",
-                }
-              }}
-            >
-              <button className="flex w-full items-center justify-center gap-2 rounded-full bg-[#0f3f44] px-6 py-4 text-base font-semibold text-white transition-all hover:bg-[#0a2a2e]">
-                <Lock className="h-5 w-5" />
-                Giriş Yap veya Hesap Oluştur
-              </button>
-            </SignInButton>
-
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => router.push('/')}
-                className="text-sm text-[#666] hover:text-[#0f3f44] hover:underline"
-              >
-                ← Alışverişe devam et
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
+  // Guest checkout is allowed; no login modal
 
   if (items.length === 0) {
     return (
@@ -374,16 +319,83 @@ export default function CheckoutPage() {
                     Teslimat Adresi
                   </h2>
                 </div>
-                <button
-                  onClick={() => setShowAddressForm(true)}
-                  className="flex items-center gap-2 text-sm font-medium text-[#0f3f44] hover:underline"
-                >
-                  <Plus className="h-4 w-4" />
-                  Yeni Adres
-                </button>
+                {!isGuest && (
+                  <button
+                    onClick={() => setShowAddressForm(true)}
+                    className="flex items-center gap-2 text-sm font-medium text-[#0f3f44] hover:underline"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Yeni Adres
+                  </button>
+                )}
               </div>
 
-              {loading ? (
+              {isGuest ? (
+                <div className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <input
+                      type="text"
+                      value={guestFirstName}
+                      onChange={(e) => setGuestFirstName(e.target.value)}
+                      placeholder="Ad"
+                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                    />
+                    <input
+                      type="text"
+                      value={guestLastName}
+                      onChange={(e) => setGuestLastName(e.target.value)}
+                      placeholder="Soyad"
+                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                    />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <input
+                      type="email"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      placeholder="E-posta"
+                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                    />
+                    <input
+                      type="tel"
+                      value={guestPhone}
+                      onChange={(e) => setGuestPhone(e.target.value)}
+                      placeholder="Telefon"
+                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                    />
+                  </div>
+                  <textarea
+                    value={guestAddress}
+                    onChange={(e) => setGuestAddress(e.target.value)}
+                    placeholder="Adres"
+                    rows={3}
+                    className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                  />
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <input
+                      type="text"
+                      value={guestDistrict}
+                      onChange={(e) => setGuestDistrict(e.target.value)}
+                      placeholder="İlçe"
+                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                    />
+                    <input
+                      type="text"
+                      value={guestCity}
+                      onChange={(e) => setGuestCity(e.target.value)}
+                      placeholder="Şehir"
+                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                    />
+                    <input
+                      type="text"
+                      value={guestPostalCode}
+                      onChange={(e) => setGuestPostalCode(e.target.value)}
+                      placeholder="Posta Kodu"
+                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                    />
+                  </div>
+                </div>
+              ) : loading ? (
                 <div className="py-8 text-center text-[#666]">Yükleniyor...</div>
               ) : addresses.length === 0 ? (
                 <div className="rounded-xl border-2 border-dashed border-[#e8e6e3] bg-[#faf8f5] p-8 text-center">

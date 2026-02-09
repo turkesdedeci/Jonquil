@@ -28,10 +28,6 @@ export async function GET(request: NextRequest) {
 
     const { userId } = await auth();
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Giriş yapmanız gerekiyor' }, { status: 401 });
-    }
-
     if (!supabase) {
       return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
     }
@@ -85,13 +81,14 @@ export async function POST(request: NextRequest) {
       order_note,
       items,
       customer,
+      shipping_address,
     } = body;
 
     // Sanitize order note
     const sanitizedOrderNote = order_note ? sanitizeString(order_note).slice(0, 1000) : null;
 
     // Validation
-    if (!shipping_address_id || !items || items.length === 0) {
+    if ((!shipping_address_id && !shipping_address) || !items || items.length === 0) {
       return NextResponse.json(
         { error: 'Eksik bilgi: Adres ve ürün gerekli' },
         { status: 400 }
@@ -115,16 +112,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch address for shipping/customer details
-    const { data: address, error: addressError } = await supabase
-      .from('addresses')
-      .select('*')
-      .eq('id', shipping_address_id)
-      .eq('user_id', userId)
-      .single();
+    // For guest checkout, require customer basics
+    if (!userId) {
+      if (!customer?.first_name || !customer?.last_name || !customer?.email || !customer?.phone) {
+        return NextResponse.json({ error: 'Misafir bilgileri gerekli' }, { status: 400 });
+      }
+      if (!shipping_address?.address_line || !shipping_address?.city) {
+        return NextResponse.json({ error: 'Misafir adres bilgileri gerekli' }, { status: 400 });
+      }
+    }
 
-    if (addressError || !address) {
-      return NextResponse.json({ error: 'Adres bulunamadı' }, { status: 404 });
+    // Fetch address for logged-in users
+    let address: any = null;
+    if (userId && shipping_address_id) {
+      const { data: addr, error: addressError } = await supabase
+        .from('addresses')
+        .select('*')
+        .eq('id', shipping_address_id)
+        .eq('user_id', userId)
+        .single();
+
+      if (addressError || !addr) {
+        return NextResponse.json({ error: 'Adres bulunamadı' }, { status: 404 });
+      }
+      address = addr;
     }
 
     // Build lookup for server-side validation
@@ -193,22 +204,22 @@ export async function POST(request: NextRequest) {
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
-        user_id: userId,
+        user_id: userId || null,
         order_number: orderNumber,
         status: payment_method === 'bank' ? 'pending' : 'processing',
         subtotal: serverSubtotal,
         shipping_cost: shippingCost,
         total_amount: totalAmount,
-        shipping_address_id,
+        shipping_address_id: userId ? shipping_address_id : null,
         order_note: sanitizedOrderNote,
-        customer_first_name: sanitizeString(customer?.first_name || address.full_name.split(' ')[0] || '').slice(0, 100),
-        customer_last_name: sanitizeString(customer?.last_name || address.full_name.split(' ').slice(1).join(' ') || '').slice(0, 100),
+        customer_first_name: sanitizeString(customer?.first_name || address?.full_name?.split(' ')[0] || '').slice(0, 100),
+        customer_last_name: sanitizeString(customer?.last_name || address?.full_name?.split(' ').slice(1).join(' ') || '').slice(0, 100),
         customer_email: sanitizeString(customer?.email || '').slice(0, 255),
-        customer_phone: sanitizeString(customer?.phone || address.phone || '').slice(0, 30),
-        shipping_address: address.address_line,
-        shipping_city: address.city,
-        shipping_district: address.district,
-        shipping_zip_code: address.postal_code,
+        customer_phone: sanitizeString(customer?.phone || address?.phone || '').slice(0, 30),
+        shipping_address: userId ? address?.address_line : sanitizeString(shipping_address?.address_line || '').slice(0, 500),
+        shipping_city: userId ? address?.city : sanitizeString(shipping_address?.city || '').slice(0, 100),
+        shipping_district: userId ? address?.district : sanitizeString(shipping_address?.district || '').slice(0, 100),
+        shipping_zip_code: userId ? address?.postal_code : sanitizeString(shipping_address?.postal_code || '').slice(0, 10),
       })
       .select()
       .single();
