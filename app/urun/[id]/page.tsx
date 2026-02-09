@@ -36,6 +36,7 @@ async function getIdFromHeaders(): Promise<string | undefined> {
   try {
     const h = await headers();
     const candidates = [
+      h.get('x-debug-product-id'),
       h.get('x-original-url'),
       h.get('x-vercel-original-url'),
       h.get('x-forwarded-uri'),
