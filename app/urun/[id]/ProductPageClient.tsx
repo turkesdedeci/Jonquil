@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
@@ -85,6 +85,10 @@ export default function ProductPageClient({
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(true);
   const [isSpecsOpen, setIsSpecsOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [zoomIndex, setZoomIndex] = useState(0);
+  const storyRef = useRef<HTMLDivElement>(null);
+  const [storyWidth, setStoryWidth] = useState(0);
 
   // Check stock status
   const inStock = isInStock(product.id);
@@ -115,6 +119,30 @@ export default function ProductPageClient({
     setActiveImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () =>
     setActiveImageIndex((prev) => (prev - 1 + images.length) % images.length);
+
+  useEffect(() => {
+    const updateWidth = () => setStoryWidth(storyRef.current?.clientWidth || 0);
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  useEffect(() => {
+    if (storyRef.current && storyWidth > 0) {
+      storyRef.current.scrollTo({
+        left: activeImageIndex * storyWidth,
+        behavior: 'smooth',
+      });
+    }
+  }, [activeImageIndex, storyWidth]);
+
+  const handleStoryScroll = () => {
+    if (!storyRef.current || !storyWidth) return;
+    const idx = Math.round(storyRef.current.scrollLeft / storyWidth);
+    if (idx !== activeImageIndex) {
+      setActiveImageIndex(Math.max(0, Math.min(images.length - 1, idx)));
+    }
+  };
 
   // Add to cart handler
   const handleAddToCart = () => {
@@ -174,24 +202,76 @@ export default function ProductPageClient({
           <div className="grid gap-6 lg:gap-12 lg:grid-cols-2">
             {/* LEFT: Image Gallery */}
             <div className="min-w-0 space-y-3 sm:space-y-4">
+              {/* Mobile Story-style Gallery */}
+              {images.length > 0 && (
+                <div className="sm:hidden">
+                  <div
+                    ref={storyRef}
+                    onScroll={handleStoryScroll}
+                    className="flex snap-x snap-mandatory overflow-x-auto rounded-2xl bg-[#faf8f5]"
+                  >
+                    {images.map((img: string, idx: number) => (
+                      <button
+                        key={`story-${idx}`}
+                        onClick={() => {
+                          setZoomIndex(idx);
+                          setIsZoomOpen(true);
+                        }}
+                        className="relative aspect-square min-w-full snap-center"
+                      >
+                        <Image
+                          src={img}
+                          alt={product.title}
+                          fill
+                          sizes="100vw"
+                          className="object-cover"
+                          loading={idx === 0 ? 'eager' : 'lazy'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  {images.length > 1 && (
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      {images.map((_, idx) => (
+                        <span
+                          key={`dot-${idx}`}
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            idx === activeImageIndex ? 'bg-[#0f3f44]' : 'bg-[#d9d6d1]'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Main Image */}
               <motion.div
-                className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#faf8f5] sm:rounded-3xl"
+                className="relative hidden aspect-square w-full overflow-hidden rounded-2xl bg-[#faf8f5] sm:block sm:rounded-3xl"
                 layoutId={`product-${product.id}`}
               >
                 {images.map((img: string, idx: number) => (
-                  <Image
+                  <button
                     key={`${selectedVariantIndex}-${idx}`}
-                    src={img}
-                    alt={product.title}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    className={`object-cover transition-opacity duration-300 ${
+                    onClick={() => {
+                      setZoomIndex(idx);
+                      setIsZoomOpen(true);
+                    }}
+                    className={`absolute inset-0 transition-opacity duration-300 ${
                       idx === activeImageIndex ? 'opacity-100' : 'opacity-0'
                     }`}
-                    priority={idx === 0}
-                    loading={idx === 0 ? 'eager' : 'lazy'}
-                  />
+                    aria-label="Görseli büyüt"
+                  >
+                    <Image
+                      src={img}
+                      alt={product.title}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      className="object-cover"
+                      priority={idx === 0}
+                      loading={idx === 0 ? 'eager' : 'lazy'}
+                    />
+                  </button>
                 ))}
 
                 {/* Image Navigation Arrows */}
@@ -222,7 +302,7 @@ export default function ProductPageClient({
 
               {/* Thumbnail Gallery */}
               {images.length > 1 && (
-                <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:gap-3 sm:px-0">
+                <div className="hidden -mx-4 gap-2 overflow-x-auto px-4 pb-2 sm:flex sm:mx-0 sm:gap-3 sm:px-0">
                   {images.map((img: string, index: number) => (
                     <button
                       key={index}
@@ -580,6 +660,44 @@ export default function ProductPageClient({
 
       {/* Recently Viewed Products */}
       <RecentlyViewed currentProductId={product.id} />
+
+      {/* Image Zoom Modal */}
+      <AnimatePresence>
+        {isZoomOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+              onClick={() => setIsZoomOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="relative h-[80vh] w-full max-w-4xl overflow-hidden rounded-2xl bg-white">
+                <Image
+                  src={images[zoomIndex] || '/placeholder.jpg'}
+                  alt={product.title}
+                  fill
+                  sizes="100vw"
+                  className="object-contain"
+                />
+                <button
+                  onClick={() => setIsZoomOpen(false)}
+                  className="absolute right-3 top-3 rounded-full bg-black/70 px-3 py-2 text-xs font-semibold text-white"
+                >
+                  Kapat
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Footer */}
       <Footer />

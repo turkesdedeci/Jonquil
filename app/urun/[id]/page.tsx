@@ -189,24 +189,30 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const jsonLd = generateJsonLd(normalizedProduct);
   const allProductsServer = await getAllProductsServer();
 
-  // Get related products (same collection, different product)
+  // Related products: score by real similarity (collection + type + color + family)
   const relatedProducts = allProductsServer
-    .filter(
-      (p) =>
-        p.collection === normalizedProduct.collection &&
-        p.id !== normalizedProduct.id &&
-        p.productType === normalizedProduct.productType
-    )
-    .slice(0, 4) as ServerProduct[];
+    .filter((p) => p.id !== normalizedProduct.id)
+    .map((p) => {
+      let score = 0;
+      if (p.collection === normalizedProduct.collection) score += 3;
+      if (p.productType && p.productType === normalizedProduct.productType) score += 3;
+      if (p.color && p.color === normalizedProduct.color) score += 2;
+      if (p.family && p.family === normalizedProduct.family) score += 1;
+      return { product: p, score };
+    })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6)
+    .map((x) => x.product) as ServerProduct[];
 
-  // If not enough related products, add from same collection
+  // Fallback: same collection if similarity pool is small
   if (relatedProducts.length < 4) {
     const moreRelated = allProductsServer
       .filter(
         (p) =>
           p.collection === normalizedProduct.collection &&
           p.id !== normalizedProduct.id &&
-          !relatedProducts.some((r) => r.id === p.id) // Use .some() for checking existence
+          !relatedProducts.some((r) => r.id === p.id)
       )
       .slice(0, 4 - relatedProducts.length) as ServerProduct[];
     relatedProducts.push(...moreRelated);

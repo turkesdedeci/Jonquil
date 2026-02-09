@@ -239,6 +239,35 @@ export default function AdminPage() {
     }));
     return [...transformedDbProducts, ...allProducts];
   }, [dbProducts]);
+
+  const topSellingProducts = useMemo(() => {
+    const counts = new Map<string, { qty: number; revenue: number }>();
+    orders.forEach(order => {
+      (order.items || []).forEach(item => {
+        const current = counts.get(item.product_id) || { qty: 0, revenue: 0 };
+        const qty = item.quantity || 0;
+        const revenue = item.total_price || 0;
+        counts.set(item.product_id, { qty: current.qty + qty, revenue: current.revenue + revenue });
+      });
+    });
+    const productMap = new Map(allCombinedProducts.map(p => [p.id, p]));
+    return Array.from(counts.entries())
+      .map(([id, data]) => ({
+        id,
+        qty: data.qty,
+        revenue: data.revenue,
+        title: productMap.get(id)?.title || id,
+        collection: productMap.get(id)?.collection || '',
+      }))
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, 5);
+  }, [orders, allCombinedProducts]);
+
+  const outOfStockProducts = useMemo(() => {
+    return allCombinedProducts
+      .filter(p => stockStatus[p.id] === false)
+      .slice(0, 5);
+  }, [allCombinedProducts, stockStatus]);
   
   // Determine which fields to show based on product type
   const fieldVisibility = useMemo(() => {
@@ -988,6 +1017,46 @@ export default function AdminPage() {
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <p className="text-sm text-gray-500">Koleksiyonlar</p>
                 <p className="text-2xl font-bold text-purple-600">2</p>
+              </div>
+            </div>
+
+            {/* Ürün Uyarıları ve En Çok Satanlar */}
+            <div className="mb-6 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-900">En Çok Satanlar</p>
+                  <span className="text-xs text-gray-400">Son siparişlere göre</span>
+                </div>
+                {topSellingProducts.length === 0 ? (
+                  <p className="text-sm text-gray-500">Henüz satış yok</p>
+                ) : (
+                  <ul className="space-y-2 text-sm text-gray-700">
+                    {topSellingProducts.map((item) => (
+                      <li key={item.id} className="flex items-center justify-between">
+                        <span className="truncate">{item.title}</span>
+                        <span className="text-xs text-gray-500">{item.qty} adet</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-900">Tükenen Ürünler</p>
+                  <span className="text-xs text-gray-400">Stok dışı</span>
+                </div>
+                {outOfStockProducts.length === 0 ? (
+                  <p className="text-sm text-gray-500">Tükenen ürün yok</p>
+                ) : (
+                  <ul className="space-y-2 text-sm text-gray-700">
+                    {outOfStockProducts.map((item) => (
+                      <li key={item.id} className="flex items-center justify-between">
+                        <span className="truncate">{item.title}</span>
+                        <span className="text-xs text-red-500">Tükendi</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
 

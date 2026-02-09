@@ -386,6 +386,31 @@ export default function SiparisTakipPage() {
             </div>
           </div>
 
+          {/* Support Actions */}
+          <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+            <h3 className="mb-4 font-semibold text-neutral-900">Destek ve İade</h3>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/iletisim?type=return"
+                className="inline-flex items-center gap-2 rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm font-medium text-[#1a1a1a] hover:border-[#0f3f44]"
+              >
+                İade Talebi Başlat
+              </a>
+              <a
+                href="/iletisim"
+                className="inline-flex items-center gap-2 rounded-full bg-[#0f3f44] px-4 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e]"
+              >
+                Destek Al
+              </a>
+              <a
+                href="/teslimat-iade"
+                className="inline-flex items-center gap-2 rounded-full border border-[#e8e6e3] bg-white px-4 py-2 text-sm font-medium text-[#1a1a1a] hover:border-[#0f3f44]"
+              >
+                Teslimat & İade Koşulları
+              </a>
+            </div>
+          </div>
+
           {/* Help Section */}
           <div className="rounded-2xl border border-[#e8e6e3] bg-[#faf8f5] p-6 text-center">
             <p className="text-neutral-600">

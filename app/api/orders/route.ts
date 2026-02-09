@@ -66,10 +66,6 @@ export async function POST(request: NextRequest) {
 
     const { userId } = await auth();
 
-    if (!userId) {
-      return NextResponse.json({ error: 'Giriş yapmanız gerekiyor' }, { status: 401 });
-    }
-
     if (!supabase) {
       return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
     }

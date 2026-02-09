@@ -18,6 +18,38 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
   const [results, setResults] = useState<Product[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const normalizeText = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ı/g, 'i')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const levenshtein = (a: string, b: string) => {
+    if (a === b) return 0;
+    if (!a.length) return b.length;
+    if (!b.length) return a.length;
+    const matrix = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+    for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+    for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
+        );
+      }
+    }
+    return matrix[a.length][b.length];
+  };
   const normalizeImageSrc = (src?: string) => {
     if (!src) return '';
     if (src.startsWith('http://') || src.startsWith('https://')) return src;
@@ -43,9 +75,9 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
       return;
     }
 
-    const searchTerm = query.toLowerCase().trim();
+    const searchTerm = normalizeText(query);
     const filtered = allProducts.filter(product => {
-      const searchableText = [
+      const searchableText = normalizeText([
         product.title,
         product.subtitle,
         product.collection,
@@ -54,9 +86,17 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
         product.color,
         product.material,
         ...(product.tags || [])
-      ].join(' ').toLowerCase();
+      ].join(' '));
 
-      return searchableText.includes(searchTerm);
+      if (searchableText.includes(searchTerm)) return true;
+
+      const tokens = searchableText.split(' ');
+      return tokens.some(token => {
+        if (!token) return false;
+        if (token.startsWith(searchTerm)) return true;
+        if (searchTerm.length <= 3) return false;
+        return levenshtein(token, searchTerm) <= 2;
+      });
     });
 
     // Limit to 10 results

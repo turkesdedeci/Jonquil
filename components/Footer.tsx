@@ -72,6 +72,7 @@ export default function Footer() {
               <li><Link href="/siparis-takip" className="hover:text-[#0f3f44]">Sipariş Takip</Link></li>
               <li><Link href="/teslimat-iade" className="hover:text-[#0f3f44]">Teslimat ve İade</Link></li>
               <li><Link href="/iletisim" className="hover:text-[#0f3f44]">Sıkça Sorulan Sorular</Link></li>
+              <li><Link href="/iletisim?type=bug" className="hover:text-[#0f3f44]">Sorun Bildir</Link></li>
               <li>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4" aria-hidden="true" />
