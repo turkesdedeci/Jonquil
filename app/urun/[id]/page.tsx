@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer, getProductByIdServer, ServerProduct } from '@/lib/products-server';
 import ProductPageClient from './ProductPageClient';
@@ -54,9 +55,15 @@ function normalizeProduct(product: ServerProduct): Product {
 }
 
 // Generate metadata for SEO
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   console.log(`[generateMetadata] Params received: ${JSON.stringify(params)}`);
-  const { id } = params;
+  const headerId = headers().get('x-product-id') || undefined;
+  const queryId = typeof searchParams?.id === 'string'
+    ? searchParams.id
+    : Array.isArray(searchParams?.id)
+      ? searchParams?.id[0]
+      : undefined;
+  const id = params?.id || queryId || headerId;
   if (!id) {
     console.error('[generateMetadata] ID is undefined, cannot generate metadata.');
     return {
@@ -150,7 +157,13 @@ function generateJsonLd(product: Product) {
 
 export default async function ProductPage({ params, searchParams }: Props) {
   const debugMode = searchParams?.debug === '1';
-  const { id } = params;
+  const headerId = headers().get('x-product-id') || undefined;
+  const queryId = typeof searchParams?.id === 'string'
+    ? searchParams.id
+    : Array.isArray(searchParams?.id)
+      ? searchParams?.id[0]
+      : undefined;
+  const id = params?.id || queryId || headerId;
   console.log(`[ProductPage] Initial ID from params: ${id}`);
   
   if (!id) {
