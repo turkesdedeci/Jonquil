@@ -96,6 +96,7 @@ export default function AdminPage() {
   const [stockStatus, setStockStatus] = useState<Record<string, boolean>>({});
   const [stockDetails, setStockDetails] = useState<Record<string, { in_stock: boolean; stock_quantity: number | null; low_stock_threshold: number | null }>>({});
   const [productOverrides, setProductOverrides] = useState<Record<string, any>>({});
+  const [stockEdits, setStockEdits] = useState<Record<string, { stock_quantity: number; low_stock_threshold: number }>>({});
   const [updatingStock, setUpdatingStock] = useState<string | null>(null);
   const [stockTableExists, setStockTableExists] = useState(true);
   const [settingUpTable, setSettingUpTable] = useState(false);
@@ -552,6 +553,47 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Stok durumu güncellenirken hata:', error);
+    } finally {
+      setUpdatingStock(null);
+    }
+  };
+
+  const updateStockDetails = async (productId: string) => {
+    const current = stockDetails[productId];
+    const editValues = stockEdits[productId] || {
+      stock_quantity: current?.stock_quantity ?? 0,
+      low_stock_threshold: current?.low_stock_threshold ?? 5,
+    };
+
+    setUpdatingStock(productId);
+    try {
+      const res = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId,
+          stockQuantity: Number.isFinite(Number(editValues.stock_quantity)) ? Number(editValues.stock_quantity) : 0,
+          lowStockThreshold: Number.isFinite(Number(editValues.low_stock_threshold)) ? Number(editValues.low_stock_threshold) : 5,
+        }),
+      });
+
+      if (res.ok) {
+        setStockDetails(prev => ({
+          ...prev,
+          [productId]: {
+            in_stock: prev[productId]?.in_stock ?? (stockStatus[productId] !== false),
+            stock_quantity: editValues.stock_quantity,
+            low_stock_threshold: editValues.low_stock_threshold,
+          }
+        }));
+        setStockEdits(prev => {
+          const next = { ...prev };
+          delete next[productId];
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error('Stok bilgisi güncellenirken hata:', error);
     } finally {
       setUpdatingStock(null);
     }
@@ -1154,6 +1196,10 @@ export default function AdminPage() {
                   && stockQuantity > 0
                   && stockQuantity <= lowStockThreshold;
                 const isUpdating = updatingStock === product.id;
+                const editValues = stockEdits[product.id] || {
+                  stock_quantity: stockQuantity ?? 0,
+                  low_stock_threshold: lowStockThreshold ?? 5,
+                };
                 const imageSrc = normalizeImageSrc(product.images?.[0]);
 
                 return (
@@ -1231,6 +1277,46 @@ export default function AdminPage() {
                       </div>
                       <div className="mt-2 text-xs text-gray-500">
                         Stok: {stockQuantity ?? 0} · Eşik: {lowStockThreshold ?? 5}
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          value={editValues.stock_quantity}
+                          onChange={(e) => setStockEdits(prev => ({
+                            ...prev,
+                            [product.id]: {
+                              stock_quantity: Number.isFinite(Number(e.target.value)) ? Number(e.target.value) : 0,
+                              low_stock_threshold: editValues.low_stock_threshold,
+                            }
+                          }))}
+                          className="col-span-1 rounded-md border border-gray-200 px-2 py-1 text-xs focus:border-[#0f3f44] focus:outline-none"
+                          placeholder="Stok"
+                          aria-label="Stok miktarı"
+                        />
+                        <input
+                          type="number"
+                          min={0}
+                          value={editValues.low_stock_threshold}
+                          onChange={(e) => setStockEdits(prev => ({
+                            ...prev,
+                            [product.id]: {
+                              stock_quantity: editValues.stock_quantity,
+                              low_stock_threshold: Number.isFinite(Number(e.target.value)) ? Number(e.target.value) : 5,
+                            }
+                          }))}
+                          className="col-span-1 rounded-md border border-gray-200 px-2 py-1 text-xs focus:border-[#0f3f44] focus:outline-none"
+                          placeholder="Eşik"
+                          aria-label="Düşük stok eşiği"
+                        />
+                        <button
+                          onClick={() => updateStockDetails(product.id)}
+                          disabled={isUpdating}
+                          className="col-span-1 rounded-md bg-[#0f3f44] px-2 py-1 text-xs font-medium text-white hover:bg-[#0a2a2e] disabled:opacity-50"
+                        >
+                          Kaydet
+                        </button>
                       </div>
 
                       {/* Stok Toggle */}
