@@ -32,9 +32,9 @@ interface Props {
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
-function getIdFromHeaders(): string | undefined {
+async function getIdFromHeaders(): Promise<string | undefined> {
   try {
-    const h = headers();
+    const h = await headers();
     const candidates = [
       h.get('x-original-url'),
       h.get('x-vercel-original-url'),
@@ -87,7 +87,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     : Array.isArray(searchParams?.id)
       ? searchParams?.id[0]
       : undefined;
-  const id = params?.id || queryId || getIdFromHeaders();
+  const id = params?.id || queryId || await getIdFromHeaders();
   if (!id) {
     console.error('[generateMetadata] ID is undefined, cannot generate metadata.');
     return {
@@ -186,7 +186,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     : Array.isArray(searchParams?.id)
       ? searchParams?.id[0]
       : undefined;
-  const id = params?.id || queryId || getIdFromHeaders();
+  const id = params?.id || queryId || await getIdFromHeaders();
   console.log(`[ProductPage] Initial ID from params: ${id}`);
   
   if (!id) {

@@ -10,9 +10,9 @@ interface Props {
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
-function getIdFromHeaders(): string | undefined {
+async function getIdFromHeaders(): Promise<string | undefined> {
   try {
-    const h = headers();
+    const h = await headers();
     const candidates = [
       h.get('x-original-url'),
       h.get('x-vercel-original-url'),
@@ -41,13 +41,13 @@ export default async function UrunDebugPage({ params, searchParams }: Props) {
     : Array.isArray(searchParams?.id)
       ? searchParams?.id[0]
       : undefined;
-  const headerId = getIdFromHeaders();
+  const headerId = await getIdFromHeaders();
   const id = params?.id || queryId || headerId;
   const normalizedId = id && id !== 'undefined' ? id : null;
   let headerSnapshot: Record<string, string | null> = {};
   let headerError: string | null = null;
   try {
-    const h = headers();
+    const h = await headers();
     headerSnapshot = {
       'x-original-url': h.get('x-original-url'),
       'x-vercel-original-url': h.get('x-vercel-original-url'),
