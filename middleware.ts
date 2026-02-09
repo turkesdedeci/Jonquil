@@ -59,13 +59,27 @@ function applySecurityHeaders(response: NextResponse) {
 function buildNextResponse(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const productId = getProductIdFromPath(pathname);
+  const requestHeaders = new Headers(request.headers);
+
+  if (productId) {
+    requestHeaders.set('x-debug-middleware', '1');
+    requestHeaders.set('x-debug-product-id', productId);
+  }
   if (productId && !request.nextUrl.searchParams.get('id')) {
     const url = request.nextUrl.clone();
     url.searchParams.set('id', productId);
-    return NextResponse.rewrite(url);
+    return NextResponse.rewrite(url, {
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 // Simple middleware without Clerk

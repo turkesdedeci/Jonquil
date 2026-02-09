@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { getProductByIdServer } from '@/lib/products-server';
 
@@ -17,6 +18,22 @@ export default async function UrunDebugPage({ params, searchParams }: Props) {
       : undefined;
   const id = params?.id || queryId;
   const normalizedId = id && id !== 'undefined' ? id : null;
+  const requestHeaders = headers();
+  const headerSnapshot: Record<string, string> = {};
+  for (const [key, value] of requestHeaders.entries()) {
+    const lower = key.toLowerCase();
+    if (
+      lower.startsWith('x-forwarded-') ||
+      lower.startsWith('x-vercel-') ||
+      lower.startsWith('x-middleware-') ||
+      lower === 'x-original-url' ||
+      lower === 'x-product-id' ||
+      lower === 'x-debug-middleware' ||
+      lower === 'x-debug-product-id'
+    ) {
+      headerSnapshot[key] = value;
+    }
+  }
   const product = normalizedId ? await getProductByIdServer(normalizedId) : null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -54,6 +71,9 @@ export default async function UrunDebugPage({ params, searchParams }: Props) {
       <pre>{JSON.stringify({
         id,
         idSource: params?.id ? 'params' : (queryId ? 'query' : null),
+        params,
+        searchParams,
+        headerSnapshot,
         found: !!product,
         title: product?.title || null,
         env: {
