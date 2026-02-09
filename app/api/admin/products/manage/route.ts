@@ -267,7 +267,17 @@ CREATE POLICY "Allow service role all" ON product_overrides
   FOR ALL USING (auth.role() = 'service_role');`
           }, { status: 400 });
         }
-        return handleDatabaseError(overrideError);
+        return NextResponse.json(
+          {
+            error: 'Veritabanı hatası',
+            debug: {
+              message: overrideError.message,
+              code: overrideError.code,
+              details: (overrideError as any).details,
+            }
+          },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json({ success: true, override });
@@ -313,7 +323,23 @@ CREATE POLICY "Allow service role all" ON product_overrides
       .select();
 
     if (error) {
-      return handleDatabaseError(error);
+      if (error.message?.includes('does not exist') || error.code === '42P01') {
+        return NextResponse.json({
+          error: 'Products tablosu bulunamadı. Lütfen önce tabloyu oluşturun.',
+          hint: 'Admin panelinde "Ürün Yönetimi" sekmesinde tablo kurulum butonuna tıklayın.'
+        }, { status: 400 });
+      }
+      return NextResponse.json(
+        {
+          error: 'Veritabanı hatası',
+          debug: {
+            message: error.message,
+            code: error.code,
+            details: (error as any).details,
+          }
+        },
+        { status: 500 }
+      );
     }
 
     if (!product || product.length === 0) {
@@ -360,7 +386,17 @@ CREATE POLICY "Allow service role all" ON product_overrides
   FOR ALL USING (auth.role() = 'service_role');`
           }, { status: 400 });
         }
-        return handleDatabaseError(overrideError);
+        return NextResponse.json(
+          {
+            error: 'Veritabanı hatası',
+            debug: {
+              message: overrideError.message,
+              code: overrideError.code,
+              details: (overrideError as any).details,
+            }
+          },
+          { status: 500 }
+        );
       }
 
       return NextResponse.json({ success: true, override });
