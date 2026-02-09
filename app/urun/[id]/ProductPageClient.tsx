@@ -89,9 +89,6 @@ export default function ProductPageClient({
   const [zoomIndex, setZoomIndex] = useState(0);
   const storyRef = useRef<HTMLDivElement>(null);
   const [storyWidth, setStoryWidth] = useState(0);
-  const mainImageRef = useRef<HTMLDivElement>(null);
-  const [hoverZoom, setHoverZoom] = useState(false);
-  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
 
   // Check stock status
   const inStock = isInStock(product.id);
@@ -147,13 +144,6 @@ export default function ProductPageClient({
     }
   };
 
-  const handleZoomMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!mainImageRef.current) return;
-    const rect = mainImageRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
-    setZoomPos({ x, y });
-  };
 
   // Add to cart handler
   const handleAddToCart = () => {
@@ -258,10 +248,6 @@ export default function ProductPageClient({
 
               {/* Main Image */}
               <motion.div
-                ref={mainImageRef}
-                onMouseEnter={() => setHoverZoom(true)}
-                onMouseLeave={() => setHoverZoom(false)}
-                onMouseMove={handleZoomMove}
                 className="relative hidden aspect-square w-full overflow-hidden rounded-2xl bg-[#faf8f5] sm:block sm:rounded-3xl cursor-zoom-in"
                 layoutId={`product-${product.id}`}
               >
@@ -289,21 +275,6 @@ export default function ProductPageClient({
                   </button>
                 ))}
 
-                {/* Hover Zoom Lens */}
-                {hoverZoom && images[activeImageIndex] && (
-                  <div
-                    className="pointer-events-none absolute h-40 w-40 rounded-full border border-white/70 shadow-xl"
-                    style={{
-                      left: `calc(${zoomPos.x * 100}% - 80px)`,
-                      top: `calc(${zoomPos.y * 100}% - 80px)`,
-                      backgroundImage: `url(${images[activeImageIndex]})`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundSize: '220% 220%',
-                      backgroundPosition: `${zoomPos.x * 100}% ${zoomPos.y * 100}%`,
-                      backdropFilter: 'blur(1px)',
-                    }}
-                  />
-                )}
 
                 {/* Image Navigation Arrows */}
                 {images.length > 1 && (
