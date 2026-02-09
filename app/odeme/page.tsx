@@ -121,9 +121,12 @@ export default function CheckoutPage() {
           unit_price: parseFloat(item.price.replace(/[^0-9]/g, '')),
           total_price: parseFloat(item.price.replace(/[^0-9]/g, '')) * item.quantity,
         })),
-        subtotal: totalPrice,
-        shipping_cost: shippingCost,
-        total_amount: grandTotal,
+        customer: {
+          first_name: user?.firstName,
+          last_name: user?.lastName,
+          email: user?.emailAddresses?.[0]?.emailAddress,
+          phone: selectedAddress?.phone,
+        },
       };
 
       // Önce siparişi oluştur

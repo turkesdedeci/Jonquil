@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
+import { getAllProductsServer } from '@/lib/products-server';
 import {
   checkRateLimit,
   getClientIP,
@@ -83,9 +84,7 @@ export async function POST(request: NextRequest) {
       payment_method,
       order_note,
       items,
-      subtotal,
-      shipping_cost,
-      total_amount,
+      customer,
     } = body;
 
     // Sanitize order note
@@ -116,6 +115,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch address for shipping/customer details
+    const { data: address, error: addressError } = await supabase
+      .from('addresses')
+      .select('*')
+      .eq('id', shipping_address_id)
+      .eq('user_id', userId)
+      .single();
+
+    if (addressError || !address) {
+      return NextResponse.json({ error: 'Adres bulunamadı' }, { status: 404 });
+    }
+
+    // Build lookup for server-side validation
+    const allProducts = await getAllProductsServer();
+    const productById = new Map(allProducts.map(p => [p.id, p]));
+
     // Check stock status for all items
     const productIds = items.map((item: any) => item.product_id);
     const { data: stockData } = await supabase
@@ -130,9 +145,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Check if any item is out of stock
-    const outOfStockItems = items.filter((item: any) =>
-      stockStatus[item.product_id] === false
-    );
+    const outOfStockItems = items.filter((item: any) => {
+      const stockTableStatus = stockStatus[item.product_id];
+      const product = productById.get(item.product_id);
+      const productInStock = product ? product.inStock !== false : true;
+      return stockTableStatus === false || !productInStock;
+    });
 
     if (outOfStockItems.length > 0) {
       const outOfStockNames = outOfStockItems.map((item: any) => item.product_title).join(', ');
@@ -141,6 +159,32 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Server-side price validation
+    let serverSubtotal = 0;
+    const normalizedItems = items.map((item: any) => {
+      const product = productById.get(item.product_id);
+      if (!product) {
+        throw new Error(`Ürün bulunamadı: ${item.product_id}`);
+      }
+      const quantity = parseInt(item.quantity) || 1;
+      const priceMatch = product.price.match(/[\d.]+/);
+      const unitPrice = priceMatch ? parseFloat(priceMatch[0]) : 0;
+      const totalPrice = unitPrice * quantity;
+      serverSubtotal += totalPrice;
+      return {
+        product_id: product.id,
+        product_title: product.title,
+        product_subtitle: product.subtitle,
+        product_image: product.images?.[0] || null,
+        quantity,
+        unit_price: unitPrice,
+        total_price: totalPrice,
+      };
+    });
+
+    const shippingCost = serverSubtotal >= 500 ? 0 : 49.9;
+    const totalAmount = serverSubtotal + shippingCost;
 
     // Generate cryptographically secure order number
     const orderNumber = generateOrderNumber();
@@ -152,9 +196,19 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         order_number: orderNumber,
         status: payment_method === 'bank' ? 'pending' : 'processing',
-        total_amount,
+        subtotal: serverSubtotal,
+        shipping_cost: shippingCost,
+        total_amount: totalAmount,
         shipping_address_id,
         order_note: sanitizedOrderNote,
+        customer_first_name: sanitizeString(customer?.first_name || address.full_name.split(' ')[0] || '').slice(0, 100),
+        customer_last_name: sanitizeString(customer?.last_name || address.full_name.split(' ').slice(1).join(' ') || '').slice(0, 100),
+        customer_email: sanitizeString(customer?.email || '').slice(0, 255),
+        customer_phone: sanitizeString(customer?.phone || address.phone || '').slice(0, 30),
+        shipping_address: address.address_line,
+        shipping_city: address.city,
+        shipping_district: address.district,
+        shipping_zip_code: address.postal_code,
       })
       .select()
       .single();
@@ -162,15 +216,9 @@ export async function POST(request: NextRequest) {
     if (orderError) throw orderError;
 
     // Create order items
-    const orderItems = items.map((item: any) => ({
+    const orderItems = normalizedItems.map((item) => ({
       order_id: order.id,
-      product_id: item.product_id,
-      product_title: item.product_title,
-      product_subtitle: item.product_subtitle,
-      product_image: item.product_image,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      total_price: item.total_price,
+      ...item,
     }));
 
     const { error: itemsError } = await supabase
