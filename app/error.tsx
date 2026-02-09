@@ -31,6 +31,11 @@ export default function GlobalError({
             {error.message}
           </p>
         )}
+        {error.digest && (
+          <p className="mb-6 rounded-lg bg-gray-100 p-3 text-left text-xs text-gray-500">
+            Hata Kodu: {error.digest}
+          </p>
+        )}
         <div className="flex gap-3">
           <button
             onClick={reset}
