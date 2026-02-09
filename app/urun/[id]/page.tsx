@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer, getProductByIdServer, ServerProduct } from '@/lib/products-server';
 import ProductPageClient from './ProductPageClient';
@@ -31,6 +32,31 @@ interface Props {
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
+function getIdFromHeaders(): string | undefined {
+  try {
+    const h = headers();
+    const candidates = [
+      h.get('x-original-url'),
+      h.get('x-vercel-original-url'),
+      h.get('x-forwarded-uri'),
+      h.get('x-forwarded-path'),
+      h.get('x-rewrite-url'),
+      h.get('x-middleware-rewrite'),
+    ].filter(Boolean) as string[];
+
+    for (const raw of candidates) {
+      const url = new URL(raw, 'https://example.com');
+      const fromQuery = url.searchParams.get('id');
+      if (fromQuery) return fromQuery;
+      const match = url.pathname.match(/^\/urun\/([^/]+)$/);
+      if (match?.[1]) return match[1];
+    }
+  } catch {
+    // ignore header parsing errors
+  }
+  return undefined;
+}
+
 // Helper to normalize product data from the server
 function normalizeProduct(product: ServerProduct): Product {
   return {
@@ -61,7 +87,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     : Array.isArray(searchParams?.id)
       ? searchParams?.id[0]
       : undefined;
-  const id = params?.id || queryId;
+  const id = params?.id || queryId || getIdFromHeaders();
   if (!id) {
     console.error('[generateMetadata] ID is undefined, cannot generate metadata.');
     return {
@@ -160,7 +186,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
     : Array.isArray(searchParams?.id)
       ? searchParams?.id[0]
       : undefined;
-  const id = params?.id || queryId;
+  const id = params?.id || queryId || getIdFromHeaders();
   console.log(`[ProductPage] Initial ID from params: ${id}`);
   
   if (!id) {

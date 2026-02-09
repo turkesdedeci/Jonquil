@@ -10,32 +10,54 @@ interface Props {
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
+function getIdFromHeaders(): string | undefined {
+  try {
+    const h = headers();
+    const candidates = [
+      h.get('x-original-url'),
+      h.get('x-vercel-original-url'),
+      h.get('x-forwarded-uri'),
+      h.get('x-forwarded-path'),
+      h.get('x-rewrite-url'),
+      h.get('x-middleware-rewrite'),
+    ].filter(Boolean) as string[];
+
+    for (const raw of candidates) {
+      const url = new URL(raw, 'https://example.com');
+      const fromQuery = url.searchParams.get('id');
+      if (fromQuery) return fromQuery;
+      const match = url.pathname.match(/^\/urun-debug\/([^/]+)$/);
+      if (match?.[1]) return match[1];
+    }
+  } catch {
+    // ignore header parsing errors
+  }
+  return undefined;
+}
+
 export default async function UrunDebugPage({ params, searchParams }: Props) {
   const queryId = typeof searchParams?.id === 'string'
     ? searchParams.id
     : Array.isArray(searchParams?.id)
       ? searchParams?.id[0]
       : undefined;
-  const id = params?.id || queryId;
+  const headerId = getIdFromHeaders();
+  const id = params?.id || queryId || headerId;
   const normalizedId = id && id !== 'undefined' ? id : null;
-  let headerSnapshot: Record<string, string> = {};
+  let headerSnapshot: Record<string, string | null> = {};
   let headerError: string | null = null;
   try {
-    const requestHeaders = headers();
-    for (const [key, value] of requestHeaders.entries()) {
-      const lower = key.toLowerCase();
-      if (
-        lower.startsWith('x-forwarded-') ||
-        lower.startsWith('x-vercel-') ||
-        lower.startsWith('x-middleware-') ||
-        lower === 'x-original-url' ||
-        lower === 'x-product-id' ||
-        lower === 'x-debug-middleware' ||
-        lower === 'x-debug-product-id'
-      ) {
-        headerSnapshot[key] = value;
-      }
-    }
+    const h = headers();
+    headerSnapshot = {
+      'x-original-url': h.get('x-original-url'),
+      'x-vercel-original-url': h.get('x-vercel-original-url'),
+      'x-forwarded-uri': h.get('x-forwarded-uri'),
+      'x-forwarded-path': h.get('x-forwarded-path'),
+      'x-rewrite-url': h.get('x-rewrite-url'),
+      'x-middleware-rewrite': h.get('x-middleware-rewrite'),
+      'x-debug-middleware': h.get('x-debug-middleware'),
+      'x-debug-product-id': h.get('x-debug-product-id'),
+    };
   } catch (err: any) {
     headerError = err?.message || 'headers() failed';
     headerSnapshot = {};
@@ -76,7 +98,7 @@ export default async function UrunDebugPage({ params, searchParams }: Props) {
       <h1>Urun Debug</h1>
       <pre>{JSON.stringify({
         id,
-        idSource: params?.id ? 'params' : (queryId ? 'query' : null),
+        idSource: params?.id ? 'params' : (queryId ? 'query' : (headerId ? 'header' : null)),
         params,
         searchParams,
         headerSnapshot,
