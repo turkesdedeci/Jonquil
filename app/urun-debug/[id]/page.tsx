@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { getProductByIdServer } from '@/lib/products-server';
 
@@ -7,11 +6,16 @@ export const revalidate = 0;
 
 interface Props {
   params: { id: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 }
 
-export default async function UrunDebugPage({ params }: Props) {
-  const headerId = headers().get('x-product-id') || undefined;
-  const id = params?.id || headerId;
+export default async function UrunDebugPage({ params, searchParams }: Props) {
+  const queryId = typeof searchParams?.id === 'string'
+    ? searchParams.id
+    : Array.isArray(searchParams?.id)
+      ? searchParams?.id[0]
+      : undefined;
+  const id = params?.id || queryId;
   const normalizedId = id && id !== 'undefined' ? id : null;
   const product = normalizedId ? await getProductByIdServer(normalizedId) : null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -49,7 +53,7 @@ export default async function UrunDebugPage({ params }: Props) {
       <h1>Urun Debug</h1>
       <pre>{JSON.stringify({
         id,
-        idSource: params?.id ? 'params' : (headerId ? 'header' : null),
+        idSource: params?.id ? 'params' : (queryId ? 'query' : null),
         found: !!product,
         title: product?.title || null,
         env: {
