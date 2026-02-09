@@ -310,11 +310,60 @@ CREATE POLICY "Allow service role all" ON product_overrides
       .from('products')
       .update(cleanData)
       .eq('id', id)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       return handleDatabaseError(error);
+    }
+
+    if (!product || product.length === 0) {
+      const cleanOverrideData = sanitizeOverrideData(updateData);
+      if (Object.keys(cleanOverrideData).length === 0) {
+        return NextResponse.json({ error: 'Güncelleme verisi gerekli' }, { status: 400 });
+      }
+
+      const { data: override, error: overrideError } = await supabase
+        .from('product_overrides')
+        .upsert({
+          product_id: id,
+          ...cleanOverrideData,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'product_id' })
+        .select()
+        .single();
+
+      if (overrideError) {
+        if (overrideError.message?.includes('does not exist') || overrideError.code === '42P01') {
+          return NextResponse.json({
+            error: "Overrides tablosu bulunamadı. Lütfen aşağıdaki SQL'i Supabase SQL Editor'de çalıştırın:",
+            sql: `CREATE TABLE IF NOT EXISTS product_overrides (
+  product_id TEXT PRIMARY KEY,
+  title VARCHAR(255),
+  subtitle VARCHAR(255),
+  price VARCHAR(50),
+  collection VARCHAR(100),
+  family VARCHAR(100),
+  product_type VARCHAR(100),
+  material VARCHAR(100),
+  color VARCHAR(100),
+  size VARCHAR(100),
+  capacity VARCHAR(100),
+  code VARCHAR(100),
+  usage VARCHAR(100),
+  set_single VARCHAR(50),
+  images TEXT[] DEFAULT '{}',
+  tags TEXT[] DEFAULT '{}',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE product_overrides ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role all" ON product_overrides
+  FOR ALL USING (auth.role() = 'service_role');`
+          }, { status: 400 });
+        }
+        return handleDatabaseError(overrideError);
+      }
+
+      return NextResponse.json({ success: true, override });
     }
 
     // Audit log: product updated
@@ -331,7 +380,7 @@ CREATE POLICY "Allow service role all" ON product_overrides
     revalidatePath('/urunler');
     revalidatePath(`/urun/${id}`);
 
-    return NextResponse.json({ success: true, product });
+    return NextResponse.json({ success: true, product: product[0] });
   } catch (error) {
     return safeErrorResponse(error, 'Ürün güncellenemedi');
   }
