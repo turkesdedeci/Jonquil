@@ -157,6 +157,7 @@ export default function CheckoutPage() {
               category: 'Porselen',
               material: item.material || 'Porselen',
               price: item.price,
+              quantity: item.quantity,
             })),
             buyer: {
               id: user?.id || `guest_${Date.now()}`,

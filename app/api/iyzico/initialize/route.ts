@@ -12,7 +12,8 @@ import {
 } from '@/lib/security';
 
 // Shipping cost configuration
-const SHIPPING_COST = 0; // Free shipping
+const SHIPPING_THRESHOLD = 500;
+const SHIPPING_FEE = 49.9;
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     // SERVER-SIDE PRICE VALIDATION
     // Calculate total from server-side product data (prevent price manipulation)
-    let serverCalculatedTotal = 0;
+    let serverCalculatedSubtotal = 0;
     const validatedBasketItems: BasketItem[] = [];
 
     for (const item of items) {
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
 
       const quantity = parseInt(item.quantity) || 1;
       const itemTotal = serverPrice * quantity;
-      serverCalculatedTotal += itemTotal;
+      serverCalculatedSubtotal += itemTotal;
 
       // Use server-side price for basket items
       validatedBasketItems.push({
@@ -118,8 +119,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Add shipping cost
-    serverCalculatedTotal += SHIPPING_COST;
+    // Add shipping cost (match frontend rule)
+    const shippingCost = serverCalculatedSubtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+    const serverCalculatedTotal = serverCalculatedSubtotal + shippingCost;
 
     // Get client IP
     const headersList = await headers();
@@ -187,6 +189,8 @@ export async function POST(request: NextRequest) {
         token: result.token,
         tokenExpireTime: result.tokenExpireTime,
         // Return server-calculated total for display
+        serverSubtotal: serverCalculatedSubtotal,
+        serverShipping: shippingCost,
         serverTotal: serverCalculatedTotal,
       });
     } else {
