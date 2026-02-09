@@ -1,13 +1,23 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Send, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
 export default function ContactForm() {
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<Status>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [subject, setSubject] = useState('');
+
+  useEffect(() => {
+    const type = searchParams.get('type');
+    if (type === 'bug') {
+      setSubject('Hata Bildirimi');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,7 +29,7 @@ export default function ContactForm() {
       name: formData.get('name') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
-      subject: formData.get('subject') as string,
+      subject,
       message: formData.get('message') as string,
     };
 
@@ -38,6 +48,7 @@ export default function ContactForm() {
         setStatus('success');
         // Reset form
         (e.target as HTMLFormElement).reset();
+        setSubject(searchParams.get('type') === 'bug' ? 'Hata Bildirimi' : '');
       } else {
         setStatus('error');
         setErrorMessage(result.error || 'Bir hata oluştu');
@@ -129,6 +140,8 @@ export default function ContactForm() {
           name="subject"
           required
           disabled={status === 'loading'}
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
           className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none transition-colors focus:border-[#0f3f44] focus:ring-1 focus:ring-[#0f3f44] disabled:bg-neutral-100"
         >
           <option value="">Konu seçiniz</option>
@@ -136,6 +149,7 @@ export default function ContactForm() {
           <option value="İade/Değişim">İade/Değişim</option>
           <option value="Ürün Bilgisi">Ürün Bilgisi</option>
           <option value="Öneri/Şikayet">Öneri/Şikayet</option>
+          <option value="Hata Bildirimi">Hata Bildirimi</option>
           <option value="Diğer">Diğer</option>
         </select>
       </div>

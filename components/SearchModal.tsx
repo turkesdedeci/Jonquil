@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
@@ -16,6 +16,7 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
   const { products: allProducts } = useProducts();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
+  const [lastSearchMs, setLastSearchMs] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const normalizeText = (value: string) =>
@@ -57,6 +58,23 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
     return `/${src}`;
   };
 
+  const searchIndex = useMemo(() => {
+    return allProducts.map(product => {
+      const searchableText = normalizeText([
+        product.title,
+        product.subtitle,
+        product.collection,
+        product.family,
+        product.productType,
+        product.color,
+        product.material,
+        ...(product.tags || [])
+      ].join(' '));
+      const tokens = searchableText.split(' ').filter(Boolean);
+      return { product, searchableText, tokens };
+    });
+  }, [allProducts]);
+
   // Focus input when modal opens
   useEffect(() => {
     if (open && inputRef.current) {
@@ -72,36 +90,30 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
+      setLastSearchMs(null);
       return;
     }
 
     const searchTerm = normalizeText(query);
-    const filtered = allProducts.filter(product => {
-      const searchableText = normalizeText([
-        product.title,
-        product.subtitle,
-        product.collection,
-        product.family,
-        product.productType,
-        product.color,
-        product.material,
-        ...(product.tags || [])
-      ].join(' '));
+    const startTime = performance.now();
+    const filtered = searchIndex
+      .filter(({ searchableText, tokens }) => {
+        if (searchableText.includes(searchTerm)) return true;
 
-      if (searchableText.includes(searchTerm)) return true;
-
-      const tokens = searchableText.split(' ');
-      return tokens.some(token => {
-        if (!token) return false;
-        if (token.startsWith(searchTerm)) return true;
-        if (searchTerm.length <= 3) return false;
-        return levenshtein(token, searchTerm) <= 2;
-      });
-    });
+        return tokens.some(token => {
+          if (!token) return false;
+          if (token.startsWith(searchTerm)) return true;
+          if (searchTerm.length <= 3) return false;
+          return levenshtein(token, searchTerm) <= 2;
+        });
+      })
+      .map(({ product }) => product);
 
     // Limit to 10 results
+    const endTime = performance.now();
+    setLastSearchMs(Math.round(endTime - startTime));
     setResults(filtered.slice(0, 10));
-  }, [query, allProducts]);
+  }, [query, searchIndex]);
 
   // Handle keyboard
   useEffect(() => {
@@ -250,6 +262,11 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
                     {' '}kapatmak için
                   </span>
                 </div>
+                {lastSearchMs !== null && (
+                  <div className="mt-1 text-[11px] text-[#bbb]">
+                    Arama süresi: {lastSearchMs} ms
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

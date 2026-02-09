@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+﻿import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer, getProductByIdServer, ServerProduct } from '@/lib/products-server';
 import ProductPageClient from './ProductPageClient';
@@ -114,6 +114,12 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
         },
       ],
     },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [imageUrl],
+    },
   };
 }
 
@@ -191,13 +197,14 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
   // Related products: score by real similarity (collection + type + color + family)
   const relatedProducts = allProductsServer
-    .filter((p) => p.id !== normalizedProduct.id)
+    .filter((p) => p.id !== normalizedProduct.id && p.inStock !== false)
     .map((p) => {
       let score = 0;
-      if (p.collection === normalizedProduct.collection) score += 3;
+      if (p.collection === normalizedProduct.collection) score += 4;
       if (p.productType && p.productType === normalizedProduct.productType) score += 3;
       if (p.color && p.color === normalizedProduct.color) score += 2;
-      if (p.family && p.family === normalizedProduct.family) score += 1;
+      if (p.family && p.family === normalizedProduct.family) score += 2;
+      if (p.material && p.material === normalizedProduct.material) score += 1;
       return { product: p, score };
     })
     .filter((x) => x.score > 0)
@@ -212,6 +219,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
         (p) =>
           p.collection === normalizedProduct.collection &&
           p.id !== normalizedProduct.id &&
+          p.inStock !== false &&
           !relatedProducts.some((r) => r.id === p.id)
       )
       .slice(0, 4 - relatedProducts.length) as ServerProduct[];

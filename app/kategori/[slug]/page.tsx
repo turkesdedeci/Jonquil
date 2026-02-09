@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+﻿import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer } from '@/lib/products-server';
 import CategoryPageClient from './CategoryPageClient';
@@ -82,6 +82,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = categories[slug as CategorySlug];
   const title = `${category.name} | Jonquil - El Yapımı Türk Porseleni`;
   const description = category.description;
+  const imageUrl = '/images/og-default.jpg';
 
   return {
     title,
@@ -93,11 +94,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'website',
       locale: 'tr_TR',
       siteName: 'Jonquil',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [imageUrl],
     },
     alternates: {
       canonical: `https://jonquil.com.tr/kategori/${slug}`,

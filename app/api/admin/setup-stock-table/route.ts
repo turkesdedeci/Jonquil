@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { isAdmin } from '@/lib/adminCheck';
 
@@ -48,8 +48,14 @@ export async function POST() {
           id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
           product_id TEXT UNIQUE NOT NULL,
           in_stock BOOLEAN DEFAULT true,
+          stock_quantity INTEGER,
+          low_stock_threshold INTEGER DEFAULT 5,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         );
+        ALTER TABLE product_stock
+          ADD COLUMN IF NOT EXISTS stock_quantity INTEGER;
+        ALTER TABLE product_stock
+          ADD COLUMN IF NOT EXISTS low_stock_threshold INTEGER DEFAULT 5;
       `
     });
 
@@ -62,8 +68,14 @@ export async function POST() {
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   product_id TEXT UNIQUE NOT NULL,
   in_stock BOOLEAN DEFAULT true,
+  stock_quantity INTEGER,
+  low_stock_threshold INTEGER DEFAULT 5,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+ALTER TABLE product_stock
+  ADD COLUMN IF NOT EXISTS stock_quantity INTEGER;
+ALTER TABLE product_stock
+  ADD COLUMN IF NOT EXISTS low_stock_threshold INTEGER DEFAULT 5;
 
 -- RLS politikası (opsiyonel)
 ALTER TABLE product_stock ENABLE ROW LEVEL SECURITY;

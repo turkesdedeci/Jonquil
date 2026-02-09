@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import {
@@ -149,11 +149,22 @@ export default function SiparisTakipPage() {
       {/* Search Form */}
       {!order && (
         <div className="mx-auto max-w-md">
+          <div className="mb-4 rounded-lg border border-[#e8e6e3] bg-[#faf8f5] p-4 text-sm text-neutral-600">
+            Siparişinizi görüntülemek için sipariş numaranızı ve siparişte kullandığınız e-posta adresini giriniz.
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-[#e8e6e3] bg-white p-6 shadow-sm">
             {error && (
               <div className="flex items-center gap-3 rounded-lg bg-red-50 p-4 text-red-700">
                 <XCircle className="h-5 w-5 shrink-0" />
-                <p className="text-sm">{error}</p>
+                <div className="text-sm">
+                  <p>{error}</p>
+                  <a
+                    href="/iletisim?type=bug"
+                    className="mt-2 inline-flex items-center text-sm font-medium text-red-700 underline"
+                  >
+                    Destek ile iletişime geç
+                  </a>
+                </div>
               </div>
             )}
 

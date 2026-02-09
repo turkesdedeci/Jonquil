@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import {
@@ -39,6 +39,32 @@ function validateProduct(data: any): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUuid = (value: string) => uuidRegex.test(value);
+
+function sanitizeOverrideData(updateData: any): Record<string, unknown> {
+  const cleanData: Record<string, unknown> = {};
+  const stringFields = [
+    'title', 'subtitle', 'price', 'collection', 'family', 'product_type',
+    'material', 'color', 'size', 'capacity', 'code', 'usage', 'set_single'
+  ];
+  const allowedFields = new Set([...stringFields, 'images', 'tags']);
+
+  Object.entries(updateData).forEach(([key, value]) => {
+    if (value !== undefined && allowedFields.has(key)) {
+      if (stringFields.includes(key) && typeof value === 'string') {
+        cleanData[key] = sanitizeString(value).slice(0, 255);
+      } else if (key === 'tags' && Array.isArray(value)) {
+        cleanData[key] = value.map((t: string) => sanitizeString(t).slice(0, 50)).slice(0, 20);
+      } else if (key === 'images' && Array.isArray(value)) {
+        cleanData[key] = value.slice(0, 20);
+      }
+    }
+  });
+
+  return cleanData;
+}
+
 // GET - List all products from database
 export async function GET(request: NextRequest) {
   try {
@@ -68,7 +94,23 @@ export async function GET(request: NextRequest) {
       return handleDatabaseError(error);
     }
 
-    return NextResponse.json({ products: products || [], tableExists: true });
+    let overrides: any[] = [];
+    let overridesTableExists = true;
+    const { data: overrideData, error: overrideError } = await supabase
+      .from('product_overrides')
+      .select('*');
+
+    if (overrideError) {
+      if (overrideError.message?.includes('does not exist') || overrideError.code === '42P01') {
+        overridesTableExists = false;
+      } else {
+        return handleDatabaseError(overrideError);
+      }
+    } else {
+      overrides = overrideData || [];
+    }
+
+    return NextResponse.json({ products: products || [], overrides, tableExists: true, overridesTableExists });
   } catch (error) {
     return safeErrorResponse(error, 'Ürünler yüklenemedi');
   }
@@ -181,10 +223,54 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Ürün ID gerekli' }, { status: 400 });
     }
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(id)) {
-      return NextResponse.json({ error: 'Geçersiz ürün ID' }, { status: 400 });
+    if (!isUuid(id)) {
+      const cleanData = sanitizeOverrideData(updateData);
+      if (Object.keys(cleanData).length === 0) {
+        return NextResponse.json({ error: 'Güncelleme verisi gerekli' }, { status: 400 });
+      }
+
+      const { data: override, error: overrideError } = await supabase
+        .from('product_overrides')
+        .upsert({
+          product_id: id,
+          ...cleanData,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'product_id' })
+        .select()
+        .single();
+
+      if (overrideError) {
+        if (overrideError.message?.includes('does not exist') || overrideError.code === '42P01') {
+          return NextResponse.json({
+            error: "Overrides tablosu bulunamadı. Lütfen aşağıdaki SQL'i Supabase SQL Editor'de çalıştırın:",
+            sql: `CREATE TABLE IF NOT EXISTS product_overrides (
+  product_id TEXT PRIMARY KEY,
+  title VARCHAR(255),
+  subtitle VARCHAR(255),
+  price VARCHAR(50),
+  collection VARCHAR(100),
+  family VARCHAR(100),
+  product_type VARCHAR(100),
+  material VARCHAR(100),
+  color VARCHAR(100),
+  size VARCHAR(100),
+  capacity VARCHAR(100),
+  code VARCHAR(100),
+  usage VARCHAR(100),
+  set_single VARCHAR(50),
+  images TEXT[] DEFAULT '{}',
+  tags TEXT[] DEFAULT '{}',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE product_overrides ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role all" ON product_overrides
+  FOR ALL USING (auth.role() = 'service_role');`
+          }, { status: 400 });
+        }
+        return handleDatabaseError(overrideError);
+      }
+
+      return NextResponse.json({ success: true, override });
     }
 
     // Validate if title or price being updated
@@ -204,9 +290,10 @@ export async function PATCH(request: NextRequest) {
     const cleanData: Record<string, unknown> = {};
     const stringFields = ['title', 'subtitle', 'price', 'collection', 'family', 'product_type',
                           'material', 'color', 'size', 'capacity', 'code', 'usage', 'set_single'];
+    const allowedFields = new Set([...stringFields, 'tags', 'images', 'in_stock']);
 
     Object.entries(updateData).forEach(([key, value]) => {
-      if (value !== undefined) {
+      if (value !== undefined && allowedFields.has(key)) {
         if (stringFields.includes(key) && typeof value === 'string') {
           cleanData[key] = sanitizeString(value).slice(0, 255);
         } else if (key === 'tags' && Array.isArray(value)) {
@@ -273,10 +360,22 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Ürün ID gerekli' }, { status: 400 });
     }
 
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(id)) {
-      return NextResponse.json({ error: 'Geçersiz ürün ID' }, { status: 400 });
+    if (!isUuid(id)) {
+      const { error } = await supabase
+        .from('product_overrides')
+        .delete()
+        .eq('product_id', id);
+
+      if (error) {
+        if (error.message?.includes('does not exist') || error.code === '42P01') {
+          return NextResponse.json({
+            error: 'Overrides tablosu bulunamadı. Lütfen önce tabloyu oluşturun.'
+          }, { status: 400 });
+        }
+        return handleDatabaseError(error);
+      }
+
+      return NextResponse.json({ success: true });
     }
 
     const { error } = await supabase

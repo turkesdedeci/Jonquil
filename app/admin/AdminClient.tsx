@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useUser } from '@/hooks/useClerkUser';
@@ -36,7 +36,7 @@ import { allProducts } from '@/data/products';
 interface Order {
   id: string;
   order_number: string;
-  user_id: string;
+  user_id?: string | null;
   user_email?: string;
   customer_first_name?: string;
   customer_last_name?: string;
@@ -86,6 +86,7 @@ export default function AdminPage() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [orderCustomerFilter, setOrderCustomerFilter] = useState<'all' | 'guest' | 'registered'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [trackingModal, setTrackingModal] = useState<Order | null>(null);
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -93,6 +94,8 @@ export default function AdminPage() {
   const [productSearch, setProductSearch] = useState('');
   const [productFilter, setProductFilter] = useState('all');
   const [stockStatus, setStockStatus] = useState<Record<string, boolean>>({});
+  const [stockDetails, setStockDetails] = useState<Record<string, { in_stock: boolean; stock_quantity: number | null; low_stock_threshold: number | null }>>({});
+  const [productOverrides, setProductOverrides] = useState<Record<string, any>>({});
   const [updatingStock, setUpdatingStock] = useState<string | null>(null);
   const [stockTableExists, setStockTableExists] = useState(true);
   const [settingUpTable, setSettingUpTable] = useState(false);
@@ -121,7 +124,9 @@ export default function AdminPage() {
     capacity: '',
     code: '',
     images: [] as string[],
-    in_stock: true
+    in_stock: true,
+    stock_quantity: 0,
+    low_stock_threshold: 5
   });
 
   // Default empty product for reset
@@ -138,7 +143,9 @@ export default function AdminPage() {
     capacity: '',
     code: '',
     images: [] as string[],
-    in_stock: true
+    in_stock: true,
+    stock_quantity: 0,
+    low_stock_threshold: 5
   };
 
   const normalizeImageSrc = (src?: string) => {
@@ -230,15 +237,29 @@ export default function AdminPage() {
 
     // Ürün filtreleme - combine static and database products
   const allCombinedProducts = useMemo(() => {
+    const applyOverrides = (product: any) => {
+      const override = productOverrides[product.id];
+      if (!override) return product;
+      return {
+        ...product,
+        ...override,
+        productType: override.product_type || product.productType || product.product_type,
+        setSingle: override.set_single || product.setSingle || product.set_single,
+      };
+    };
+
     // Transform dbProducts to match allProducts format
-    const transformedDbProducts = dbProducts.map(p => ({
+    const transformedDbProducts = dbProducts.map(p => applyOverrides({
       ...p,
       productType: p.product_type,
       setSingle: p.set_single,
       isFromDatabase: true,
     }));
-    return [...transformedDbProducts, ...allProducts];
-  }, [dbProducts]);
+
+    const transformedStatic = allProducts.map(p => applyOverrides(p));
+
+    return [...transformedDbProducts, ...transformedStatic];
+  }, [dbProducts, productOverrides]);
 
   const topSellingProducts = useMemo(() => {
     const counts = new Map<string, { qty: number; revenue: number }>();
@@ -265,9 +286,9 @@ export default function AdminPage() {
 
   const outOfStockProducts = useMemo(() => {
     return allCombinedProducts
-      .filter(p => stockStatus[p.id] === false)
+      .filter(p => (stockDetails[p.id]?.in_stock ?? stockStatus[p.id]) === false)
       .slice(0, 5);
-  }, [allCombinedProducts, stockStatus]);
+  }, [allCombinedProducts, stockStatus, stockDetails]);
   
   // Determine which fields to show based on product type
   const fieldVisibility = useMemo(() => {
@@ -315,6 +336,11 @@ export default function AdminPage() {
       if (res.ok) {
         const data = await res.json();
         setDbProducts(data.products || []);
+        const overridesMap: Record<string, any> = {};
+        (data.overrides || []).forEach((item: any) => {
+          overridesMap[item.product_id] = item;
+        });
+        setProductOverrides(overridesMap);
       }
     } catch (error) {
       console.error('DB ürünleri yüklenirken hata:', error);
@@ -327,6 +353,7 @@ export default function AdminPage() {
       if (res.ok) {
         const data = await res.json();
         setStockStatus(data.stockStatus || {});
+        setStockDetails(data.stockDetails || {});
         setStockTableExists(data.tableExists !== false);
       }
     } catch (error) {
@@ -389,6 +416,25 @@ export default function AdminPage() {
           setDbProducts(prev => [data.product, ...prev]);
         }
 
+        const stockRes = await fetch('/api/admin/products', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: editingProductId || data.product?.id,
+            inStock: newProduct.in_stock !== false,
+            stockQuantity: Number.isFinite(Number(newProduct.stock_quantity)) ? Number(newProduct.stock_quantity) : 0,
+            lowStockThreshold: Number.isFinite(Number(newProduct.low_stock_threshold)) ? Number(newProduct.low_stock_threshold) : 5,
+          }),
+        });
+
+        if (!stockRes.ok) {
+          const stockData = await stockRes.json().catch(() => ({}));
+          setProductFormMessage({ type: 'error', text: stockData.error || 'Stok bilgisi kaydedilemedi' });
+        } else {
+          await loadDbProducts();
+          await loadStockStatus();
+        }
+
         setTimeout(() => {
           setShowProductModal(false);
           setProductFormMessage(null);
@@ -407,21 +453,25 @@ export default function AdminPage() {
 
   // Open edit modal with product data
   const openEditModal = (product: any) => {
+    const override = productOverrides[product.id] || {};
+    const stockInfo = stockDetails[product.id];
     setEditingProductId(product.id);
     setNewProduct({
-      title: product.title || '',
-      subtitle: product.subtitle || '',
-      price: product.price || '',
-      collection: product.collection || 'aslan',
-      family: product.family || '',
-      product_type: product.product_type || product.productType || '',
-      material: product.material || 'Porselen',
-      color: product.color || '',
-      size: product.size || '',
-      capacity: product.capacity || '',
-      code: product.code || '',
-      images: product.images || [],
-      in_stock: product.in_stock !== false
+      title: override.title || product.title || '',
+      subtitle: override.subtitle || product.subtitle || '',
+      price: override.price || product.price || '',
+      collection: override.collection || product.collection || 'aslan',
+      family: override.family || product.family || '',
+      product_type: override.product_type || product.product_type || product.productType || '',
+      material: override.material || product.material || 'Porselen',
+      color: override.color || product.color || '',
+      size: override.size || product.size || '',
+      capacity: override.capacity || product.capacity || '',
+      code: override.code || product.code || '',
+      images: override.images || product.images || [],
+      in_stock: stockInfo?.in_stock ?? product.in_stock !== false,
+      stock_quantity: stockInfo?.stock_quantity ?? 0,
+      low_stock_threshold: stockInfo?.low_stock_threshold ?? 5
     });
     setShowProductModal(true);
   };
@@ -478,7 +528,7 @@ export default function AdminPage() {
   };
 
   const toggleStockStatus = async (productId: string) => {
-    const currentStatus = stockStatus[productId] !== false; // Default true (in stock)
+    const currentStatus = (stockDetails[productId]?.in_stock ?? stockStatus[productId]) !== false; // Default true (in stock)
     const newStatus = !currentStatus;
 
     setUpdatingStock(productId);
@@ -491,6 +541,14 @@ export default function AdminPage() {
 
       if (res.ok) {
         setStockStatus(prev => ({ ...prev, [productId]: newStatus }));
+        setStockDetails(prev => ({
+          ...prev,
+          [productId]: {
+            in_stock: newStatus,
+            stock_quantity: prev[productId]?.stock_quantity ?? null,
+            low_stock_threshold: prev[productId]?.low_stock_threshold ?? null,
+          }
+        }));
       }
     } catch (error) {
       console.error('Stok durumu güncellenirken hata:', error);
@@ -554,14 +612,15 @@ export default function AdminPage() {
 
   const exportOrders = () => {
     const csv = [
-      ['Sipariş No', 'Tarih', 'Müşteri', 'Email', 'Durum', 'Toplam'].join(','),
+      ['Sipariş No', 'Tarih', 'Müşteri', 'Email', 'Durum', 'Toplam', 'Misafir'].join(','),
       ...filteredOrders.map(o => [
         o.order_number,
         new Date(o.created_at).toLocaleDateString('tr-TR'),
         `${o.customer_first_name || ''} ${o.customer_last_name || ''}`.trim(),
         o.user_email || '',
         statusConfig[o.status].label,
-        o.total_amount
+        o.total_amount,
+        !o.user_id ? 'Evet' : 'Hayır'
       ].join(','))
     ].join('\n');
 
@@ -632,6 +691,10 @@ export default function AdminPage() {
   // Filtreleme
   const filteredOrders = orders
     .filter(order => filter === 'all' || order.status === filter)
+    .filter(order =>
+      orderCustomerFilter === 'all' ||
+      (orderCustomerFilter === 'guest' ? !order.user_id : !!order.user_id)
+    )
     .filter(order =>
       searchTerm === '' ||
       order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -788,6 +851,18 @@ export default function AdminPage() {
                 />
               </div>
 
+              <div>
+                <select
+                  value={orderCustomerFilter}
+                  onChange={(e) => setOrderCustomerFilter(e.target.value as 'all' | 'guest' | 'registered')}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                >
+                  <option value="all">Tüm Müşteriler</option>
+                  <option value="guest">Sadece Misafir</option>
+                  <option value="registered">Sadece Üyeler</option>
+                </select>
+              </div>
+
               <div className="flex gap-2">
                 <button
                   onClick={loadOrders}
@@ -876,7 +951,14 @@ export default function AdminPage() {
                                 <p className="font-medium text-gray-900">
                                   {order.customer_first_name} {order.customer_last_name}
                                 </p>
-                                <p className="text-sm text-gray-500">{order.user_email}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm text-gray-500">{order.user_email}</p>
+                                  {!order.user_id && (
+                                    <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                                      Misafir
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </td>
                             <td className="whitespace-nowrap px-6 py-4">
@@ -1005,13 +1087,13 @@ export default function AdminPage() {
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <p className="text-sm text-gray-500">Stokta</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {allCombinedProducts.filter(p => stockStatus[p.id] !== false).length}
+                  {allCombinedProducts.filter(p => (stockDetails[p.id]?.in_stock ?? stockStatus[p.id]) !== false).length}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
                 <p className="text-sm text-gray-500">Tükendi</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {allCombinedProducts.filter(p => stockStatus[p.id] === false).length}
+                  {allCombinedProducts.filter(p => (stockDetails[p.id]?.in_stock ?? stockStatus[p.id]) === false).length}
                 </p>
               </div>
               <div className="rounded-xl border border-gray-200 bg-white p-4">
@@ -1063,7 +1145,14 @@ export default function AdminPage() {
             {/* Ürün Listesi */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredProducts.map((product) => {
-                const isInStock = stockStatus[product.id] !== false;
+                const stockInfo = stockDetails[product.id];
+                const isInStock = (stockInfo?.in_stock ?? stockStatus[product.id]) !== false;
+                const stockQuantity = stockInfo?.stock_quantity;
+                const lowStockThreshold = stockInfo?.low_stock_threshold;
+                const isLowStock = typeof stockQuantity === 'number'
+                  && typeof lowStockThreshold === 'number'
+                  && stockQuantity > 0
+                  && stockQuantity <= lowStockThreshold;
                 const isUpdating = updatingStock === product.id;
                 const imageSrc = normalizeImageSrc(product.images?.[0]);
 
@@ -1103,17 +1192,22 @@ export default function AdminPage() {
                             Tükendi
                           </span>
                         )}
+                        {isLowStock && isInStock && (
+                          <span className="rounded-full bg-yellow-500 px-2 py-1 text-xs font-medium text-white">
+                            Düşük Stok
+                          </span>
+                        )}
                       </div>
-                      {/* Edit/Delete buttons for DB products */}
-                      {product.isFromDatabase && (
-                        <div className="absolute right-2 top-2 flex gap-1">
-                          <button
-                            onClick={() => openEditModal(product)}
-                            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm hover:bg-white hover:text-blue-600"
-                            title="Düzenle"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
+                      {/* Edit/Delete buttons */}
+                      <div className="absolute right-2 top-2 flex gap-1">
+                        <button
+                          onClick={() => openEditModal(product)}
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm hover:bg-white hover:text-blue-600"
+                          title="Düzenle"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        {product.isFromDatabase && (
                           <button
                             onClick={() => setDeleteConfirmId(product.id)}
                             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-sm hover:bg-white hover:text-red-600"
@@ -1121,8 +1215,8 @@ export default function AdminPage() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                     <div className="p-4">
                       <p className={`font-medium line-clamp-1 ${isInStock ? 'text-gray-900' : 'text-gray-400'}`}>
@@ -1134,6 +1228,9 @@ export default function AdminPage() {
                           {product.price}
                         </span>
                         <span className="text-xs text-gray-400">{product.code}</span>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        Stok: {stockQuantity ?? 0} · Eşik: {lowStockThreshold ?? 5}
                       </div>
 
                       {/* Stok Toggle */}
@@ -1679,20 +1776,54 @@ export default function AdminPage() {
               </div>
 
               {/* In Stock Toggle */}
-              <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
-                <span className="text-sm font-medium text-gray-700">Stokta</span>
-                <button
-                  onClick={() => setNewProduct(prev => ({ ...prev, in_stock: !prev.in_stock }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    newProduct.in_stock ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                      newProduct.in_stock ? 'translate-x-6' : 'translate-x-1'
-                    }`}
+              <div className="grid gap-4 rounded-lg border border-gray-200 p-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Stok Miktarı
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newProduct.stock_quantity}
+                    onChange={(e) => setNewProduct(prev => ({
+                      ...prev,
+                      stock_quantity: Number.isFinite(Number(e.target.value)) ? Number(e.target.value) : 0
+                    }))}
+                    placeholder="Örn: 25"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
                   />
-                </button>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Düşük Stok Eşiği
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newProduct.low_stock_threshold}
+                    onChange={(e) => setNewProduct(prev => ({
+                      ...prev,
+                      low_stock_threshold: Number.isFinite(Number(e.target.value)) ? Number(e.target.value) : 5
+                    }))}
+                    placeholder="Örn: 5"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 sm:col-span-2">
+                  <span className="text-sm font-medium text-gray-700">Stokta</span>
+                  <button
+                    onClick={() => setNewProduct(prev => ({ ...prev, in_stock: !prev.in_stock }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      newProduct.in_stock ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                        newProduct.in_stock ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
 
               {/* Save Button */}

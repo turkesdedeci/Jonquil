@@ -83,7 +83,7 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
     try {
       const { data: stockData } = await supabase
         .from('product_stock')
-        .select('product_id, in_stock');
+        .select('product_id, in_stock, stock_quantity, low_stock_threshold');
 
       if (stockData) {
         stockData.forEach(item => {
@@ -95,15 +95,57 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
     }
   }
 
-  // Add stock status to static products
-  const staticWithStock: ServerProduct[] = staticProducts.map(product => ({
-    ...product,
-    inStock: stockStatus[product.id] !== false,
-    isFromDatabase: false,
-  }));
+  // Get product overrides (for static products)
+  let overrides: Record<string, any> = {};
+
+  if (supabase) {
+    try {
+      const { data: overrideData } = await supabase
+        .from('product_overrides')
+        .select('*');
+
+      if (overrideData) {
+        overrideData.forEach(item => {
+          overrides[item.product_id] = item;
+        });
+      }
+    } catch (err) {
+      // Overrides table might not exist yet
+    }
+  }
+
+  // Add stock status + overrides to static products
+  const staticWithStock: ServerProduct[] = staticProducts.map(product => {
+    const override = overrides[product.id];
+    const overrideProductType = override?.product_type ?? override?.productType;
+    const overrideSetSingle = override?.set_single ?? override?.setSingle;
+    const merged = { ...product, ...override };
+    return {
+      ...merged,
+      productType: overrideProductType ?? merged.productType,
+      setSingle: overrideSetSingle ?? merged.setSingle,
+      inStock: stockStatus[product.id] !== false,
+      isFromDatabase: false,
+    } as ServerProduct;
+  });
+
+  const dbWithOverrides: ServerProduct[] = dbProducts.map(product => {
+    const override = overrides[product.id];
+    const overrideProductType = override?.product_type ?? override?.productType;
+    const overrideSetSingle = override?.set_single ?? override?.setSingle;
+    const merged = { ...product, ...override } as any;
+    const stockOverride = stockStatus[product.id];
+    return {
+      ...merged,
+      productType: overrideProductType ?? merged.productType,
+      setSingle: overrideSetSingle ?? merged.setSingle,
+      inStock: stockOverride !== undefined ? stockOverride : merged.inStock !== false,
+      isFromDatabase: true,
+    } as ServerProduct;
+  });
 
   // Combine: database products first, then static products
-  return [...dbProducts, ...staticWithStock];
+  return [...dbWithOverrides, ...staticWithStock];
 }
 
 // Find a product by ID (server-side)

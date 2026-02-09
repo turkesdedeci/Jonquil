@@ -40,32 +40,38 @@ async function ensureTableExists() {
 // GET - Fetch all product stock statuses
 export async function GET() {
   if (!supabase) {
-    return NextResponse.json({ stockStatus: {}, tableExists: false });
+    return NextResponse.json({ stockStatus: {}, stockDetails: {}, tableExists: false });
   }
 
   try {
     const { data, error } = await supabase
       .from('product_stock')
-      .select('product_id, in_stock');
+      .select('product_id, in_stock, stock_quantity, low_stock_threshold');
 
     if (error) {
       // Table probably doesn't exist
       if (error.code === '42P01') {
-        return NextResponse.json({ stockStatus: {}, tableExists: false });
+        return NextResponse.json({ stockStatus: {}, stockDetails: {}, tableExists: false });
       }
       throw error;
     }
 
     // Convert to object for easy lookup
     const stockStatus: Record<string, boolean> = {};
+    const stockDetails: Record<string, { in_stock: boolean; stock_quantity: number | null; low_stock_threshold: number | null }> = {};
     data?.forEach(item => {
       stockStatus[item.product_id] = item.in_stock;
+      stockDetails[item.product_id] = {
+        in_stock: item.in_stock,
+        stock_quantity: item.stock_quantity ?? null,
+        low_stock_threshold: item.low_stock_threshold ?? null,
+      };
     });
 
-    return NextResponse.json({ stockStatus, tableExists: true });
+    return NextResponse.json({ stockStatus, stockDetails, tableExists: true });
   } catch (error) {
     console.error('Error fetching stock status:', error);
-    return NextResponse.json({ stockStatus: {}, tableExists: false });
+    return NextResponse.json({ stockStatus: {}, stockDetails: {}, tableExists: false });
   }
 }
 
@@ -84,9 +90,9 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const { productId, inStock } = await request.json();
+    const { productId, inStock, stockQuantity, lowStockThreshold } = await request.json();
 
-    if (!productId || typeof inStock !== 'boolean') {
+    if (!productId || (typeof inStock !== 'boolean' && typeof stockQuantity !== 'number' && typeof lowStockThreshold !== 'number')) {
       return NextResponse.json(
         { error: 'Geçersiz parametreler' },
         { status: 400 }
@@ -107,6 +113,8 @@ export async function PATCH(request: NextRequest) {
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   product_id TEXT UNIQUE NOT NULL,
   in_stock BOOLEAN DEFAULT true,
+  stock_quantity INTEGER,
+  low_stock_threshold INTEGER DEFAULT 5,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );`
         },
@@ -114,20 +122,30 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const updateData: Record<string, any> = {
+      product_id: productId,
+      updated_at: new Date().toISOString()
+    };
+    if (typeof inStock === 'boolean') {
+      updateData.in_stock = inStock;
+    }
+    if (typeof stockQuantity === 'number') {
+      updateData.stock_quantity = stockQuantity;
+    }
+    if (typeof lowStockThreshold === 'number') {
+      updateData.low_stock_threshold = lowStockThreshold;
+    }
+
     // Upsert the stock status
     const { error } = await supabase
       .from('product_stock')
-      .upsert({
-        product_id: productId,
-        in_stock: inStock,
-        updated_at: new Date().toISOString()
-      }, {
+      .upsert(updateData, {
         onConflict: 'product_id'
       });
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, productId, inStock });
+    return NextResponse.json({ success: true, productId, inStock, stockQuantity, lowStockThreshold });
   } catch (error: any) {
     console.error('Error updating stock status:', error);
     return NextResponse.json(

@@ -54,7 +54,6 @@ export async function GET(request: NextRequest) {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('in_stock', true) // Only show in-stock products publicly
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -68,7 +67,7 @@ export async function GET(request: NextRequest) {
     if (supabase) {
       const { data: stockData } = await supabase
         .from('product_stock')
-        .select('product_id, in_stock');
+        .select('product_id, in_stock, stock_quantity, low_stock_threshold');
 
       if (stockData) {
         stockData.forEach(item => {
@@ -77,15 +76,54 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Add stock status to static products
-    const staticWithStock = staticProducts.map(product => ({
-      ...product,
-      inStock: stockStatus[product.id] !== false, // Default to in stock
-      isFromDatabase: false,
-    }));
+    // Get product overrides (for static products)
+    let overrides: Record<string, any> = {};
+
+    if (supabase) {
+      const { data: overrideData } = await supabase
+        .from('product_overrides')
+        .select('*');
+
+      if (overrideData) {
+        overrideData.forEach(item => {
+          overrides[item.product_id] = item;
+        });
+      }
+    }
+
+    // Add stock status + overrides to static products
+    const staticWithStock = staticProducts.map(product => {
+      const override = overrides[product.id];
+      const overrideProductType = override?.product_type ?? override?.productType;
+      const overrideSetSingle = override?.set_single ?? override?.setSingle;
+      const merged = { ...product, ...override };
+      return {
+        ...merged,
+        productType: overrideProductType ?? merged.productType,
+        setSingle: overrideSetSingle ?? merged.setSingle,
+        inStock: stockStatus[product.id] !== false, // Default to in stock
+        isFromDatabase: false,
+      };
+    });
+
+    const dbWithOverrides = dbProducts.map(product => {
+      const override = overrides[product.id];
+      const overrideProductType = override?.product_type ?? override?.productType;
+      const overrideSetSingle = override?.set_single ?? override?.setSingle;
+      const merged = { ...product, ...override };
+      const stockOverride = stockStatus[product.id];
+      return {
+        ...merged,
+        productType: overrideProductType ?? merged.productType,
+        setSingle: overrideSetSingle ?? merged.setSingle,
+        inStock: stockOverride !== undefined ? stockOverride : merged.inStock !== false,
+        isFromDatabase: true,
+      };
+    });
 
     // Combine: database products first, then static products
-    const allCombinedProducts = [...dbProducts, ...staticWithStock];
+    const allCombinedProducts = [...dbWithOverrides, ...staticWithStock]
+      .filter(p => p.inStock !== false);
 
     return NextResponse.json({
       products: allCombinedProducts,
