@@ -168,7 +168,7 @@ export default function SiparisTakipPage() {
                 onChange={(e) => setOrderNumber(e.target.value.toUpperCase())}
                 required
                 disabled={loading}
-                placeholder="ORD-XXXXXX"
+                placeholder="JQXXXXXX"
                 className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm uppercase outline-none transition-colors focus:border-[#0f3f44] focus:ring-1 focus:ring-[#0f3f44] disabled:bg-neutral-100"
               />
             </div>
