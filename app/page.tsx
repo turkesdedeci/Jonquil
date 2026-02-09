@@ -168,7 +168,7 @@ function Homepage({
 
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/urunler"
+                href="/#koleksiyonlar"
                 className="rounded-full bg-white px-8 py-4 text-[14px] font-semibold tracking-wide text-[#0f3f44] transition-all hover:bg-[#d4af7a] hover:text-white"
               >
                 Koleksiyonları Keşfet

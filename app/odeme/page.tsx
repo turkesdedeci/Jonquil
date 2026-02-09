@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useUser } from '@/hooks/useClerkUser';
+import { useUser, SignInButton } from '@/hooks/useClerkUser';
 import { useCart } from '@/contexts/CartContext';
 import { useAlert } from '@/components/AlertModal';
 import {
@@ -49,7 +49,8 @@ export default function CheckoutPage() {
   const [iyzicoFormContent, setIyzicoFormContent] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const iyzicoFormRef = useRef<HTMLDivElement>(null);
-  const isGuest = !user;
+  const [checkoutMode, setCheckoutMode] = useState<'login' | 'guest'>('login');
+  const isGuest = !user && checkoutMode === 'guest';
 
   const [guestFirstName, setGuestFirstName] = useState('');
   const [guestLastName, setGuestLastName] = useState('');
@@ -66,6 +67,7 @@ export default function CheckoutPage() {
   // Adresleri yükle
   useEffect(() => {
     if (user) {
+      setCheckoutMode('login');
       loadAddresses();
     } else {
       setLoading(false);
@@ -96,6 +98,10 @@ export default function CheckoutPage() {
 
   // Sipariş oluştur
   const handleSubmitOrder = async () => {
+    if (!user && checkoutMode !== 'guest') {
+      showWarning('Lütfen giriş yapın veya üye olmadan devam edin', 'Devam Etme Seçeneği');
+      return;
+    }
     if (!selectedAddressId && !isGuest) {
       showWarning('Lütfen bir teslimat adresi seçin', 'Adres Gerekli');
       return;
@@ -308,149 +314,190 @@ export default function CheckoutPage() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Sol Taraf - Adres + Ödeme */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Teslimat Adresi */}
-            <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
-              <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+            {!user && (
+              <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+                <div className="mb-4 flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3f44]">
-                    <MapPin className="h-5 w-5 text-white" />
+                    <Lock className="h-5 w-5 text-white" />
                   </div>
                   <h2 className="text-xl font-semibold text-[#1a1a1a]">
-                    Teslimat Adresi
+                    Devam Etme Seçeneği
                   </h2>
                 </div>
-                {!isGuest && (
-                  <button
-                    onClick={() => setShowAddressForm(true)}
-                    className="flex items-center gap-2 text-sm font-medium text-[#0f3f44] hover:underline"
+                <p className="mb-4 text-sm text-[#666]">
+                  Tavsiyemiz giriş yapmanız. Ama isterseniz üye olmadan da devam edebilirsiniz.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <SignInButton
+                    mode="modal"
+                    appearance={{
+                      elements: {
+                        rootBox: "w-full",
+                        card: "rounded-2xl shadow-2xl",
+                        socialButtonsBlockButton: "border border-[#e8e6e3] hover:bg-[#faf8f5]",
+                        formButtonPrimary: "bg-[#0f3f44] hover:bg-[#0a2a2e]",
+                        footerActionLink: "text-[#0f3f44]",
+                      }
+                    }}
                   >
-                    <Plus className="h-4 w-4" />
-                    Yeni Adres
+                    <button className="rounded-full bg-[#0f3f44] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0a2a2e]">
+                      Giriş Yap (Tavsiye Edilen)
+                    </button>
+                  </SignInButton>
+                  <button
+                    onClick={() => setCheckoutMode('guest')}
+                    className="rounded-full border border-[#e8e6e3] bg-white px-6 py-3 text-sm font-semibold text-[#1a1a1a] hover:border-[#0f3f44]"
+                  >
+                    Üye Olmadan Devam Et
                   </button>
-                )}
+                </div>
               </div>
+            )}
 
-              {isGuest ? (
-                <div className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="text"
-                      value={guestFirstName}
-                      onChange={(e) => setGuestFirstName(e.target.value)}
-                      placeholder="Ad"
-                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                    />
-                    <input
-                      type="text"
-                      value={guestLastName}
-                      onChange={(e) => setGuestLastName(e.target.value)}
-                      placeholder="Soyad"
-                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                    />
+            {(user || isGuest) && (
+              <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3f44]">
+                      <MapPin className="h-5 w-5 text-white" />
+                    </div>
+                    <h2 className="text-xl font-semibold text-[#1a1a1a]">
+                      Teslimat Adresi
+                    </h2>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <input
-                      type="email"
-                      value={guestEmail}
-                      onChange={(e) => setGuestEmail(e.target.value)}
-                      placeholder="E-posta"
-                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                    />
-                    <input
-                      type="tel"
-                      value={guestPhone}
-                      onChange={(e) => setGuestPhone(e.target.value)}
-                      placeholder="Telefon"
-                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                    />
-                  </div>
-                  <textarea
-                    value={guestAddress}
-                    onChange={(e) => setGuestAddress(e.target.value)}
-                    placeholder="Adres"
-                    rows={3}
-                    className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                  />
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <input
-                      type="text"
-                      value={guestDistrict}
-                      onChange={(e) => setGuestDistrict(e.target.value)}
-                      placeholder="İlçe"
-                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                    />
-                    <input
-                      type="text"
-                      value={guestCity}
-                      onChange={(e) => setGuestCity(e.target.value)}
-                      placeholder="Şehir"
-                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                    />
-                    <input
-                      type="text"
-                      value={guestPostalCode}
-                      onChange={(e) => setGuestPostalCode(e.target.value)}
-                      placeholder="Posta Kodu"
-                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                    />
-                  </div>
-                </div>
-              ) : loading ? (
-                <div className="py-8 text-center text-[#666]">Yükleniyor...</div>
-              ) : addresses.length === 0 ? (
-                <div className="rounded-xl border-2 border-dashed border-[#e8e6e3] bg-[#faf8f5] p-8 text-center">
-                  <p className="mb-4 text-[#666]">Henüz kayıtlı adres yok</p>
-                  <button
-                    onClick={() => router.push('/hesabim')}
-                    className="rounded-full bg-[#0f3f44] px-6 py-2 text-sm text-white hover:bg-[#0a2a2e]"
-                  >
-                    Adres Ekle
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {addresses.map((address) => (
+                  {!isGuest && (
                     <button
-                      key={address.id}
-                      onClick={() => setSelectedAddressId(address.id)}
-                      className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
-                        selectedAddressId === address.id
-                          ? 'border-[#0f3f44] bg-[#0f3f44]/5'
-                          : 'border-[#e8e6e3] hover:border-[#0f3f44]/30'
-                      }`}
+                      onClick={() => setShowAddressForm(true)}
+                      className="flex items-center gap-2 text-sm font-medium text-[#0f3f44] hover:underline"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="mb-1 flex items-center gap-2">
-                            <span className="font-semibold text-[#1a1a1a]">
-                              {address.title}
-                            </span>
-                            {address.is_default && (
-                              <span className="rounded-full bg-[#0f3f44] px-2 py-0.5 text-xs text-white">
-                                Varsayılan
+                      <Plus className="h-4 w-4" />
+                      Yeni Adres
+                    </button>
+                  )}
+                </div>
+
+                {isGuest ? (
+                  <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <input
+                        type="text"
+                        value={guestFirstName}
+                        onChange={(e) => setGuestFirstName(e.target.value)}
+                        placeholder="Ad"
+                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                      />
+                      <input
+                        type="text"
+                        value={guestLastName}
+                        onChange={(e) => setGuestLastName(e.target.value)}
+                        placeholder="Soyad"
+                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                      />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <input
+                        type="email"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        placeholder="E-posta"
+                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                      />
+                      <input
+                        type="tel"
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(e.target.value)}
+                        placeholder="Telefon"
+                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                      />
+                    </div>
+                    <textarea
+                      value={guestAddress}
+                      onChange={(e) => setGuestAddress(e.target.value)}
+                      placeholder="Adres"
+                      rows={3}
+                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                    />
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <input
+                        type="text"
+                        value={guestDistrict}
+                        onChange={(e) => setGuestDistrict(e.target.value)}
+                        placeholder="İlçe"
+                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                      />
+                      <input
+                        type="text"
+                        value={guestCity}
+                        onChange={(e) => setGuestCity(e.target.value)}
+                        placeholder="Şehir"
+                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                      />
+                      <input
+                        type="text"
+                        value={guestPostalCode}
+                        onChange={(e) => setGuestPostalCode(e.target.value)}
+                        placeholder="Posta Kodu"
+                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                      />
+                    </div>
+                  </div>
+                ) : loading ? (
+                  <div className="py-8 text-center text-[#666]">Yükleniyor...</div>
+                ) : addresses.length === 0 ? (
+                  <div className="rounded-xl border-2 border-dashed border-[#e8e6e3] bg-[#faf8f5] p-8 text-center">
+                    <p className="mb-4 text-[#666]">Henüz kayıtlı adres yok</p>
+                    <button
+                      onClick={() => router.push('/hesabim')}
+                      className="rounded-full bg-[#0f3f44] px-6 py-2 text-sm text-white hover:bg-[#0a2a2e]"
+                    >
+                      Adres Ekle
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {addresses.map((address) => (
+                      <button
+                        key={address.id}
+                        onClick={() => setSelectedAddressId(address.id)}
+                        className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
+                          selectedAddressId === address.id
+                            ? 'border-[#0f3f44] bg-[#0f3f44]/5'
+                            : 'border-[#e8e6e3] hover:border-[#0f3f44]/30'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="mb-1 flex items-center gap-2">
+                              <span className="font-semibold text-[#1a1a1a]">
+                                {address.title}
                               </span>
+                              {address.is_default && (
+                                <span className="rounded-full bg-[#0f3f44] px-2 py-0.5 text-xs text-white">
+                                  Varsayılan
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-[#666]">
+                              {address.full_name}<br />
+                              {address.address_line}<br />
+                              {address.district}, {address.city} {address.postal_code}<br />
+                              {address.phone}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {selectedAddressId === address.id && (
+                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0f3f44]">
+                                <Check className="h-4 w-4 text-white" />
+                              </div>
                             )}
                           </div>
-                          <p className="text-sm text-[#666]">
-                            {address.full_name}<br />
-                            {address.address_line}<br />
-                            {address.district}, {address.city} {address.postal_code}<br />
-                            {address.phone}
-                          </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {selectedAddressId === address.id && (
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0f3f44]">
-                              <Check className="h-4 w-4 text-white" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Ödeme Yöntemi */}
             <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
