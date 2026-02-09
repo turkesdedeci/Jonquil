@@ -18,21 +18,27 @@ export default async function UrunDebugPage({ params, searchParams }: Props) {
       : undefined;
   const id = params?.id || queryId;
   const normalizedId = id && id !== 'undefined' ? id : null;
-  const requestHeaders = headers();
-  const headerSnapshot: Record<string, string> = {};
-  for (const [key, value] of requestHeaders.entries()) {
-    const lower = key.toLowerCase();
-    if (
-      lower.startsWith('x-forwarded-') ||
-      lower.startsWith('x-vercel-') ||
-      lower.startsWith('x-middleware-') ||
-      lower === 'x-original-url' ||
-      lower === 'x-product-id' ||
-      lower === 'x-debug-middleware' ||
-      lower === 'x-debug-product-id'
-    ) {
-      headerSnapshot[key] = value;
+  let headerSnapshot: Record<string, string> = {};
+  let headerError: string | null = null;
+  try {
+    const requestHeaders = headers();
+    for (const [key, value] of requestHeaders.entries()) {
+      const lower = key.toLowerCase();
+      if (
+        lower.startsWith('x-forwarded-') ||
+        lower.startsWith('x-vercel-') ||
+        lower.startsWith('x-middleware-') ||
+        lower === 'x-original-url' ||
+        lower === 'x-product-id' ||
+        lower === 'x-debug-middleware' ||
+        lower === 'x-debug-product-id'
+      ) {
+        headerSnapshot[key] = value;
+      }
     }
+  } catch (err: any) {
+    headerError = err?.message || 'headers() failed';
+    headerSnapshot = {};
   }
   const product = normalizedId ? await getProductByIdServer(normalizedId) : null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -74,6 +80,7 @@ export default async function UrunDebugPage({ params, searchParams }: Props) {
         params,
         searchParams,
         headerSnapshot,
+        headerError,
         found: !!product,
         title: product?.title || null,
         env: {
