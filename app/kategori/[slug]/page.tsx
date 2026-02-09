@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { allProducts } from '@/data/products';
+import { getAllProductsServer } from '@/lib/products-server';
 import CategoryPageClient from './CategoryPageClient';
 
 // Category mapping (slug -> display name & metadata)
@@ -61,6 +61,8 @@ type CategorySlug = keyof typeof categories;
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+export const revalidate = 300;
 
 // Generate static params for all categories
 export async function generateStaticParams() {
@@ -136,6 +138,7 @@ export default async function CategoryPage({ params }: Props) {
   const category = categories[categorySlug];
 
   // Get products for this category
+  const allProducts = await getAllProductsServer();
   const products = allProducts.filter((p) => p.productType === category.productType);
 
   const jsonLd = generateJsonLd(categorySlug, products.length);

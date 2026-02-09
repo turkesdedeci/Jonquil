@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { getProductByIdServer } from '@/lib/products-server';
 
@@ -6,68 +5,19 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   searchParams?: Record<string, string | string[] | undefined>;
 }
 
-async function getIdFromHeaders(): Promise<string | undefined> {
-  try {
-    const h = await headers();
-    const candidates = [
-      h.get('x-debug-product-id'),
-      h.get('x-original-url'),
-      h.get('x-vercel-original-url'),
-      h.get('x-forwarded-uri'),
-      h.get('x-forwarded-path'),
-      h.get('x-rewrite-url'),
-      h.get('x-middleware-rewrite'),
-    ].filter(Boolean) as string[];
-
-    for (const raw of candidates) {
-      if (!raw) continue;
-      // If header already is a plain id (e.g., x-debug-product-id)
-      if (!raw.includes('/') && !raw.includes('?')) {
-        return raw;
-      }
-      const url = new URL(raw, 'https://example.com');
-      const fromQuery = url.searchParams.get('id');
-      if (fromQuery) return fromQuery;
-      const match = url.pathname.match(/^\/urun-debug\/([^/]+)$/);
-      if (match?.[1]) return match[1];
-    }
-  } catch {
-    // ignore header parsing errors
-  }
-  return undefined;
-}
-
 export default async function UrunDebugPage({ params, searchParams }: Props) {
+  const { id: paramId } = await params;
   const queryId = typeof searchParams?.id === 'string'
     ? searchParams.id
     : Array.isArray(searchParams?.id)
       ? searchParams?.id[0]
       : undefined;
-  const headerId = await getIdFromHeaders();
-  const id = params?.id || queryId || headerId;
+  const id = paramId || queryId;
   const normalizedId = id && id !== 'undefined' ? id : null;
-  let headerSnapshot: Record<string, string | null> = {};
-  let headerError: string | null = null;
-  try {
-    const h = await headers();
-    headerSnapshot = {
-      'x-original-url': h.get('x-original-url'),
-      'x-vercel-original-url': h.get('x-vercel-original-url'),
-      'x-forwarded-uri': h.get('x-forwarded-uri'),
-      'x-forwarded-path': h.get('x-forwarded-path'),
-      'x-rewrite-url': h.get('x-rewrite-url'),
-      'x-middleware-rewrite': h.get('x-middleware-rewrite'),
-      'x-debug-middleware': h.get('x-debug-middleware'),
-      'x-debug-product-id': h.get('x-debug-product-id'),
-    };
-  } catch (err: any) {
-    headerError = err?.message || 'headers() failed';
-    headerSnapshot = {};
-  }
   const product = normalizedId ? await getProductByIdServer(normalizedId) : null;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -104,11 +54,9 @@ export default async function UrunDebugPage({ params, searchParams }: Props) {
       <h1>Urun Debug</h1>
       <pre>{JSON.stringify({
         id,
-        idSource: params?.id ? 'params' : (queryId ? 'query' : (headerId ? 'header' : null)),
-        params,
+        idSource: paramId ? 'params' : (queryId ? 'query' : null),
+        params: { id: paramId },
         searchParams,
-        headerSnapshot,
-        headerError,
         found: !!product,
         title: product?.title || null,
         env: {

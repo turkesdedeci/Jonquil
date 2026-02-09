@@ -18,6 +18,13 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
   const [results, setResults] = useState<Product[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const normalizeImageSrc = (src?: string) => {
+    if (!src) return '';
+    if (src.startsWith('http://') || src.startsWith('https://')) return src;
+    if (src.startsWith('/')) return src;
+    return `/${src}`;
+  };
+
   // Focus input when modal opens
   useEffect(() => {
     if (open && inputRef.current) {
@@ -145,7 +152,7 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
                         <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#f5f5f5]">
                           {product.images?.[0] && (
                             <Image
-                              src={product.images[0].startsWith('/') ? product.images[0] : `/${product.images[0]}`}
+                              src={normalizeImageSrc(product.images[0])}
                               alt={product.title}
                               fill
                               sizes="64px"

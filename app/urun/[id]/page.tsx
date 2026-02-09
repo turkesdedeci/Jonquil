@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer, getProductByIdServer, ServerProduct } from '@/lib/products-server';
 import ProductPageClient from './ProductPageClient';
@@ -28,39 +27,8 @@ interface Product {
 
 // Corrected Props interface for server components
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   searchParams?: Record<string, string | string[] | undefined>;
-}
-
-async function getIdFromHeaders(): Promise<string | undefined> {
-  try {
-    const h = await headers();
-    const candidates = [
-      h.get('x-debug-product-id'),
-      h.get('x-original-url'),
-      h.get('x-vercel-original-url'),
-      h.get('x-forwarded-uri'),
-      h.get('x-forwarded-path'),
-      h.get('x-rewrite-url'),
-      h.get('x-middleware-rewrite'),
-    ].filter(Boolean) as string[];
-
-    for (const raw of candidates) {
-      if (!raw) continue;
-      // If header already is a plain id (e.g., x-debug-product-id)
-      if (!raw.includes('/') && !raw.includes('?')) {
-        return raw;
-      }
-      const url = new URL(raw, 'https://example.com');
-      const fromQuery = url.searchParams.get('id');
-      if (fromQuery) return fromQuery;
-      const match = url.pathname.match(/^\/urun\/([^/]+)$/);
-      if (match?.[1]) return match[1];
-    }
-  } catch {
-    // ignore header parsing errors
-  }
-  return undefined;
 }
 
 // Helper to normalize product data from the server
@@ -88,12 +56,13 @@ function normalizeProduct(product: ServerProduct): Product {
 // Generate metadata for SEO
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   console.log(`[generateMetadata] Params received: ${JSON.stringify(params)}`);
+  const { id: paramId } = await params;
   const queryId = typeof searchParams?.id === 'string'
     ? searchParams.id
     : Array.isArray(searchParams?.id)
       ? searchParams?.id[0]
       : undefined;
-  const id = params?.id || queryId || await getIdFromHeaders();
+  const id = paramId || queryId;
   if (!id) {
     console.error('[generateMetadata] ID is undefined, cannot generate metadata.');
     return {
@@ -187,12 +156,13 @@ function generateJsonLd(product: Product) {
 
 export default async function ProductPage({ params, searchParams }: Props) {
   const debugMode = searchParams?.debug === '1';
+  const { id: paramId } = await params;
   const queryId = typeof searchParams?.id === 'string'
     ? searchParams.id
     : Array.isArray(searchParams?.id)
       ? searchParams?.id[0]
       : undefined;
-  const id = params?.id || queryId || await getIdFromHeaders();
+  const id = paramId || queryId;
   console.log(`[ProductPage] Initial ID from params: ${id}`);
   
   if (!id) {

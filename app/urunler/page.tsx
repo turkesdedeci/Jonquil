@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
-import { allProducts } from '@/data/products';
+import { getAllProductsServer } from '@/lib/products-server';
 import AllProductsClient from './AllProductsClient';
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Tüm Ürünler | Jonquil - El Yapımı Türk Porseleni',
@@ -26,14 +28,14 @@ export const metadata: Metadata = {
 };
 
 // JSON-LD for product listing
-function generateJsonLd() {
+function generateJsonLd(productCount: number) {
   return {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Tüm Ürünler',
     description: 'Jonquil koleksiyonlarından tüm el yapımı porselen ürünleri.',
     url: 'https://jonquil.com.tr/urunler',
-    numberOfItems: allProducts.length,
+    numberOfItems: productCount,
     isPartOf: {
       '@type': 'WebSite',
       name: 'Jonquil',
@@ -46,8 +48,9 @@ function generateJsonLd() {
   };
 }
 
-export default function AllProductsPage() {
-  const jsonLd = generateJsonLd();
+export default async function AllProductsPage() {
+  const products = await getAllProductsServer();
+  const jsonLd = generateJsonLd(products.length);
 
   return (
     <>
@@ -58,7 +61,7 @@ export default function AllProductsPage() {
       />
 
       {/* Client Component */}
-      <AllProductsClient products={allProducts} />
+      <AllProductsClient products={products} />
     </>
   );
 }

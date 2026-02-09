@@ -141,6 +141,13 @@ export default function AdminPage() {
     in_stock: true
   };
 
+  const normalizeImageSrc = (src?: string) => {
+    if (!src) return '';
+    if (src.startsWith('http://') || src.startsWith('https://')) return src;
+    if (src.startsWith('/')) return src;
+    return `/${src}`;
+  };
+
   // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -989,6 +996,7 @@ export default function AdminPage() {
               {filteredProducts.map((product) => {
                 const isInStock = stockStatus[product.id] !== false;
                 const isUpdating = updatingStock === product.id;
+                const imageSrc = normalizeImageSrc(product.images?.[0]);
 
                 return (
                   <div
@@ -998,9 +1006,9 @@ export default function AdminPage() {
                     }`}
                   >
                     <div className="relative aspect-square bg-gray-100">
-                      {product.images?.[0] && (
+                      {imageSrc && (
                         <Image
-                          src={product.images[0].startsWith('/') ? product.images[0] : `/${product.images[0]}`}
+                          src={imageSrc}
                           alt={product.title}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

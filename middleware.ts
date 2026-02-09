@@ -45,46 +45,15 @@ if (process.env.NODE_ENV === 'production') {
   securityHeaders['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload';
 }
 
-function getProductIdFromPath(pathname: string): string | null {
-  const match = pathname.match(/^\/urun(?:-debug)?\/([^/]+)$/);
-  return match?.[1] || null;
-}
-
 function applySecurityHeaders(response: NextResponse) {
   for (const [key, value] of Object.entries(securityHeaders)) {
     response.headers.set(key, value);
   }
 }
 
-function buildNextResponse(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const productId = getProductIdFromPath(pathname);
-  const requestHeaders = new Headers(request.headers);
-
-  if (productId) {
-    requestHeaders.set('x-debug-middleware', '1');
-    requestHeaders.set('x-debug-product-id', productId);
-  }
-  if (productId && !request.nextUrl.searchParams.get('id')) {
-    const url = request.nextUrl.clone();
-    url.searchParams.set('id', productId);
-    return NextResponse.rewrite(url, {
-      request: {
-        headers: requestHeaders,
-      },
-    });
-  }
-
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
-}
-
 // Simple middleware without Clerk
 function simpleMiddleware(request: NextRequest) {
-  const response = buildNextResponse(request);
+  const response = NextResponse.next();
 
   // Add security headers to all responses
   applySecurityHeaders(response);
@@ -94,7 +63,7 @@ function simpleMiddleware(request: NextRequest) {
 
 // Wrap clerkMiddleware with security headers (only if Clerk is configured)
 const clerkMiddlewareHandler = clerkMiddleware(async (auth, request) => {
-  const response = buildNextResponse(request);
+  const response = NextResponse.next();
 
   // Add security headers to all responses
   applySecurityHeaders(response);
