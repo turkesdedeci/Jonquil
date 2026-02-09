@@ -578,14 +578,16 @@ export default function AdminPage() {
       });
 
       if (res.ok) {
+        const shouldBeInStock = editValues.stock_quantity > 0;
         setStockDetails(prev => ({
           ...prev,
           [productId]: {
-            in_stock: prev[productId]?.in_stock ?? (stockStatus[productId] !== false),
+            in_stock: shouldBeInStock,
             stock_quantity: editValues.stock_quantity,
             low_stock_threshold: editValues.low_stock_threshold,
           }
         }));
+        setStockStatus(prev => ({ ...prev, [productId]: shouldBeInStock }));
         setStockEdits(prev => {
           const next = { ...prev };
           delete next[productId];

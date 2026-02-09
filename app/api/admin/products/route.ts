@@ -135,6 +135,9 @@ export async function PATCH(request: NextRequest) {
     if (typeof lowStockThreshold === 'number') {
       updateData.low_stock_threshold = lowStockThreshold;
     }
+    if (typeof stockQuantity === 'number' && stockQuantity <= 0) {
+      updateData.in_stock = false;
+    }
 
     // Upsert the stock status
     const { error } = await supabase

@@ -87,7 +87,8 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
 
       if (stockData) {
         stockData.forEach(item => {
-          stockStatus[item.product_id] = item.in_stock;
+          const isOutOfStock = typeof item.stock_quantity === 'number' && item.stock_quantity <= 0;
+          stockStatus[item.product_id] = isOutOfStock ? false : item.in_stock;
         });
       }
     } catch (err) {
