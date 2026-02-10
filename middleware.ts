@@ -34,6 +34,7 @@ function buildCsp(nonce: string) {
     "base-uri 'self'",
     "object-src 'none'",
     "report-to csp-endpoint",
+    "upgrade-insecure-requests",
   ].join('; ');
 }
 
