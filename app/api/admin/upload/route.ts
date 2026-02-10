@@ -134,6 +134,11 @@ export async function POST(request: NextRequest) {
 // DELETE - Delete image from Supabase Storage
 export async function DELETE(request: NextRequest) {
   try {
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'upload');
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
     const originCheck = requireSameOrigin(request);
     if (originCheck) return originCheck;
     if (!await isAdmin()) {
