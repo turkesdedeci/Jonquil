@@ -259,14 +259,11 @@ function Homepage({
             transition={{ duration: 1.2 }}
             className="absolute inset-0 relative"
           >
-            <Image
+            <img
               src={slides[currentSlide]}
               alt="Jonquil Collection"
-              fill
-              sizes="100vw"
-              className="object-cover"
-              unoptimized
-              priority={currentSlide === 0}
+              className="h-full w-full object-cover"
+              loading={currentSlide === 0 ? "eager" : "lazy"}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
           </motion.div>
@@ -497,7 +494,12 @@ function Homepage({
               transition={{ delay: 0.1 }}
             >
               {galleryVisible[0] && (
-                <Image src={galleryVisible[0]} alt="Gallery image 1" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-500 hover:scale-105" unoptimized />
+                <img
+                  src={galleryVisible[0]}
+                  alt="Gallery image 1"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  loading="lazy"
+                />
               )}
             </motion.div>
             <motion.div
@@ -508,7 +510,12 @@ function Homepage({
               transition={{ delay: 0.2 }}
             >
               {galleryVisible[1] && (
-                <Image src={galleryVisible[1]} alt="Gallery image 2" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" unoptimized />
+                <img
+                  src={galleryVisible[1]}
+                  alt="Gallery image 2"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  loading="lazy"
+                />
               )}
             </motion.div>
             <motion.div
@@ -519,7 +526,12 @@ function Homepage({
               transition={{ delay: 0.3 }}
             >
               {galleryVisible[2] && (
-                <Image src={galleryVisible[2]} alt="Gallery image 3" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" unoptimized />
+                <img
+                  src={galleryVisible[2]}
+                  alt="Gallery image 3"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  loading="lazy"
+                />
               )}
             </motion.div>
             <motion.div
@@ -530,7 +542,12 @@ function Homepage({
               transition={{ delay: 0.4 }}
             >
               {galleryVisible[3] && (
-                <Image src={galleryVisible[3]} alt="Gallery image 4" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" unoptimized />
+                <img
+                  src={galleryVisible[3]}
+                  alt="Gallery image 4"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  loading="lazy"
+                />
               )}
             </motion.div>
             <motion.div
@@ -541,7 +558,12 @@ function Homepage({
               transition={{ delay: 0.5 }}
             >
               {galleryVisible[4] && (
-                <Image src={galleryVisible[4]} alt="Gallery image 5" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" unoptimized />
+                <img
+                  src={galleryVisible[4]}
+                  alt="Gallery image 5"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  loading="lazy"
+                />
               )}
             </motion.div>
           </div>
