@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdmin, isClerkConfigured } from '@/lib/adminCheck';
+import { checkRateLimitAsync, getClientIP } from '@/lib/security';
 
 // No-cache headers for admin check
 const noCacheHeaders = {
@@ -7,6 +8,10 @@ const noCacheHeaders = {
 };
 
 export async function GET(request: NextRequest) {
+  const clientIP = getClientIP(request);
+  const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
+  if (rateLimitResponse) return rateLimitResponse;
+
   // If Clerk is not configured, return false immediately with reason
   if (!isClerkConfigured()) {
     console.log('Admin check: Clerk not configured');

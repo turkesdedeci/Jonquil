@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { isAdmin } from '@/lib/adminCheck';
+import { checkRateLimitAsync, getClientIP } from '@/lib/security';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -38,7 +39,11 @@ async function ensureTableExists() {
 }
 
 // GET - Fetch all product stock statuses
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const clientIP = getClientIP(request);
+  const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
+  if (rateLimitResponse) return rateLimitResponse;
+
   // Admin check
   if (!await isAdmin()) {
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
@@ -82,6 +87,10 @@ export async function GET() {
 
 // PATCH - Update product stock status (admin only)
 export async function PATCH(request: NextRequest) {
+  const clientIP = getClientIP(request);
+  const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
+  if (rateLimitResponse) return rateLimitResponse;
+
   // Admin check
   if (!await isAdmin()) {
     return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
