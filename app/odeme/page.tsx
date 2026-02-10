@@ -49,7 +49,7 @@ export default function CheckoutPage() {
   const [addressSaving, setAddressSaving] = useState(false);
   const [iyzicoFormContent, setIyzicoFormContent] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const iyzicoFormRef = useRef<HTMLDivElement>(null);
+  const iyzicoFormRef = useRef<HTMLIFrameElement>(null);
   const [checkoutMode, setCheckoutMode] = useState<'login' | 'guest'>('login');
   const isGuest = !user && checkoutMode === 'guest';
 
@@ -373,20 +373,10 @@ export default function CheckoutPage() {
     }
   };
 
-  // iyzico form içeriğini render et
+  // iyzico form içeriğini güvenli iframe içinde izole et
   useEffect(() => {
-    if (iyzicoFormContent && iyzicoFormRef.current) {
-      iyzicoFormRef.current.innerHTML = iyzicoFormContent;
-      // Execute any scripts in the form
-      const scripts = iyzicoFormRef.current.querySelectorAll('script');
-      scripts.forEach(script => {
-        const newScript = document.createElement('script');
-        Array.from(script.attributes).forEach(attr => {
-          newScript.setAttribute(attr.name, attr.value);
-        });
-        newScript.textContent = script.textContent;
-        script.parentNode?.replaceChild(newScript, script);
-      });
+    if (iyzicoFormRef.current && iyzicoFormContent) {
+      iyzicoFormRef.current.srcdoc = iyzicoFormContent;
     }
   }, [iyzicoFormContent]);
 
@@ -889,12 +879,17 @@ export default function CheckoutPage() {
 
             {/* iyzico Ödeme Formu */}
             {iyzicoFormContent && (
-              <div ref={iyzicoFormRef} className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+              <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
                 <div className="mb-4 flex items-center gap-2">
                   <Lock className="h-5 w-5 text-[#0f3f44]" />
                   <span className="font-semibold text-[#1a1a1a]">Güvenli Ödeme</span>
                 </div>
-                {/* iyzico form buraya inject edilecek */}
+                <iframe
+                  ref={iyzicoFormRef}
+                  title="İyzico Checkout"
+                  sandbox="allow-forms allow-scripts allow-popups"
+                  className="w-full min-h-[520px] rounded-lg border border-[#e8e6e3]"
+                />
               </div>
             )}
 
