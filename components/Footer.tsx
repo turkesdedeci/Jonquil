@@ -35,7 +35,7 @@ export default function Footer() {
                 <Instagram className="h-5 w-5" aria-hidden="true" />
               </a>
               <a
-                href="mailto:info@jonquil.com"
+                href="mailto:info@jonquilstudio.co"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0f3f44] shadow-sm transition-colors hover:bg-[#0f3f44] hover:text-white"
                 aria-label="E-posta gönder"
               >
@@ -81,13 +81,13 @@ export default function Footer() {
               <li>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4" aria-hidden="true" />
-                  <a href="tel:+905001234567" aria-label="Telefon: +90 500 123 45 67">+90 (500) 123 45 67</a>
+                  <a href="tel:+905335101093" aria-label="Telefon: 0 533 510 10 93">0 (533) 510 10 93</a>
                 </div>
               </li>
               <li>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4" aria-hidden="true" />
-                  <a href="mailto:info@jonquil.com" className="hover:text-[#0f3f44]">info@jonquil.com</a>
+                  <a href="mailto:info@jonquilstudio.co" className="hover:text-[#0f3f44]">info@jonquilstudio.co</a>
                 </div>
               </li>
             </ul>
