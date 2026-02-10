@@ -504,7 +504,7 @@ function Homepage({
 
           <div key={galleryKey} className="grid grid-cols-2 gap-4 md:grid-cols-4 opacity-0 animate-[fadeIn_1.2s_ease_forwards] transition-opacity duration-700 ease-out">
             <motion.div
-              className="col-span-2 row-span-2 overflow-hidden rounded-2xl relative"
+              className="col-span-2 row-span-2 aspect-[4/3] overflow-hidden rounded-2xl relative"
             >
               {galleryVisible[0] && (
                 <Image
@@ -518,7 +518,7 @@ function Homepage({
               )}
             </motion.div>
             <motion.div
-              className="overflow-hidden rounded-2xl relative"
+              className="aspect-square overflow-hidden rounded-2xl relative"
             >
               {galleryVisible[1] && (
                 <Image
@@ -532,7 +532,7 @@ function Homepage({
               )}
             </motion.div>
             <motion.div
-              className="overflow-hidden rounded-2xl relative"
+              className="aspect-square overflow-hidden rounded-2xl relative"
             >
               {galleryVisible[2] && (
                 <Image
@@ -546,7 +546,7 @@ function Homepage({
               )}
             </motion.div>
             <motion.div
-              className="overflow-hidden rounded-2xl relative"
+              className="aspect-square overflow-hidden rounded-2xl relative"
             >
               {galleryVisible[3] && (
                 <Image
@@ -560,7 +560,7 @@ function Homepage({
               )}
             </motion.div>
             <motion.div
-              className="overflow-hidden rounded-2xl relative"
+              className="aspect-square overflow-hidden rounded-2xl relative"
             >
               {galleryVisible[4] && (
                 <Image
