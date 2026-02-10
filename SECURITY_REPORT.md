@@ -1,36 +1,36 @@
-# Security Report (2026-02-10)
+# Güvenlik Raporu (2026-02-10)
 
-## Scope
-- Codebase security review
-- API route hardening
-- CSP/headers tightening
-- Payment flow isolation (iyzico)
+## Kapsam
+- Kod tabanı güvenlik incelemesi
+- API route sertleştirme
+- CSP/header sıkılaştırma
+- Ödeme akışı izolasyonu (iyzico)
 
-## Summary
-No critical vulnerabilities remain. Major risks were addressed: rate limiting, admin guarding, debug endpoints, CSP/XSS surface, and payment flow isolation.
+## Özet
+Kritik açık kalmadı. Ana riskler giderildi: rate limit, admin koruması, debug endpoint’ler, CSP/XSS yüzeyi ve ödeme akışı izolasyonu.
 
-## Key Changes Implemented
-1. **Rate limiting enforced** across public, auth, and admin endpoints (Redis-compatible).
-2. **Admin access guards** verified and added where missing.
-3. **Debug endpoints/pages disabled** in production.
-4. **CSRF mitigation** via same-origin checks on sensitive endpoints.
-5. **Iyzico checkout isolated** inside a sandboxed iframe.
-6. **CSP hardened** with per-request nonces and reporting.
-7. **CSP reports endpoint** added and hardened against abuse.
-8. **Security headers** ensured for all responses.
+## Uygulanan Başlıca Değişiklikler
+1. **Rate limit zorunlu hale getirildi** (public, auth ve admin endpoint’leri; Redis uyumlu).
+2. **Admin erişim kontrolleri** doğrulandı ve eksik yerlere eklendi.
+3. **Debug endpoint/sayfaları** prod’da kapatıldı.
+4. **CSRF azaltımı** için hassas endpoint’lerde same‑origin kontrolü eklendi.
+5. **Iyzico checkout** sandboxed iframe içine alındı.
+6. **CSP sertleştirildi** (istek başına nonce + raporlama).
+7. **CSP rapor endpoint’i** eklendi ve kötüye kullanıma karşı sertleştirildi.
+8. **Güvenlik header’ları** tüm yanıtlarda garanti altına alındı.
 
-## Current Residual Risks
-1. **Nonce-based CSP relies on header propagation**  
-   - If a reverse proxy strips the `x-nonce` header, inline JSON-LD scripts may be blocked.
-2. **Hosted checkout not enabled**  
-   - Iyzico still uses embedded HTML. Hosted checkout would further reduce XSS surface.
-3. **Automated external testing**  
-   - Bot protection blocked automated live validation. Manual verification recommended.
+## Kalan Artık Riskler
+1. **Nonce tabanlı CSP, header taşınmasına bağlı**  
+   - Reverse proxy `x-nonce` header’ını düşürürse inline JSON‑LD script’ler engellenebilir.
+2. **Hosted checkout aktif değil**  
+   - Iyzico hâlâ gömülü HTML kullanıyor. Hosted checkout XSS yüzeyini daha da azaltır.
+3. **Otomatik dış test**  
+   - Bot koruması canlı doğrulamayı engelledi. Manuel doğrulama önerilir.
 
-## Recommended Next Steps (Optional)
-1. Move to **iyzico hosted checkout** if possible.
-2. Add **log storage** for CSP reports (Supabase table) if long-term monitoring is desired.
-3. Validate CSP in production with real traffic and iterate on allowed sources.
+## Önerilen Sonraki Adımlar (Opsiyonel)
+1. Mümkünse **iyzico hosted checkout**’a geçiş.
+2. CSP raporları için **kalıcı log saklama** (Supabase tablosu).
+3. Prod trafikte CSP doğrulaması yapıp izin verilen kaynakları netleştirme.
 
-## Verification Notes
-Tests were not run in this session. Recommend running standard build/test pipeline after deployment.
+## Doğrulama Notları
+Bu oturumda test çalıştırılmadı. Dağıtım sonrası standart build/test hattı önerilir.
