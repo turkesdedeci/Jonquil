@@ -170,6 +170,53 @@ export default function AdminPage() {
     return `/${src}`;
   };
 
+  const compressImage = async (file: File, maxBytes = 4 * 1024 * 1024, maxDimension = 2000) => {
+    if (!file.type.startsWith('image/')) return file;
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Resim okunamadı'));
+      reader.readAsDataURL(file);
+    });
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Resim yüklenemedi'));
+      image.src = dataUrl;
+    });
+
+    const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
+    const targetWidth = Math.max(1, Math.round(img.width * scale));
+    const targetHeight = Math.max(1, Math.round(img.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+    const preferredType = file.type === 'image/png' ? 'image/jpeg' : file.type;
+    let quality = 0.85;
+
+    const toBlob = (q: number) =>
+      new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, preferredType, q));
+
+    let blob = await toBlob(quality);
+    while (blob && blob.size > maxBytes && quality > 0.5) {
+      quality -= 0.1;
+      blob = await toBlob(quality);
+    }
+
+    if (!blob || blob.size > maxBytes) return file;
+
+    const ext = preferredType === 'image/webp' ? 'webp' : 'jpg';
+    const name = file.name.replace(/\.[^/.]+$/, `.${ext}`);
+    return new File([blob], name, { type: preferredType });
+  };
+
   // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -182,8 +229,9 @@ export default function AdminPage() {
       const uploadedUrls: string[] = [];
 
       for (const file of Array.from(files)) {
+        const optimizedFile = await compressImage(file);
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', optimizedFile);
 
         const res = await fetch('/api/admin/upload', {
           method: 'POST',
