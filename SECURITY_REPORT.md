@@ -32,5 +32,19 @@ Kritik açık kalmadı. Ana riskler giderildi: rate limit, admin koruması, debu
 2. CSP raporları için **kalıcı log saklama** (Supabase tablosu).
 3. Prod trafikte CSP doğrulaması yapıp izin verilen kaynakları netleştirme.
 
+## CSP Rapor Tablosu (Supabase SQL)
+```sql
+CREATE TABLE IF NOT EXISTS csp_reports (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  reported_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ip TEXT,
+  report TEXT
+);
+
+ALTER TABLE csp_reports ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role all" ON csp_reports
+  FOR ALL USING (auth.role() = 'service_role');
+```
+
 ## Doğrulama Notları
 Bu oturumda test çalıştırılmadı. Dağıtım sonrası standart build/test hattı önerilir.
