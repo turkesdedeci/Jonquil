@@ -14,11 +14,11 @@ export default function Footer() {
           <div>
             <div className="mb-6 flex items-center">
               <Image
-                src="/images/products/GENEL FOTOLAR/LOGO/JONQUILLOGO_4.png"
+                src="/images/products/GENEL FOTOLAR/LOGO/JONQUILLOGO_1.png"
                 alt={`${BRAND.name} logo`}
-                width={180}
-                height={60}
-                className="h-16 w-auto"
+                width={260}
+                height={90}
+                className="ml-2 h-20 w-auto md:ml-4"
               />
             </div>
             <p className="mb-6 text-sm leading-relaxed text-[#666]">

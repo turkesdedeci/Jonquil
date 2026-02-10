@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,7 +20,6 @@ import { ASSETS } from "@/constants/brand";
 import { LuxuryBadge, FeatureCard, CollectionCard, ProductCard } from "@/components/Cards";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useMemo } from "react";
 import ProductDetail from "@/components/ProductDetail"; // This was missing in the original and is needed for ProductPage
 
 interface Route {
@@ -34,17 +33,100 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
+const FOOTER_SLIDES = [
+  "image00001.jpeg",
+  "image00002.jpeg",
+  "image00003.jpeg",
+  "image00004.jpeg",
+  "image00005.jpeg",
+  "image00006.jpeg",
+  "image00007.png",
+  "IMG_0003.jpg",
+  "Jonquil foto galeri-ottoman seri (1).jpg",
+  "Jonquil foto galeri-ottoman seri (10).jpg",
+  "Jonquil foto galeri-ottoman seri (11).jpg",
+  "Jonquil foto galeri-ottoman seri (12).jpg",
+  "Jonquil foto galeri-ottoman seri (13).jpg",
+  "Jonquil foto galeri-ottoman seri (14).jpg",
+  "Jonquil foto galeri-ottoman seri (15).jpg",
+  "Jonquil foto galeri-ottoman seri (16).jpg",
+  "Jonquil foto galeri-ottoman seri (17).jpg",
+  "Jonquil foto galeri-ottoman seri (18).jpg",
+  "Jonquil foto galeri-ottoman seri (2).jpg",
+  "Jonquil foto galeri-ottoman seri (3).jpg",
+  "Jonquil foto galeri-ottoman seri (4).jpg",
+  "Jonquil foto galeri-ottoman seri (5).jpg",
+  "Jonquil foto galeri-ottoman seri (6).jpg",
+  "Jonquil foto galeri-ottoman seri (7).jpg",
+  "Jonquil foto galeri-ottoman seri (8).jpg",
+  "Jonquil foto galeri-ottoman seri (9).jpg",
+  "S (1).jpeg",
+  "S (2).jpeg",
+  "S (3).jpeg",
+  "S (4).jpeg",
+  "S (5).jpeg",
+  "S (6).jpeg",
+  "s10-2.jpg",
+  "s10.jpg",
+  "S3.jpg",
+  "s4-2.jpg",
+  "s4.jpg",
+  "s5.jpg",
+  "s6.jpg",
+  "s7.jpg",
+  "s9.jpg",
+  "sa.jpg",
+  "sb.jpg",
+];
+
+const toFooterSlidePath = (name: string) =>
+  encodeURI(`/images/footerslayt/${name}`);
+
 export default function Page() {
   const { products: allProducts } = useProducts();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const slides = [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3];
+  const [bestSellers, setBestSellers] = useState<any[]>([]);
+  const heroSlides = useMemo(
+    () => FOOTER_SLIDES.map(toFooterSlidePath),
+    []
+  );
+  const slides = heroSlides.length > 0 ? heroSlides : [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3];
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(interval);
   }, [slides.length]);
+
+  useEffect(() => {
+    if (slides.length === 0) return;
+    const interval = setInterval(() => {
+      setGalleryIndex((prev) => (prev + 1) % slides.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [slides.length]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadBestSellers = async () => {
+      try {
+        const res = await fetch('/api/products/best-sellers');
+        const data = await res.json();
+        if (isMounted && Array.isArray(data?.products)) {
+          setBestSellers(data.products);
+        }
+      } catch {
+        // fallback handled below
+      }
+    };
+
+    loadBestSellers();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [route, setRoute] = useState<Route>({ name: "home" });
 
@@ -122,6 +204,15 @@ function Homepage({
   setCurrentSlide: React.Dispatch<React.SetStateAction<number>>;
   slides: string[];
 }) {
+  const galleryImages = slides;
+  const galleryVisible = useMemo(() => {
+    if (galleryImages.length === 0) return [];
+    const count = 5;
+    return Array.from({ length: count }, (_, i) => {
+      return galleryImages[(galleryIndex + i) % galleryImages.length];
+    });
+  }, [galleryImages, galleryIndex]);
+
   return (
     <main>
       {/* Hero Section - Full Screen with Carousel */}
@@ -151,10 +242,6 @@ function Homepage({
             transition={{ delay: 0.3, duration: 0.8 }}
             className="max-w-2xl"
           >
-            <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/10 px-5 py-2 backdrop-blur-md">
-              <div className="h-2 w-2 animate-pulse rounded-full bg-[#d4af7a]" />
-              <span className="text-sm font-light tracking-wider text-white">Yeni Sezon</span>
-            </div>
 
             <h1 className="mb-6 font-serif text-6xl font-light leading-tight text-white md:text-7xl lg:text-8xl">
               Sofranıza
@@ -340,7 +427,7 @@ function Homepage({
           </motion.div>
 
           <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-            {allProducts.slice(0, 4).map((product, i) => (
+            {(bestSellers.length > 0 ? bestSellers : allProducts.slice(0, 4)).map((product, i) => (
               <motion.div
                 key={product.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -386,7 +473,9 @@ function Homepage({
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
             >
-              <img src="/images/products/GENEL FOTOLAR/Header-1.jpg" alt="Gallery image 1" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+              {galleryVisible[0] && (
+                <img src={galleryVisible[0]} alt="Gallery image 1" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+              )}
             </motion.div>
             <motion.div
               className="overflow-hidden rounded-2xl"
@@ -395,7 +484,9 @@ function Homepage({
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
-              <img src="/images/products/GENEL FOTOLAR/Header-2.jpg" alt="Gallery image 2" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+              {galleryVisible[1] && (
+                <img src={galleryVisible[1]} alt="Gallery image 2" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+              )}
             </motion.div>
             <motion.div
               className="overflow-hidden rounded-2xl"
@@ -404,7 +495,9 @@ function Homepage({
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
             >
-              <img src="/images/products/GENEL FOTOLAR/Header-3.jpg" alt="Gallery image 3" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+              {galleryVisible[2] && (
+                <img src={galleryVisible[2]} alt="Gallery image 3" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+              )}
             </motion.div>
             <motion.div
               className="overflow-hidden rounded-2xl"
@@ -413,7 +506,20 @@ function Homepage({
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
             >
-              <img src="/images/products/GENEL FOTOLAR/Header-4.jpg" alt="Gallery image 4" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+              {galleryVisible[3] && (
+                <img src={galleryVisible[3]} alt="Gallery image 4" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+              )}
+            </motion.div>
+            <motion.div
+              className="overflow-hidden rounded-2xl"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.5 }}
+            >
+              {galleryVisible[4] && (
+                <img src={galleryVisible[4]} alt="Gallery image 5" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+              )}
             </motion.div>
           </div>
         </div>
