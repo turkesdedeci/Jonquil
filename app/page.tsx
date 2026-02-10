@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   BadgeCheck,
   Gift,
@@ -22,6 +21,20 @@ import { LuxuryBadge, FeatureCard, CollectionCard, ProductCard } from "@/compone
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductDetail from "@/components/ProductDetail"; // This was missing in the original and is needed for ProductPage
+
+// Lightweight motion stubs to avoid loading the full animation library on the homepage.
+const MotionDiv = ({
+  initial,
+  animate,
+  exit,
+  transition,
+  whileInView,
+  viewport,
+  ...rest
+}: any) => <div {...rest} />;
+
+const motion = { div: MotionDiv };
+const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
 interface Route {
   name: "home" | "collections" | "collection" | "product" | "about" | "contact" | "allProducts" | "category";
