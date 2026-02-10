@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
+import {
+  checkRateLimitAsync,
+  getClientIP,
+  safeErrorResponse
+} from '@/lib/security';
 
 // GET - Tek bir siparişi getir
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const clientIP = getClientIP(request);
+  const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { userId } = await auth();
   
   if (!userId) {
@@ -15,6 +24,10 @@ export async function GET(
 
   try {
     const { id: orderId } = await params;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(orderId)) {
+      return NextResponse.json({ error: 'Invalid order id' }, { status: 400 });
+    }
 
     // Siparişi getir (kullanıcı kontrolü ile)
     const { data: order, error: orderError } = await supabase
@@ -52,6 +65,6 @@ export async function GET(
     });
   } catch (error: any) {
     console.error('Order fetch error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return safeErrorResponse(error, 'Sipariş getirilemedi');
   }
 }
