@@ -181,7 +181,7 @@ export default function AdminPage() {
     });
 
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image();
+      const image = document.createElement('img');
       image.onload = () => resolve(image);
       image.onerror = () => reject(new Error('Resim yüklenemedi'));
       image.src = dataUrl;
