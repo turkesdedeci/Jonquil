@@ -179,6 +179,7 @@ export default function Page() {
           setCurrentSlide={setCurrentSlide}
           slides={slides}
           galleryIndex={galleryIndex}
+          bestSellers={bestSellers}
         />
       );
   }
@@ -199,6 +200,7 @@ function Homepage({
   setCurrentSlide,
   slides,
   galleryIndex,
+  bestSellers,
 }: {
   onGo: (r: Route) => void;
   allProducts: any[];
@@ -206,6 +208,7 @@ function Homepage({
   setCurrentSlide: React.Dispatch<React.SetStateAction<number>>;
   slides: string[];
   galleryIndex: number;
+  bestSellers: any[];
 }) {
   const galleryImages = slides;
   const galleryVisible = useMemo(() => {
