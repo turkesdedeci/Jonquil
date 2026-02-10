@@ -90,7 +90,7 @@ const FOOTER_SLIDES = [
 ];
 
 const toFooterSlidePath = (name: string) =>
-  `/images/footerslayt/${name}`;
+  `/images/footerslayt/${encodeURIComponent(name)}`;
 
 export default function Page() {
   const { products: allProducts } = useProducts();

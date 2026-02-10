@@ -16,7 +16,7 @@ const cspDirectives = [
   "img-src 'self' data: blob: https://*.supabase.co https://img.clerk.com",
   "font-src 'self' data:",
   "connect-src 'self' https://*.clerk.accounts.dev https://*.supabase.co https://api.iyzipay.com wss://*.supabase.co",
-  "frame-src 'self' https://*.iyzipay.com https://challenges.cloudflare.com",
+  "frame-src 'self' https://*.iyzipay.com https://challenges.cloudflare.com https://www.google.com https://maps.google.com",
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",
