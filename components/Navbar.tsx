@@ -188,6 +188,9 @@ function MobileNav({
                 <Link href="/hakkimizda" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   Hakkımızda <ChevronRight className="h-4 w-4 text-[#999]" />
                 </Link>
+                <Link href="/blog" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+                  Blog <ChevronRight className="h-4 w-4 text-[#999]" />
+                </Link>
                 <Link href="/iletisim" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   İletişim <ChevronRight className="h-4 w-4 text-[#999]" />
                 </Link>
@@ -335,6 +338,9 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-[#e8e6e3]/50 bg-white/80 backdrop-blur-xl" role="banner">
+        <div className="bg-[#0f3f44] px-6 py-2 text-center text-[11px] font-medium tracking-wide text-white">
+          500 TL üzeri ücretsiz kargo
+        </div>
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-4">
           <Link href="/" className="flex items-center" aria-label="Ana sayfa">
             <Image
@@ -372,6 +378,7 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
                <ProductsDropdown open={productsOpen} anchorRef={productsBtnRef} onClose={() => setProductsOpen(false)} />
              </div>
              <Link href="/hakkimizda" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">Hakkımızda</Link>
+             <Link href="/blog" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">Blog</Link>
              <Link href="/iletisim" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">İletişim</Link>
           </nav>
 

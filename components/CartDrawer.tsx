@@ -1,6 +1,9 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
 
@@ -11,7 +14,35 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ open, onClose, onCheckout }: CartDrawerProps) {
+  const router = useRouter();
   const { items, removeFromCart, updateQuantity, totalItems, totalPrice } = useCart();
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!open || items.length === 0) {
+      setSuggestions([]);
+      return;
+    }
+    let active = true;
+    const loadSuggestions = async () => {
+      try {
+        const { allProducts } = await import('@/data/products');
+        const base = allProducts.find((p: any) => p.id === items[0]?.productId);
+        const sameCollection = base
+          ? allProducts.filter((p: any) => p.collection === base.collection && p.id !== base.id)
+          : allProducts;
+        if (active) {
+          setSuggestions(sameCollection.slice(0, 3));
+        }
+      } catch {
+        if (active) setSuggestions([]);
+      }
+    };
+    loadSuggestions();
+    return () => {
+      active = false;
+    };
+  }, [open, items]);
 
   return (
     <>
@@ -57,14 +88,17 @@ export function CartDrawer({ open, onClose, onCheckout }: CartDrawerProps) {
                     Ürün eklemek için koleksiyonumuzu keşfedin
                   </p>
                   <button
-                    onClick={onClose}
+                    onClick={() => {
+                      onClose();
+                      router.push('/urunler');
+                    }}
                     className="rounded-lg bg-[#0f3f44] px-6 py-3 font-medium text-white hover:bg-[#0a2a2e]"
                   >
                     Ürünlere Göz At
                   </button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {items.map((item) => (
                     <div
                       key={item.id}
@@ -130,6 +164,38 @@ export function CartDrawer({ open, onClose, onCheckout }: CartDrawerProps) {
                       </div>
                     </div>
                   ))}
+                  {suggestions.length > 0 && (
+                    <div className="rounded-xl border border-[#e8e6e3] bg-white p-4">
+                      <h4 className="mb-3 text-sm font-semibold text-[#1a1a1a]">Sana Özel Öneriler</h4>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        {suggestions.map((product) => (
+                          <Link
+                            key={product.id}
+                            href={`/urun/${product.id}`}
+                            onClick={onClose}
+                            className="group rounded-lg border border-[#e8e6e3] p-2 hover:border-[#0f3f44]/40"
+                          >
+                            <div className="relative mb-2 aspect-square overflow-hidden rounded-md bg-[#faf8f5]">
+                              <Image
+                                src={product.images?.[0] || '/placeholder.jpg'}
+                                alt={product.title}
+                                fill
+                                sizes="96px"
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                loading="lazy"
+                              />
+                            </div>
+                            <div className="text-[11px] font-medium text-[#1a1a1a] line-clamp-2">
+                              {product.title}
+                            </div>
+                            <div className="mt-1 text-[11px] font-semibold text-[#0f3f44]">
+                              {product.price}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
