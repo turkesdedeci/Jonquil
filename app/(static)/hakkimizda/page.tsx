@@ -95,7 +95,7 @@ export default function HakkimizdaPage() {
 
             <div>
               <dt className="text-sm font-medium text-neutral-500">MERSİS No</dt>
-              <dd className="mt-1 text-neutral-900">—</dd>
+              <dd className="mt-1 text-neutral-900">0484212213400001</dd>
             </div>
 
             <div>

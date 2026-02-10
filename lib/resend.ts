@@ -23,7 +23,7 @@ export function isResendConfigured(): boolean {
 
 // Email configuration
 export const EMAIL_FROM = process.env.EMAIL_FROM || 'Jonquil <noreply@jonquil.com>';
-export const EMAIL_ADMIN = process.env.EMAIL_ADMIN || 'info@jonquil.com';
+export const EMAIL_ADMIN = process.env.EMAIL_ADMIN || 'info@jonquilstudio.co';
 
 // Types
 export interface ContactFormData {
