@@ -15,12 +15,26 @@ interface Address {
   is_default: boolean;
 }
 
+interface Province {
+  id: number;
+  name: string;
+}
+
+interface District {
+  id: number;
+  name: string;
+}
+
 export function AdreslerimTab() {
   const { user } = useUser();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [selectedProvinceId, setSelectedProvinceId] = useState<number | ''>('');
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     full_name: '',
@@ -52,6 +66,52 @@ export function AdreslerimTab() {
       loadAddresses();
     }
   }, [user]);
+
+  useEffect(() => {
+    const loadProvinces = async () => {
+      try {
+        const res = await fetch('https://api.turkiyeapi.dev/v1/provinces');
+        const data = await res.json();
+        const list = data?.data || [];
+        setProvinces(list.map((p: any) => ({ id: p.id, name: p.name })));
+      } catch (error) {
+        console.error('İller yüklenirken hata:', error);
+      }
+    };
+
+    loadProvinces();
+  }, []);
+
+  useEffect(() => {
+    const loadDistricts = async () => {
+      if (!selectedProvinceId) {
+        setDistricts([]);
+        return;
+      }
+      setLoadingDistricts(true);
+      try {
+        const res = await fetch(`https://api.turkiyeapi.dev/v1/districts?provinceId=${selectedProvinceId}`);
+        const data = await res.json();
+        const list = data?.data || [];
+        setDistricts(list.map((d: any) => ({ id: d.id, name: d.name })));
+      } catch (error) {
+        console.error('İlçeler yüklenirken hata:', error);
+      } finally {
+        setLoadingDistricts(false);
+      }
+    };
+
+    loadDistricts();
+  }, [selectedProvinceId]);
+
+  useEffect(() => {
+    if (!editingId || !formData.city || provinces.length === 0) return;
+    const normalizedCity = formData.city.toLocaleLowerCase('tr-TR');
+    const matchedProvince = provinces.find(p => p.name.toLocaleLowerCase('tr-TR') === normalizedCity);
+    if (matchedProvince && matchedProvince.id !== selectedProvinceId) {
+      setSelectedProvinceId(matchedProvince.id);
+    }
+  }, [editingId, formData.city, provinces, selectedProvinceId]);
 
   // Form submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,6 +172,9 @@ export function AdreslerimTab() {
       postal_code: address.postal_code || '',
       is_default: address.is_default,
     });
+    const normalizedCity = address.city?.toLocaleLowerCase('tr-TR');
+    const matchedProvince = provinces.find(p => p.name.toLocaleLowerCase('tr-TR') === normalizedCity);
+    setSelectedProvinceId(matchedProvince?.id || '');
     setShowForm(true);
   };
 
@@ -126,6 +189,8 @@ export function AdreslerimTab() {
       postal_code: '',
       is_default: false,
     });
+    setSelectedProvinceId('');
+    setDistricts([]);
   };
 
   if (loading && addresses.length === 0) {
@@ -216,27 +281,45 @@ export function AdreslerimTab() {
             <div className="grid gap-4 md:grid-cols-3">
               <div>
                 <label className="mb-1 block text-sm font-medium text-[#1a1a1a]">
-                  İlçe *
+                  İl *
                 </label>
-                <input
-                  type="text"
-                  value={formData.district}
-                  onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                <select
+                  value={selectedProvinceId}
+                  onChange={(e) => {
+                    const nextId = e.target.value ? Number(e.target.value) : '';
+                    setSelectedProvinceId(nextId);
+                    const province = provinces.find(p => p.id === nextId);
+                    setFormData({
+                      ...formData,
+                      city: province?.name || '',
+                      district: '',
+                    });
+                  }}
                   required
                   className="w-full rounded-lg border border-[#e8e6e3] px-3 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
-                />
+                >
+                  <option value="">İl seçin</option>
+                  {provinces.map((province) => (
+                    <option key={province.id} value={province.id}>{province.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-[#1a1a1a]">
-                  İl *
+                  İlçe *
                 </label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                <select
+                  value={formData.district}
+                  onChange={(e) => setFormData({ ...formData, district: e.target.value })}
                   required
-                  className="w-full rounded-lg border border-[#e8e6e3] px-3 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
-                />
+                  disabled={!selectedProvinceId || loadingDistricts}
+                  className="w-full rounded-lg border border-[#e8e6e3] px-3 py-2 text-sm focus:border-[#0f3f44] focus:outline-none disabled:bg-[#faf8f5]"
+                >
+                  <option value="">{loadingDistricts ? 'Yükleniyor...' : 'İlçe seçin'}</option>
+                  {districts.map((district) => (
+                    <option key={district.id} value={district.name}>{district.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-[#1a1a1a]">

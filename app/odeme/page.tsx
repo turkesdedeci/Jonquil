@@ -46,6 +46,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressSaving, setAddressSaving] = useState(false);
   const [iyzicoFormContent, setIyzicoFormContent] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const iyzicoFormRef = useRef<HTMLDivElement>(null);
@@ -61,6 +62,24 @@ export default function CheckoutPage() {
   const [guestDistrict, setGuestDistrict] = useState('');
   const [guestPostalCode, setGuestPostalCode] = useState('');
 
+  const [provinces, setProvinces] = useState<Array<{ id: number; name: string }>>([]);
+  const [addressProvinceId, setAddressProvinceId] = useState<number | ''>('');
+  const [addressDistricts, setAddressDistricts] = useState<Array<{ id: number; name: string }>>([]);
+  const [addressDistrictLoading, setAddressDistrictLoading] = useState(false);
+  const [guestProvinceId, setGuestProvinceId] = useState<number | ''>('');
+  const [guestDistricts, setGuestDistricts] = useState<Array<{ id: number; name: string }>>([]);
+  const [guestDistrictLoading, setGuestDistrictLoading] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    title: '',
+    full_name: '',
+    phone: '',
+    address_line: '',
+    district: '',
+    city: '',
+    postal_code: '',
+    is_default: false,
+  });
+
   const shippingCost = totalPrice >= 500 ? 0 : 49.90; // 500 TL üzeri ücretsiz kargo
   const grandTotal = totalPrice + shippingCost;
 
@@ -73,6 +92,65 @@ export default function CheckoutPage() {
       setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    const loadProvinces = async () => {
+      try {
+        const res = await fetch('https://api.turkiyeapi.dev/v1/provinces');
+        const data = await res.json();
+        const list = data?.data || [];
+        setProvinces(list.map((p: any) => ({ id: p.id, name: p.name })));
+      } catch (error) {
+        console.error('İller yüklenirken hata:', error);
+      }
+    };
+
+    loadProvinces();
+  }, []);
+
+  useEffect(() => {
+    const loadDistricts = async () => {
+      if (!addressProvinceId) {
+        setAddressDistricts([]);
+        return;
+      }
+      setAddressDistrictLoading(true);
+      try {
+        const res = await fetch(`https://api.turkiyeapi.dev/v1/districts?provinceId=${addressProvinceId}`);
+        const data = await res.json();
+        const list = data?.data || [];
+        setAddressDistricts(list.map((d: any) => ({ id: d.id, name: d.name })));
+      } catch (error) {
+        console.error('İlçeler yüklenirken hata:', error);
+      } finally {
+        setAddressDistrictLoading(false);
+      }
+    };
+
+    loadDistricts();
+  }, [addressProvinceId]);
+
+  useEffect(() => {
+    const loadGuestDistricts = async () => {
+      if (!guestProvinceId) {
+        setGuestDistricts([]);
+        return;
+      }
+      setGuestDistrictLoading(true);
+      try {
+        const res = await fetch(`https://api.turkiyeapi.dev/v1/districts?provinceId=${guestProvinceId}`);
+        const data = await res.json();
+        const list = data?.data || [];
+        setGuestDistricts(list.map((d: any) => ({ id: d.id, name: d.name })));
+      } catch (error) {
+        console.error('İlçeler yüklenirken hata:', error);
+      } finally {
+        setGuestDistrictLoading(false);
+      }
+    };
+
+    loadGuestDistricts();
+  }, [guestProvinceId]);
 
   const loadAddresses = async () => {
     try {
@@ -93,6 +171,49 @@ export default function CheckoutPage() {
       console.error('Adresler yüklenirken hata:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addressForm.title || !addressForm.full_name || !addressForm.address_line || !addressForm.city || !addressForm.district) {
+      showWarning('Lütfen tüm zorunlu alanları doldurun', 'Eksik Bilgi');
+      return;
+    }
+
+    setAddressSaving(true);
+    try {
+      const res = await fetch('/api/addresses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addressForm),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showError(data.error || 'Adres kaydedilemedi', 'Adres Hatası');
+        return;
+      }
+
+      await loadAddresses();
+      setShowAddressForm(false);
+      setAddressProvinceId('');
+      setAddressDistricts([]);
+      setAddressForm({
+        title: '',
+        full_name: '',
+        phone: '',
+        address_line: '',
+        district: '',
+        city: '',
+        postal_code: '',
+        is_default: false,
+      });
+    } catch (error) {
+      console.error('Adres kaydedilirken hata:', error);
+      showError('Adres kaydedilemedi', 'Adres Hatası');
+    } finally {
+      setAddressSaving(false);
     }
   };
 
@@ -376,6 +497,126 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
+                {!isGuest && showAddressForm && (
+                  <div className="mb-6 rounded-xl border border-[#e8e6e3] bg-[#faf8f5] p-4">
+                    <form onSubmit={handleCreateAddress} className="space-y-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-[#1a1a1a]">Adres Başlığı *</label>
+                          <input
+                            type="text"
+                            value={addressForm.title}
+                            onChange={(e) => setAddressForm({ ...addressForm, title: e.target.value })}
+                            required
+                            className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-[#1a1a1a]">Ad Soyad *</label>
+                          <input
+                            type="text"
+                            value={addressForm.full_name}
+                            onChange={(e) => setAddressForm({ ...addressForm, full_name: e.target.value })}
+                            required
+                            className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-[#1a1a1a]">Telefon *</label>
+                        <input
+                          type="tel"
+                          value={addressForm.phone}
+                          onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                          required
+                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-medium text-[#1a1a1a]">Adres *</label>
+                        <textarea
+                          value={addressForm.address_line}
+                          onChange={(e) => setAddressForm({ ...addressForm, address_line: e.target.value })}
+                          rows={3}
+                          required
+                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        />
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        <select
+                          value={addressProvinceId}
+                          onChange={(e) => {
+                            const nextId = e.target.value ? Number(e.target.value) : '';
+                            setAddressProvinceId(nextId);
+                            const province = provinces.find(p => p.id === nextId);
+                            setAddressForm({
+                              ...addressForm,
+                              city: province?.name || '',
+                              district: '',
+                            });
+                          }}
+                          required
+                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        >
+                          <option value="">İl seçin</option>
+                          {provinces.map((province) => (
+                            <option key={province.id} value={province.id}>{province.name}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={addressForm.district}
+                          onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
+                          required
+                          disabled={!addressProvinceId || addressDistrictLoading}
+                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44] disabled:bg-[#faf8f5]"
+                        >
+                          <option value="">{addressDistrictLoading ? 'Yükleniyor...' : 'İlçe seçin'}</option>
+                          {addressDistricts.map((district) => (
+                            <option key={district.id} value={district.name}>{district.name}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          value={addressForm.postal_code}
+                          onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })}
+                          placeholder="Posta Kodu"
+                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        />
+                      </div>
+
+                      <label className="flex items-center gap-2 text-sm text-[#666]">
+                        <input
+                          type="checkbox"
+                          checked={addressForm.is_default}
+                          onChange={(e) => setAddressForm({ ...addressForm, is_default: e.target.checked })}
+                          className="h-4 w-4 rounded border-[#e8e6e3] text-[#0f3f44] focus:ring-[#0f3f44]"
+                        />
+                        Varsayılan adres olarak ayarla
+                      </label>
+
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={addressSaving}
+                          className="flex-1 rounded-lg bg-[#0f3f44] px-4 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e] disabled:opacity-50"
+                        >
+                          {addressSaving ? 'Kaydediliyor...' : 'Kaydet'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowAddressForm(false)}
+                          className="flex-1 rounded-lg border border-[#e8e6e3] px-4 py-2 text-sm font-medium text-[#1a1a1a] hover:bg-white"
+                        >
+                          İptal
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
                 {isGuest ? (
                   <div className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -418,20 +659,33 @@ export default function CheckoutPage() {
                       className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                     />
                     <div className="grid gap-4 sm:grid-cols-3">
-                      <input
-                        type="text"
+                      <select
+                        value={guestProvinceId}
+                        onChange={(e) => {
+                          const nextId = e.target.value ? Number(e.target.value) : '';
+                          setGuestProvinceId(nextId);
+                          const province = provinces.find(p => p.id === nextId);
+                          setGuestCity(province?.name || '');
+                          setGuestDistrict('');
+                        }}
+                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                      >
+                        <option value="">İl seçin</option>
+                        {provinces.map((province) => (
+                          <option key={province.id} value={province.id}>{province.name}</option>
+                        ))}
+                      </select>
+                      <select
                         value={guestDistrict}
                         onChange={(e) => setGuestDistrict(e.target.value)}
-                        placeholder="İlçe"
-                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                      />
-                      <input
-                        type="text"
-                        value={guestCity}
-                        onChange={(e) => setGuestCity(e.target.value)}
-                        placeholder="Şehir"
-                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
-                      />
+                        disabled={!guestProvinceId || guestDistrictLoading}
+                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44] disabled:bg-[#faf8f5]"
+                      >
+                        <option value="">{guestDistrictLoading ? 'Yükleniyor...' : 'İlçe seçin'}</option>
+                        {guestDistricts.map((district) => (
+                          <option key={district.id} value={district.name}>{district.name}</option>
+                        ))}
+                      </select>
                       <input
                         type="text"
                         value={guestPostalCode}
