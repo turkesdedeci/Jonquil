@@ -5,6 +5,7 @@ import { checkRateLimit, getClientIP, safeErrorResponse } from '@/lib/security';
 
 // Enable ISR with 5-minute revalidation (reduces DB load significantly)
 export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

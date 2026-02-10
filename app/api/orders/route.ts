@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 import { getAllProductsServer } from '@/lib/products-server';
+import { sendOrderEmails } from '@/lib/resend';
 import {
   checkRateLimit,
   getClientIP,
@@ -240,6 +241,34 @@ export async function POST(request: NextRequest) {
       .select('*, order_items(*)')
       .eq('id', order.id)
       .single();
+
+    if (payment_method === 'bank') {
+      try {
+        const formatPrice = (value: number) => `${value.toLocaleString('tr-TR')} ₺`;
+        await sendOrderEmails({
+          orderId: order.order_number || order.id,
+          customerName: `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim(),
+          customerEmail: order.customer_email || '',
+          customerPhone: order.customer_phone || undefined,
+          shippingAddress: {
+            address: order.shipping_address || '',
+            city: order.shipping_city || '',
+            district: order.shipping_district || undefined,
+            zipCode: order.shipping_zip_code || undefined,
+          },
+          items: normalizedItems.map(item => ({
+            title: item.product_title,
+            quantity: item.quantity,
+            price: formatPrice(item.total_price),
+          })),
+          subtotal: formatPrice(serverSubtotal),
+          shippingCost: formatPrice(shippingCost),
+          total: formatPrice(totalAmount),
+        });
+      } catch (error) {
+        console.error('Failed to send bank order emails:', error);
+      }
+    }
 
     return NextResponse.json(completeOrder, { status: 201 });
   } catch (error) {

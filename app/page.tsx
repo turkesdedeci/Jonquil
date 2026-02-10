@@ -178,6 +178,7 @@ export default function Page() {
           currentSlide={currentSlide}
           setCurrentSlide={setCurrentSlide}
           slides={slides}
+          galleryIndex={galleryIndex}
         />
       );
   }
@@ -197,12 +198,14 @@ function Homepage({
   currentSlide,
   setCurrentSlide,
   slides,
+  galleryIndex,
 }: {
   onGo: (r: Route) => void;
   allProducts: any[];
   currentSlide: number;
   setCurrentSlide: React.Dispatch<React.SetStateAction<number>>;
   slides: string[];
+  galleryIndex: number;
 }) {
   const galleryImages = slides;
   const galleryVisible = useMemo(() => {

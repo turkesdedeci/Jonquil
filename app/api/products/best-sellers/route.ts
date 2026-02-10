@@ -4,6 +4,7 @@ import { checkRateLimit, getClientIP, safeErrorResponse } from '@/lib/security';
 import { getAllProductsServer } from '@/lib/products-server';
 
 export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
