@@ -77,7 +77,6 @@ export async function GET(request: NextRequest) {
       .slice(0, 4)
       .map(item => ({
         ...(item as any).product,
-        bestSellerQty: (item as any).qty,
       }));
 
     return NextResponse.json({ products: bestSellerProducts }, {
