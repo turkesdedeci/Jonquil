@@ -13,7 +13,13 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="mb-6 flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-[#0f3f44] to-[#0a2a2e]" aria-hidden="true" />
+              <Image
+                src="/images/products/GENEL FOTOLAR/LOGO/JONQUILLOGO_4.png"
+                alt={`${BRAND.name} logo`}
+                width={120}
+                height={40}
+                className="h-10 w-auto"
+              />
               <div>
                 <div className="text-sm font-bold tracking-widest text-[#1a1a1a]">{BRAND.name}</div>
                 <div className="text-[10px] font-light tracking-wide text-[#999]">
@@ -98,16 +104,33 @@ export default function Footer() {
               <div className="flex items-center gap-3">
                 {/* iyzico Logo */}
                 <div className="flex h-8 items-center rounded bg-white px-3 shadow-sm">
-                  <span className="text-sm font-bold text-[#1a1a1a]">iyzico</span>
+                  <Image
+                    src="/images/iyzico_ile_ode_colored.png"
+                    alt="iyzico ile öde"
+                    width={73}
+                    height={20}
+                    className="h-5 w-auto"
+                  />
                 </div>
                 {/* Visa */}
                 <div className="flex h-8 items-center rounded bg-white px-3 shadow-sm">
-                  <span className="text-sm font-bold text-[#1a1f71]">VISA</span>
+                  <Image
+                    src="/images/visa-brandmark-blue-1960x622.webp"
+                    alt="Visa"
+                    width={73}
+                    height={20}
+                    className="h-5 w-auto"
+                  />
                 </div>
                 {/* Mastercard */}
                 <div className="flex h-8 items-center rounded bg-white px-3 shadow-sm">
-                  <span className="text-sm font-bold text-[#eb001b]">Master</span>
-                  <span className="text-sm font-bold text-[#f79e1b]">card</span>
+                  <Image
+                    src="/images/ma_symbol_opt_73_3x.png"
+                    alt="Mastercard"
+                    width={73}
+                    height={20}
+                    className="h-5 w-auto"
+                  />
                 </div>
               </div>
             </div>

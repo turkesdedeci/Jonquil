@@ -6,7 +6,7 @@ export const BRAND = {
 
 export const ASSETS = {
   // Logo
-  logo: "/images/products/GENEL FOTOLAR/LOGO/Logo.jpg",
+  logo: "/images/products/GENEL FOTOLAR/LOGO/logo-1.png",
   
   // Hero images
   hero: "/images/products/GENEL FOTOLAR/Header-1.jpg",

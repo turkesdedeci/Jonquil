@@ -526,12 +526,25 @@ export default function CheckoutPage() {
                           <CreditCard className="h-5 w-5" />
                           Kredi/Banka Kartı
                         </div>
-                        <p className="text-sm text-[#666]">
-                          iyzico güvenli ödeme ile anında onay
-                        </p>
+                        <div className="flex items-center gap-2 text-sm text-[#666]">
+                          <Image
+                            src="/images/iyzico_ile_ode_colored.png"
+                            alt="iyzico ile öde"
+                            width={73}
+                            height={20}
+                            className="h-4 w-auto"
+                          />
+                          <span>güvenli ödeme ile anında onay</span>
+                        </div>
                         <div className="mt-2 flex items-center gap-2">
-                          <div className="flex h-6 items-center rounded bg-white px-2 text-xs font-bold shadow-sm">
-                            iyzico
+                          <div className="flex h-6 items-center rounded bg-white px-2 shadow-sm">
+                            <Image
+                              src="/images/iyzico_ile_ode_colored.png"
+                              alt="iyzico ile öde"
+                              width={73}
+                              height={20}
+                              className="h-4 w-auto"
+                            />
                           </div>
                           <div className="flex h-6 items-center rounded bg-white px-2 text-xs font-bold text-[#1a1f71] shadow-sm">
                             VISA
