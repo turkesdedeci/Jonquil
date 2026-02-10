@@ -134,19 +134,17 @@ export function ProductCard({
     >
       {/* Product Image */}
       <div className={`relative aspect-square overflow-hidden bg-[#faf8f5] ${!inStock ? 'grayscale' : ''}`}>
-        {images.map((img: string, idx: number) => (
-          <Image
-            key={idx}
-            src={img || "/placeholder.jpg"}
-            alt={`${product.title} - Görsel ${idx + 1}`}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className={`object-cover transition-opacity duration-300 ${
-              idx === currentImgIndex ? "opacity-100" : "opacity-0"
-            } ${!inStock && idx === currentImgIndex ? 'opacity-60' : ''}`}
-            loading="lazy"
-          />
-        ))}
+        <Image
+          key={currentImgIndex}
+          src={images[currentImgIndex] || "/placeholder.jpg"}
+          alt={`${product.title} - Görsel ${currentImgIndex + 1}`}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className={`object-cover transition-opacity duration-300 ${
+            !inStock ? 'opacity-60' : 'opacity-100'
+          }`}
+          loading="lazy"
+        />
 
         {/* Image Navigation Arrows (if multiple images) */}
         {images.length > 1 && inStock && (

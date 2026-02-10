@@ -8,7 +8,7 @@ import { ProductsProvider } from '@/hooks/useProducts';
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://jonquil.com.tr'),
+  metadataBase: new URL('https://www.jonquilstudio.co'),
   title: {
     default: 'Jonquil Studio - El Yapımı Türk Porseleni',
     template: '%s | Jonquil',
@@ -36,15 +36,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'tr_TR',
-    url: 'https://jonquil.com.tr',
+    url: 'https://www.jonquilstudio.co',
     siteName: 'Jonquil Studio',
     title: 'Jonquil Studio - El Yapımı Türk Porseleni',
     description: 'Premium el yapımı porselen tabak setleri ve tasarım objeleri.',
     images: [
       {
-        url: '/images/og-default.jpg',
-        width: 1200,
-        height: 630,
+        url: '/images/products/GENEL FOTOLAR/Header-1.jpg',
         alt: 'Jonquil Studio - El Yapımı Türk Porseleni',
       },
     ],
@@ -53,7 +51,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Jonquil Studio - El Yapımı Türk Porseleni',
     description: 'Premium el yapımı porselen tabak setleri ve tasarım objeleri.',
-    images: ['/images/og-default.jpg'],
+    images: ['/images/products/GENEL FOTOLAR/Header-1.jpg'],
   },
   robots: {
     index: true,
