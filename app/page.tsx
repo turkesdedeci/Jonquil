@@ -502,13 +502,9 @@ function Homepage({
             </p>
           </motion.div>
 
-          <div key={galleryKey} className="grid grid-cols-2 gap-4 md:grid-cols-4 opacity-0 animate-[fadeIn_1.2s_ease_forwards]">
+          <div key={galleryKey} className="grid grid-cols-2 gap-4 md:grid-cols-4 opacity-0 animate-[fadeIn_1.2s_ease_forwards] transition-opacity duration-700 ease-out">
             <motion.div
               className="col-span-2 row-span-2 overflow-hidden rounded-2xl relative"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
             >
               {galleryVisible[0] && (
                 <Image
@@ -523,10 +519,6 @@ function Homepage({
             </motion.div>
             <motion.div
               className="overflow-hidden rounded-2xl relative"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
             >
               {galleryVisible[1] && (
                 <Image
@@ -541,10 +533,6 @@ function Homepage({
             </motion.div>
             <motion.div
               className="overflow-hidden rounded-2xl relative"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
             >
               {galleryVisible[2] && (
                 <Image
@@ -559,10 +547,6 @@ function Homepage({
             </motion.div>
             <motion.div
               className="overflow-hidden rounded-2xl relative"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4 }}
             >
               {galleryVisible[3] && (
                 <Image
@@ -577,10 +561,6 @@ function Homepage({
             </motion.div>
             <motion.div
               className="overflow-hidden rounded-2xl relative"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5 }}
             >
               {galleryVisible[4] && (
                 <Image
