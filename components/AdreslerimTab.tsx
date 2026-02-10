@@ -71,11 +71,12 @@ export function AdreslerimTab() {
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
     if (!digits) return '';
-    const padded = digits.padEnd(11, '');
-    const part1 = padded.slice(0, 1);
-    const part2 = padded.slice(1, 4);
-    const part3 = padded.slice(4, 11);
-    return `${part1}(${part2})${part3}`.replace(/\(.*?\)/, digits.length >= 4 ? `(${part2})` : '');
+    const part1 = digits.slice(0, 1);
+    const part2 = digits.slice(1, 4);
+    const part3 = digits.slice(4);
+    if (digits.length <= 1) return part1;
+    if (digits.length <= 4) return `${part1}(${part2}`;
+    return `${part1}(${part2})${part3}`;
   };
 
   const isValidPhone = (value: string) => /^0\(\d{3}\)\d{7}$/.test(value);
