@@ -38,6 +38,7 @@ interface Order {
   order_number: string;
   user_id?: string | null;
   user_email?: string;
+  customer_email?: string;
   customer_first_name?: string;
   customer_last_name?: string;
   customer_phone?: string;
@@ -106,8 +107,13 @@ export default function AdminPage() {
   const getCustomerName = (order: Order) => {
     const name = `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim();
     if (name) return name;
-    if (order.user_email) return order.user_email.split('@')[0];
+    const email = order.user_email || order.customer_email;
+    if (email) return email.split('@')[0];
     return 'Müşteri';
+  };
+
+  const getCustomerEmail = (order: Order) => {
+    return order.user_email || order.customer_email || '';
   };
 
   // New product states
@@ -749,7 +755,7 @@ export default function AdminPage() {
     .filter(order =>
       searchTerm === '' ||
       order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (order.user_email || order.customer_email)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       `${order.customer_first_name} ${order.customer_last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -1003,7 +1009,7 @@ export default function AdminPage() {
                                   {getCustomerName(order)}
                                 </p>
                                 <div className="flex items-center gap-2">
-                                  <p className="text-sm text-gray-500">{order.user_email || '—'}</p>
+                                  <p className="text-sm text-gray-500">{getCustomerEmail(order) || '—'}</p>
                                   {!order.user_id && (
                                     <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
                                       Misafir
@@ -1416,7 +1422,7 @@ export default function AdminPage() {
                   <p className="font-medium text-gray-900">
                     {getCustomerName(selectedOrder)}
                   </p>
-                  <p className="text-sm text-gray-600">{selectedOrder.user_email || '—'}</p>
+                  <p className="text-sm text-gray-600">{getCustomerEmail(selectedOrder) || '—'}</p>
                   {selectedOrder.customer_phone && (
                     <p className="text-sm text-gray-600">{selectedOrder.customer_phone}</p>
                   )}
