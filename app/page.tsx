@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
@@ -418,6 +418,7 @@ function Homepage({
             src={ASSETS.tablescape}
             alt="Background"
             className="h-full w-full object-cover"
+            loading="lazy"
           />
         </div>
         <div className="relative z-10 mx-auto max-w-4xl px-6 text-center text-white">
@@ -1516,6 +1517,7 @@ function AboutPage({ onGo }: { onGo: (r: Route) => void }) {
                 src={ASSETS.tablescape}
                 alt="Jonquil Ottoman Collection"
                 className="h-full w-full object-cover"
+                loading="lazy"
               />
             </div>
 
