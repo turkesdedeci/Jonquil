@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BadgeCheck,
@@ -101,6 +102,8 @@ export default function Page() {
   );
   const slides = heroSlides.length > 0 ? heroSlides : [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3];
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [gallerySet, setGallerySet] = useState<string[]>([]);
+  const [galleryKey, setGalleryKey] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -116,6 +119,21 @@ export default function Page() {
     }, 8000);
     return () => clearInterval(interval);
   }, [slides.length]);
+
+  useEffect(() => {
+    if (slides.length === 0) return;
+    const count = 5;
+    const selected: string[] = [];
+    const used = new Set<number>();
+    while (selected.length < count && used.size < slides.length) {
+      const idx = Math.floor(Math.random() * slides.length);
+      if (used.has(idx)) continue;
+      used.add(idx);
+      selected.push(slides[idx]);
+    }
+    setGallerySet(selected);
+    setGalleryKey((prev) => prev + 1);
+  }, [galleryIndex, slides]);
 
   useEffect(() => {
     let isMounted = true;
@@ -220,20 +238,7 @@ function Homepage({
   galleryIndex: number;
   bestSellers: any[];
 }) {
-  const galleryImages = slides;
-  const galleryVisible = useMemo(() => {
-    if (galleryImages.length === 0) return [];
-    const count = 5;
-    const selected: string[] = [];
-    const used = new Set<number>();
-    while (selected.length < count && used.size < galleryImages.length) {
-      const idx = Math.floor(Math.random() * galleryImages.length);
-      if (used.has(idx)) continue;
-      used.add(idx);
-      selected.push(galleryImages[idx]);
-    }
-    return selected;
-  }, [galleryImages, galleryIndex]);
+  const galleryVisible = gallerySet;
 
   return (
     <main>
@@ -246,12 +251,15 @@ function Homepage({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2 }}
-            className="absolute inset-0"
+            className="absolute inset-0 relative"
           >
-            <img
+            <Image
               src={slides[currentSlide]}
               alt="Jonquil Collection"
-              className="h-full w-full object-cover"
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={currentSlide === 0}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
           </motion.div>
@@ -473,60 +481,60 @@ function Homepage({
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div key={galleryKey} className="grid grid-cols-2 gap-4 md:grid-cols-4 opacity-0 animate-[fadeIn_1.2s_ease_forwards]">
             <motion.div
-              className="col-span-2 row-span-2 overflow-hidden rounded-2xl"
+              className="col-span-2 row-span-2 overflow-hidden rounded-2xl relative"
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
             >
               {galleryVisible[0] && (
-                <img src={galleryVisible[0]} alt="Gallery image 1" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
+                <Image src={galleryVisible[0]} alt="Gallery image 1" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-500 hover:scale-105" />
               )}
             </motion.div>
             <motion.div
-              className="overflow-hidden rounded-2xl"
+              className="overflow-hidden rounded-2xl relative"
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
               {galleryVisible[1] && (
-                <img src={galleryVisible[1]} alt="Gallery image 2" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
+                <Image src={galleryVisible[1]} alt="Gallery image 2" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" />
               )}
             </motion.div>
             <motion.div
-              className="overflow-hidden rounded-2xl"
+              className="overflow-hidden rounded-2xl relative"
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
             >
               {galleryVisible[2] && (
-                <img src={galleryVisible[2]} alt="Gallery image 3" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
+                <Image src={galleryVisible[2]} alt="Gallery image 3" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" />
               )}
             </motion.div>
             <motion.div
-              className="overflow-hidden rounded-2xl"
+              className="overflow-hidden rounded-2xl relative"
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
             >
               {galleryVisible[3] && (
-                <img src={galleryVisible[3]} alt="Gallery image 4" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
+                <Image src={galleryVisible[3]} alt="Gallery image 4" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" />
               )}
             </motion.div>
             <motion.div
-              className="overflow-hidden rounded-2xl"
+              className="overflow-hidden rounded-2xl relative"
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.5 }}
             >
               {galleryVisible[4] && (
-                <img src={galleryVisible[4]} alt="Gallery image 5" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
+                <Image src={galleryVisible[4]} alt="Gallery image 5" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" />
               )}
             </motion.div>
           </div>
