@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import {
   checkRateLimitAsync,
   getClientIP,
+  requireSameOrigin,
   sanitizeString,
   safeErrorResponse,
   handleDatabaseError
@@ -53,6 +54,8 @@ export async function POST(request: NextRequest) {
     const clientIP = getClientIP(request);
     const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     const { userId } = await auth();
     if (!userId) {
@@ -108,6 +111,8 @@ export async function DELETE(request: NextRequest) {
     const clientIP = getClientIP(request);
     const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     const { userId } = await auth();
     if (!userId) {

@@ -7,6 +7,7 @@ import { sendOrderEmails } from '@/lib/resend';
 import {
   checkRateLimitAsync,
   getClientIP,
+  requireSameOrigin,
   sanitizeString,
   safeErrorResponse,
   handleDatabaseError
@@ -68,6 +69,8 @@ export async function POST(request: NextRequest) {
     const clientIP = getClientIP(request);
     const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     const { userId } = await auth();
 
@@ -287,6 +290,8 @@ export async function PATCH(request: NextRequest) {
     const clientIP = getClientIP(request);
     const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     const { userId } = await auth();
 

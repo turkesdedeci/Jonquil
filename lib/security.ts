@@ -499,3 +499,31 @@ export function secureJsonResponse(
   const response = NextResponse.json(data, init);
   return addSecurityHeaders(response);
 }
+
+// ============================================
+// ORIGIN CHECKS (BASIC CSRF MITIGATION)
+// ============================================
+
+/**
+ * Enforce same-origin requests when Origin is present.
+ * Allows requests with no Origin (e.g., same-site navigations or some clients).
+ */
+export function requireSameOrigin(request: Request): NextResponse | null {
+  const origin = request.headers.get('origin');
+  if (!origin) return null;
+
+  const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
+  if (!host) return null;
+
+  try {
+    const originUrl = new URL(origin);
+    const originHost = originUrl.host;
+    if (originHost !== host) {
+      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    }
+  } catch {
+    return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+  }
+
+  return null;
+}

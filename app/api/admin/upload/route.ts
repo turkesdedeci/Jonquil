@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   checkRateLimitAsync,
   getClientIP,
+  requireSameOrigin,
   validateFileSignature,
   validateFileSize,
   safeErrorResponse
@@ -31,6 +32,8 @@ export async function POST(request: NextRequest) {
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
@@ -131,6 +134,8 @@ export async function POST(request: NextRequest) {
 // DELETE - Delete image from Supabase Storage
 export async function DELETE(request: NextRequest) {
   try {
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }

@@ -85,9 +85,10 @@ export async function POST(request: NextRequest) {
       const orderId = result.conversationId;
       const paymentId = result.paymentId;
       const paidPrice = result.paidPrice;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
       // Update order in database
-      if (supabase && orderId) {
+      if (supabase && orderId && uuidRegex.test(orderId)) {
         try {
           await supabase
             .from('orders')
@@ -118,9 +119,10 @@ export async function POST(request: NextRequest) {
       const errorMessage = result.errorMessage || 'Ödeme işlemi başarısız';
       const errorCode = result.errorCode || 'unknown';
       const orderId = result.conversationId;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
       // Update order status to failed
-      if (supabase && orderId) {
+      if (supabase && orderId && uuidRegex.test(orderId)) {
         try {
           await supabase
             .from('orders')
@@ -171,9 +173,10 @@ export async function GET(request: NextRequest) {
       const orderId = result.conversationId;
       const paymentId = result.paymentId;
       const paidPrice = result.paidPrice;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
       // Update order if supabase is available
-      if (supabase && orderId) {
+      if (supabase && orderId && uuidRegex.test(orderId)) {
         await supabase
           .from('orders')
           .update({

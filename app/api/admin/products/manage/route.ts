@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   checkRateLimitAsync,
   getClientIP,
+  requireSameOrigin,
   sanitizeString,
   safeErrorResponse,
   handleDatabaseError
@@ -123,6 +124,8 @@ export async function POST(request: NextRequest) {
     const clientIP = getClientIP(request);
     const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
@@ -207,6 +210,8 @@ export async function PATCH(request: NextRequest) {
     const clientIP = getClientIP(request);
     const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
@@ -429,6 +434,8 @@ export async function DELETE(request: NextRequest) {
     const clientIP = getClientIP(request);
     const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });

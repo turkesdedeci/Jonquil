@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { isAdmin } from '@/lib/adminCheck';
+import { checkRateLimitAsync, getClientIP, requireSameOrigin } from '@/lib/security';
 
 // Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -12,6 +13,12 @@ const supabase = supabaseUrl && supabaseServiceKey
 
 export async function POST(request: NextRequest) {
   try {
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
+    if (rateLimitResponse) return rateLimitResponse;
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
+
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
@@ -94,6 +101,10 @@ CREATE TRIGGER update_products_updated_at
 
 export async function GET(request: NextRequest) {
   try {
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
+    if (rateLimitResponse) return rateLimitResponse;
+
     if (!await isAdmin()) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }

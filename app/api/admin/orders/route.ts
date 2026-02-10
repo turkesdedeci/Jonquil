@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import {
   checkRateLimitAsync,
   getClientIP,
+  requireSameOrigin,
   sanitizeString,
   safeErrorResponse,
   handleDatabaseError
@@ -134,6 +135,8 @@ export async function PATCH(request: NextRequest) {
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     // Admin kontrolü
     if (!await isAdmin()) {
