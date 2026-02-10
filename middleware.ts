@@ -11,19 +11,21 @@ const hasClerkConfig = !!(
 // Allows: self, Clerk auth, Supabase storage, iyzico payment
 const scriptSrc = [
   "'self'",
-  "'unsafe-inline'",
   ...(process.env.NODE_ENV === 'production' ? [] : ["'unsafe-eval'"]),
   'https://*.clerk.accounts.dev',
   'https://challenges.cloudflare.com',
+  'https://static.iyzipay.com',
+  'https://*.iyzipay.com',
+  'https://*.iyzico.com',
 ];
 
 const cspDirectives = [
   "default-src 'self'",
   `script-src ${scriptSrc.join(' ')}`,
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self'",
   "img-src 'self' data: blob: https://*.supabase.co https://img.clerk.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.clerk.accounts.dev https://*.supabase.co https://api.iyzipay.com wss://*.supabase.co",
+  "connect-src 'self' https://*.clerk.accounts.dev https://*.supabase.co https://api.iyzipay.com https://*.iyzipay.com https://*.iyzico.com wss://*.supabase.co",
   "frame-src 'self' https://*.iyzipay.com https://challenges.cloudflare.com https://www.google.com https://maps.google.com",
   "frame-ancestors 'none'",
   "form-action 'self'",
