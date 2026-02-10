@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { allProducts as staticProducts } from '@/data/products';
-import { checkRateLimit, getClientIP, safeErrorResponse } from '@/lib/security';
+import { checkRateLimitAsync, getClientIP, safeErrorResponse } from '@/lib/security';
 
 // Enable ISR with 5-minute revalidation (reduces DB load significantly)
 export const revalidate = 300;
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   try {
     // Rate limiting for read operations
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'read');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
     if (rateLimitResponse) {
       return rateLimitResponse;
     }

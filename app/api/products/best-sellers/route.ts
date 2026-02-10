@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { checkRateLimit, getClientIP, safeErrorResponse } from '@/lib/security';
+import { checkRateLimitAsync, getClientIP, safeErrorResponse } from '@/lib/security';
 import { getAllProductsServer } from '@/lib/products-server';
 
 export const revalidate = 300;
@@ -26,7 +26,7 @@ function normalizeTitle(value: string) {
 export async function GET(request: NextRequest) {
   try {
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'read');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
     if (rateLimitResponse) {
       return rateLimitResponse;
     }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendContactEmail, isResendConfigured, type ContactFormData } from '@/lib/resend';
 import {
-  checkRateLimit,
+  checkRateLimitAsync,
   getClientIP,
   sanitizeString,
   sanitizeEmail,
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting - strict for contact form to prevent spam
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'contact');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'contact');
     if (rateLimitResponse) {
       return rateLimitResponse;
     }

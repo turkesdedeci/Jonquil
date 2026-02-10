@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { checkRateLimit, getClientIP } from '@/lib/security';
+import { checkRateLimitAsync, getClientIP } from '@/lib/security';
 
 // Enable ISR with 1-minute revalidation for stock data
 export const revalidate = 60;
@@ -21,7 +21,7 @@ const cacheHeaders = {
 export async function GET(request: NextRequest) {
   // Rate limiting
   const clientIP = getClientIP(request);
-  const rateLimitResponse = checkRateLimit(clientIP, 'read');
+  const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
   if (rateLimitResponse) {
     return rateLimitResponse;
   }

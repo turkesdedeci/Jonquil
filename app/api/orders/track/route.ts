@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import {
-  checkRateLimit,
+  checkRateLimitAsync,
   getClientIP,
   sanitizeString,
   sanitizeEmail,
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting - strict for order tracking to prevent enumeration
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'auth');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'auth');
     if (rateLimitResponse) {
       return rateLimitResponse;
     }

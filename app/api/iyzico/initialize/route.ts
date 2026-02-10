@@ -3,7 +3,7 @@ import { initializeCheckoutForm, isIyzicoConfigured, type BasketItem, type Buyer
 import { headers } from 'next/headers';
 import { getProductByIdServer, getProductPriceServer } from '@/lib/products-server';
 import {
-  checkRateLimit,
+  checkRateLimitAsync,
   getClientIP,
   sanitizeString,
   sanitizeEmail,
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting - strict for payment operations
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'auth');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'auth');
     if (rateLimitResponse) return rateLimitResponse;
 
     // Check if iyzico is configured

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
 import {
-  checkRateLimit,
+  checkRateLimitAsync,
   getClientIP,
   sanitizeString,
   safeErrorResponse,
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   try {
     // Rate limiting
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'read');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'read');
     if (rateLimitResponse) return rateLimitResponse;
 
     const { userId } = await auth();
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
 
     const { userId } = await auth();
@@ -106,7 +106,7 @@ export async function DELETE(request: NextRequest) {
   try {
     // Rate limiting
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'write');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
     if (rateLimitResponse) return rateLimitResponse;
 
     const { userId } = await auth();

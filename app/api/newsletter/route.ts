@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resend, isResendConfigured, EMAIL_FROM } from '@/lib/resend';
 import { createClient } from '@supabase/supabase-js';
 import {
-  checkRateLimit,
+  checkRateLimitAsync,
   getClientIP,
   sanitizeEmail,
   escapeHtml,
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting - strict for newsletter to prevent spam
     const clientIP = getClientIP(request);
-    const rateLimitResponse = checkRateLimit(clientIP, 'contact');
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'contact');
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
