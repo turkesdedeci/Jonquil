@@ -33,13 +33,24 @@ function buildCsp(nonce: string) {
     "form-action 'self'",
     "base-uri 'self'",
     "object-src 'none'",
+    "report-to csp-endpoint",
   ].join('; ');
 }
 
 function buildSecurityHeaders(nonce: string): Record<string, string> {
+  const reportTo = JSON.stringify({
+    group: 'csp-endpoint',
+    max_age: 10886400,
+    endpoints: [{ url: '/api/csp-report' }],
+    include_subdomains: true,
+  });
+
   return {
     // Content Security Policy
     'Content-Security-Policy': buildCsp(nonce),
+    // CSP Report-Only (for observing violations)
+    'Content-Security-Policy-Report-Only': buildCsp(nonce),
+    'Report-To': reportTo,
     // Prevent clickjacking (redundant with CSP frame-ancestors but good for older browsers)
     'X-Frame-Options': 'DENY',
     // Prevent MIME type sniffing
