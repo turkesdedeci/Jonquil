@@ -22,7 +22,7 @@ const scriptSrc = [
 const cspDirectives = [
   "default-src 'self'",
   `script-src ${scriptSrc.join(' ')}`,
-  "style-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co https://img.clerk.com",
   "font-src 'self' data:",
   "connect-src 'self' https://*.clerk.accounts.dev https://*.supabase.co https://api.iyzipay.com https://*.iyzipay.com https://*.iyzico.com wss://*.supabase.co",
