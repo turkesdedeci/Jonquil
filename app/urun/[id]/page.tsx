@@ -161,7 +161,7 @@ function generateJsonLd(product: Product) {
 }
 
 export default async function ProductPage({ params, searchParams }: Props) {
-  const debugMode = searchParams?.debug === '1';
+  const debugMode = searchParams?.debug === '1' && process.env.NODE_ENV !== 'production';
   const { id: paramId } = await params;
   const queryId = typeof searchParams?.id === 'string'
     ? searchParams.id

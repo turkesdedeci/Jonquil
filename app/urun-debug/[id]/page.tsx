@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { getProductByIdServer } from '@/lib/products-server';
 
@@ -10,6 +11,10 @@ interface Props {
 }
 
 export default async function UrunDebugPage({ params, searchParams }: Props) {
+  if (process.env.NODE_ENV === 'production') {
+    notFound();
+  }
+
   const { id: paramId } = await params;
   const queryId = typeof searchParams?.id === 'string'
     ? searchParams.id
