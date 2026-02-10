@@ -1,4 +1,5 @@
-﻿import { Metadata } from 'next';
+import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer, getProductByIdServer, ServerProduct } from '@/lib/products-server';
 import ProductPageClient from './ProductPageClient';
@@ -161,6 +162,7 @@ function generateJsonLd(product: Product) {
 }
 
 export default async function ProductPage({ params, searchParams }: Props) {
+  const nonce = headers().get('x-nonce') || undefined;
   const debugMode = searchParams?.debug === '1' && process.env.NODE_ENV !== 'production';
   const { id: paramId } = await params;
   const queryId = typeof searchParams?.id === 'string'
@@ -232,6 +234,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
       {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 

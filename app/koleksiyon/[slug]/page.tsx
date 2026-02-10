@@ -1,4 +1,5 @@
-﻿import { Metadata } from 'next';
+import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer } from '@/lib/products-server';
 import CollectionPageClient from './CollectionPageClient';
@@ -107,6 +108,7 @@ function generateJsonLd(slug: CollectionSlug, productCount: number) {
 }
 
 export default async function CollectionPage({ params }: Props) {
+  const nonce = headers().get('x-nonce') || undefined;
   const { slug } = await params;
 
   if (!collections[slug as CollectionSlug]) {
@@ -127,6 +129,7 @@ export default async function CollectionPage({ params }: Props) {
       {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
