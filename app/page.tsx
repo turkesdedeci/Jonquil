@@ -257,7 +257,7 @@ function Homepage({
   gallerySet: string[];
   galleryKey: number;
 }) {
-  const galleryVisible = gallerySet;
+  const galleryVisible = gallerySet.length > 0 ? gallerySet : slides.slice(0, 5);
 
   return (
     <main>
