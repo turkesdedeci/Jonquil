@@ -43,7 +43,40 @@ export async function GET(request: NextRequest) {
       return handleDatabaseError(error);
     }
 
-    return NextResponse.json(orders || [], {
+    const safeOrders = orders || [];
+    const addressIds = safeOrders
+      .map((order: any) => order.shipping_address_id)
+      .filter(Boolean);
+
+    let addressMap = new Map<string, { full_name?: string; phone?: string }>();
+
+    if (addressIds.length > 0) {
+      const { data: addresses } = await supabase
+        .from('addresses')
+        .select('id, full_name, phone')
+        .in('id', Array.from(new Set(addressIds)));
+
+      if (addresses) {
+        addressMap = new Map(addresses.map((addr: any) => [addr.id, addr]));
+      }
+    }
+
+    const enrichedOrders = safeOrders.map((order: any) => {
+      if (order.customer_first_name || order.customer_last_name) return order;
+      const addr = order.shipping_address_id ? addressMap.get(order.shipping_address_id) : null;
+      if (!addr?.full_name) return order;
+      const nameParts = String(addr.full_name).trim().split(/\s+/);
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      return {
+        ...order,
+        customer_first_name: firstName,
+        customer_last_name: lastName,
+        customer_phone: order.customer_phone || addr.phone || order.customer_phone,
+      };
+    });
+
+    return NextResponse.json(enrichedOrders, {
       headers: {
         'Cache-Control': 'private, no-cache, no-store, must-revalidate',
       },
