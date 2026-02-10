@@ -96,7 +96,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     const loadProvinces = async () => {
       try {
-        const res = await fetch('https://api.turkiyeapi.dev/v1/provinces');
+        const res = await fetch('/api/locations/provinces');
         const data = await res.json();
         const list = data?.data || [];
         setProvinces(list.map((p: any) => ({ id: p.id, name: p.name })));
@@ -116,7 +116,7 @@ export default function CheckoutPage() {
       }
       setAddressDistrictLoading(true);
       try {
-        const res = await fetch(`https://api.turkiyeapi.dev/v1/districts?provinceId=${addressProvinceId}`);
+        const res = await fetch(`/api/locations/districts?provinceId=${addressProvinceId}`);
         const data = await res.json();
         const list = data?.data || [];
         setAddressDistricts(list.map((d: any) => ({ id: d.id, name: d.name })));
@@ -138,7 +138,7 @@ export default function CheckoutPage() {
       }
       setGuestDistrictLoading(true);
       try {
-        const res = await fetch(`https://api.turkiyeapi.dev/v1/districts?provinceId=${guestProvinceId}`);
+        const res = await fetch(`/api/locations/districts?provinceId=${guestProvinceId}`);
         const data = await res.json();
         const list = data?.data || [];
         setGuestDistricts(list.map((d: any) => ({ id: d.id, name: d.name })));
@@ -180,6 +180,10 @@ export default function CheckoutPage() {
       showWarning('Lütfen tüm zorunlu alanları doldurun', 'Eksik Bilgi');
       return;
     }
+    if (!isValidPhone(addressForm.phone)) {
+      showWarning('Telefon formatı 0(555)5555555 olmalıdır', 'Telefon Formatı');
+      return;
+    }
 
     setAddressSaving(true);
     try {
@@ -217,6 +221,19 @@ export default function CheckoutPage() {
     }
   };
 
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (!digits) return '';
+    const part1 = digits.slice(0, 1);
+    const part2 = digits.slice(1, 4);
+    const part3 = digits.slice(4);
+    if (digits.length <= 1) return part1;
+    if (digits.length <= 4) return `${part1}(${part2}`;
+    return `${part1}(${part2})${part3}`;
+  };
+
+  const isValidPhone = (value: string) => /^0\(\d{3}\)\d{7}$/.test(value);
+
   // Sipariş oluştur
   const handleSubmitOrder = async () => {
     if (!user && checkoutMode !== 'guest') {
@@ -230,6 +247,10 @@ export default function CheckoutPage() {
     if (isGuest) {
       if (!guestFirstName || !guestLastName || !guestEmail || !guestPhone || !guestAddress || !guestCity) {
         showWarning('Lütfen misafir bilgilerini doldurun', 'Eksik Bilgi');
+        return;
+      }
+      if (!isValidPhone(guestPhone)) {
+        showWarning('Telefon formatı 0(555)5555555 olmalıdır', 'Telefon Formatı');
         return;
       }
     }
@@ -528,7 +549,9 @@ export default function CheckoutPage() {
                         <input
                           type="tel"
                           value={addressForm.phone}
-                          onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                          onChange={(e) => setAddressForm({ ...addressForm, phone: formatPhone(e.target.value) })}
+                          placeholder="0(555)5555555"
+                          pattern="0\(\d{3}\)\d{7}"
                           required
                           className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                         />
@@ -646,8 +669,9 @@ export default function CheckoutPage() {
                       <input
                         type="tel"
                         value={guestPhone}
-                        onChange={(e) => setGuestPhone(e.target.value)}
-                        placeholder="Telefon"
+                        onChange={(e) => setGuestPhone(formatPhone(e.target.value))}
+                        placeholder="0(555)5555555"
+                        pattern="0\(\d{3}\)\d{7}"
                         className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                       />
                     </div>

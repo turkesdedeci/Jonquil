@@ -35,6 +35,7 @@ export function AdreslerimTab() {
   const [districts, setDistricts] = useState<District[]>([]);
   const [selectedProvinceId, setSelectedProvinceId] = useState<number | ''>('');
   const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     full_name: '',
@@ -67,10 +68,22 @@ export function AdreslerimTab() {
     }
   }, [user]);
 
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (!digits) return '';
+    const padded = digits.padEnd(11, '');
+    const part1 = padded.slice(0, 1);
+    const part2 = padded.slice(1, 4);
+    const part3 = padded.slice(4, 11);
+    return `${part1}(${part2})${part3}`.replace(/\(.*?\)/, digits.length >= 4 ? `(${part2})` : '');
+  };
+
+  const isValidPhone = (value: string) => /^0\(\d{3}\)\d{7}$/.test(value);
+
   useEffect(() => {
     const loadProvinces = async () => {
       try {
-        const res = await fetch('https://api.turkiyeapi.dev/v1/provinces');
+        const res = await fetch('/api/locations/provinces');
         const data = await res.json();
         const list = data?.data || [];
         setProvinces(list.map((p: any) => ({ id: p.id, name: p.name })));
@@ -90,7 +103,7 @@ export function AdreslerimTab() {
       }
       setLoadingDistricts(true);
       try {
-        const res = await fetch(`https://api.turkiyeapi.dev/v1/districts?provinceId=${selectedProvinceId}`);
+        const res = await fetch(`/api/locations/districts?provinceId=${selectedProvinceId}`);
         const data = await res.json();
         const list = data?.data || [];
         setDistricts(list.map((d: any) => ({ id: d.id, name: d.name })));
@@ -116,6 +129,11 @@ export function AdreslerimTab() {
   // Form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+    if (!isValidPhone(formData.phone)) {
+      setFormError('Telefon formatı 0(555)5555555 olmalıdır.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -134,6 +152,7 @@ export function AdreslerimTab() {
         setShowForm(false);
         setEditingId(null);
         resetForm();
+        setFormError(null);
       }
     } catch (error) {
       console.error('Adres kaydedilirken hata:', error);
@@ -221,6 +240,11 @@ export function AdreslerimTab() {
           <h3 className="mb-4 font-medium text-[#1a1a1a]">
             {editingId ? 'Adresi Düzenle' : 'Yeni Adres Ekle'}
           </h3>
+          {formError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {formError}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -257,8 +281,9 @@ export function AdreslerimTab() {
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+90 555 123 4567"
+                onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
+                placeholder="0(555)5555555"
+                pattern="0\(\d{3}\)\d{7}"
                 required
                 className="w-full rounded-lg border border-[#e8e6e3] px-3 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
               />
