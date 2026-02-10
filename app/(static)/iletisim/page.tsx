@@ -31,8 +31,8 @@ export default function IletisimPage() {
               </div>
               <div>
                 <h3 className="font-medium text-neutral-900">E-posta</h3>
-                <a href="mailto:info@jonquil.com" className="text-[#0f3f44] hover:underline">
-                  info@jonquil.com
+                <a href="mailto:fulyaozzturk@gmail.com" className="text-[#0f3f44] hover:underline">
+                  fulyaozzturk@gmail.com
                 </a>
               </div>
             </div>
@@ -43,8 +43,8 @@ export default function IletisimPage() {
               </div>
               <div>
                 <h3 className="font-medium text-neutral-900">Telefon</h3>
-                <a href="tel:+905001234567" className="text-[#0f3f44] hover:underline">
-                  +90 (500) 123 45 67
+                <a href="tel:+905335101093" className="text-[#0f3f44] hover:underline">
+                  0 (533) 510 10 93
                 </a>
               </div>
             </div>
@@ -56,8 +56,8 @@ export default function IletisimPage() {
               <div>
                 <h3 className="font-medium text-neutral-900">Adres</h3>
                 <p className="text-neutral-600">
-                  Örnek Mahallesi, Örnek Sokak No: 1<br />
-                  Kadıköy / İstanbul
+                  Kazım Özalp Mah. Kumkapı Sok. 31/4<br />
+                  Çankaya / Ankara
                 </p>
               </div>
             </div>
@@ -91,30 +91,25 @@ export default function IletisimPage() {
             <dl className="space-y-3 text-sm">
               <div className="flex flex-col">
                 <dt className="font-medium text-neutral-500">Ticaret Unvanı</dt>
-                <dd className="text-neutral-900">JONQUIL STUDIO TİCARET LİMİTED ŞİRKETİ</dd>
-              </div>
-
-              <div className="flex flex-col">
-                <dt className="font-medium text-neutral-500">MERSİS No</dt>
-                <dd className="text-neutral-900">0123456789012345</dd>
+                <dd className="text-neutral-900">JONQUİL TASARIM TİCARET LİMİTED ŞİRKETİ</dd>
               </div>
 
               <div className="flex flex-col">
                 <dt className="font-medium text-neutral-500">Vergi Dairesi / No</dt>
-                <dd className="text-neutral-900">Kadıköy V.D. / 1234567890</dd>
+                <dd className="text-neutral-900">Cumhuriyet Vergi Dairesi / 484 212 2134</dd>
               </div>
 
               <div className="flex flex-col">
                 <dt className="font-medium text-neutral-500">Merkez Adresi</dt>
                 <dd className="text-neutral-900">
-                  Örnek Mahallesi, Örnek Sokak No: 1<br />
-                  34710 Kadıköy / İstanbul
+                  Kazım Özalp Mah. Kumkapı Sok. 31/4<br />
+                  Çankaya / Ankara
                 </dd>
               </div>
 
               <div className="flex flex-col">
-                <dt className="font-medium text-neutral-500">KEP Adresi</dt>
-                <dd className="text-neutral-900">jonquil@hs01.kep.tr</dd>
+                <dt className="font-medium text-neutral-500">Yetkili Kişi</dt>
+                <dd className="text-neutral-900">Fulya Öztürk</dd>
               </div>
             </dl>
           </div>
@@ -132,13 +127,38 @@ export default function IletisimPage() {
                 </a>
               </li>
               <li>
-                <a href="/gizlilik-politikasi" className="text-[#0f3f44] hover:underline">
-                  Gizlilik Politikası
+                <a href="/on-bilgilendirme-formu" className="text-[#0f3f44] hover:underline">
+                  Ön Bilgilendirme Formu
+                </a>
+              </li>
+              <li>
+                <a href="/uyelik-sozlesmesi" className="text-[#0f3f44] hover:underline">
+                  Üyelik Sözleşmesi
+                </a>
+              </li>
+              <li>
+                <a href="/kisisel-veriler-politikasi" className="text-[#0f3f44] hover:underline">
+                  Kişisel Veriler Politikası (KVKK)
+                </a>
+              </li>
+              <li>
+                <a href="/gizlilik-guvenlik-politikasi" className="text-[#0f3f44] hover:underline">
+                  Gizlilik ve Güvenlik Politikası
+                </a>
+              </li>
+              <li>
+                <a href="/iptal-iade-proseduru" className="text-[#0f3f44] hover:underline">
+                  İptal ve İade Prosedürü
                 </a>
               </li>
               <li>
                 <a href="/teslimat-iade" className="text-[#0f3f44] hover:underline">
                   Teslimat ve İade Koşulları
+                </a>
+              </li>
+              <li>
+                <a href="/gizlilik-politikasi" className="text-[#0f3f44] hover:underline">
+                  Gizlilik Politikası
                 </a>
               </li>
             </ul>

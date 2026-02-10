@@ -707,16 +707,35 @@ export default function CheckoutPage() {
                     className="mt-1 h-4 w-4 rounded border-[#e8e6e3] text-[#0f3f44] focus:ring-[#0f3f44]"
                   />
                   <span className="text-xs text-[#666]">
+                    <a href="/on-bilgilendirme-formu" target="_blank" className="text-[#0f3f44] hover:underline">
+                      Ön Bilgilendirme Formu
+                    </a>
+                    'nu ve{' '}
                     <a href="/mesafeli-satis-sozlesmesi" target="_blank" className="text-[#0f3f44] hover:underline">
                       Mesafeli Satış Sözleşmesi
                     </a>
-                    'ni ve{' '}
-                    <a href="/gizlilik-politikasi" target="_blank" className="text-[#0f3f44] hover:underline">
-                      Gizlilik Politikası
-                    </a>
-                    'nı okudum ve kabul ediyorum.
+                    'ni okudum ve kabul ediyorum.
                   </span>
                 </label>
+
+                <p className="text-xs text-[#999]">
+                  <a href="/uyelik-sozlesmesi" target="_blank" className="text-[#0f3f44] hover:underline">
+                    Üyelik Sözleşmesi
+                  </a>
+                  ,{' '}
+                  <a href="/kisisel-veriler-politikasi" target="_blank" className="text-[#0f3f44] hover:underline">
+                    Kişisel Veriler Politikası (KVKK)
+                  </a>
+                  ,{' '}
+                  <a href="/gizlilik-guvenlik-politikasi" target="_blank" className="text-[#0f3f44] hover:underline">
+                    Gizlilik ve Güvenlik Politikası
+                  </a>
+                  ,{' '}
+                  <a href="/iptal-iade-proseduru" target="_blank" className="text-[#0f3f44] hover:underline">
+                    İptal ve İade Prosedürü
+                  </a>
+                  .
+                </p>
 
                 <button
                   onClick={handleSubmitOrder}

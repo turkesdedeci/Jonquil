@@ -12,20 +12,14 @@ export default function Footer() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <div className="mb-6 flex items-center gap-3">
+            <div className="mb-6 flex items-center">
               <Image
                 src="/images/products/GENEL FOTOLAR/LOGO/JONQUILLOGO_4.png"
                 alt={`${BRAND.name} logo`}
-                width={120}
-                height={40}
-                className="h-10 w-auto"
+                width={180}
+                height={60}
+                className="h-16 w-auto"
               />
-              <div>
-                <div className="text-sm font-bold tracking-widest text-[#1a1a1a]">{BRAND.name}</div>
-                <div className="text-[10px] font-light tracking-wide text-[#999]">
-                  {BRAND.tagline}
-                </div>
-              </div>
             </div>
             <p className="mb-6 text-sm leading-relaxed text-[#666]">
               El yapımı porselen ve tasarım objeleri ile sofranıza sanat katın.
@@ -66,7 +60,12 @@ export default function Footer() {
             <ul className="space-y-3 text-sm text-[#666]">
               <li><Link href="/hakkimizda" className="hover:text-[#0f3f44]">Hakkımızda</Link></li>
               <li><Link href="/iletisim" className="hover:text-[#0f3f44]">İletişim</Link></li>
+              <li><Link href="/on-bilgilendirme-formu" className="hover:text-[#0f3f44]">Ön Bilgilendirme</Link></li>
               <li><Link href="/mesafeli-satis-sozlesmesi" className="hover:text-[#0f3f44]">Mesafeli Satış Sözleşmesi</Link></li>
+              <li><Link href="/uyelik-sozlesmesi" className="hover:text-[#0f3f44]">Üyelik Sözleşmesi</Link></li>
+              <li><Link href="/kisisel-veriler-politikasi" className="hover:text-[#0f3f44]">Kişisel Veriler (KVKK)</Link></li>
+              <li><Link href="/gizlilik-guvenlik-politikasi" className="hover:text-[#0f3f44]">Gizlilik ve Güvenlik</Link></li>
+              <li><Link href="/iptal-iade-proseduru" className="hover:text-[#0f3f44]">İptal ve İade Prosedürü</Link></li>
               <li><Link href="/gizlilik-politikasi" className="hover:text-[#0f3f44]">Gizlilik Politikası</Link></li>
             </ul>
           </nav>
