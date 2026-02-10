@@ -166,6 +166,20 @@ export default function IletisimPage() {
         </div>
       </div>
 
+      {/* Google Maps */}
+      <div className="mt-12 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-sm">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3060.2615542933486!2d32.8548!3d39.9044!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14d34f19da6c0b4f%3A0x6b3c9e7e5f5e5e5e!2sKavakl%C4%B1dere%20Cd.%20No%3A5%2C%2006540%20%C3%87ankaya%2FAnkara!5e0!3m2!1str!2str!4v1234567890123!5m2!1str!2str"
+          width="100%"
+          height="360"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          title="Jonquil Studio Location"
+        />
+      </div>
+
       {/* İletişim Formu */}
       <div className="mt-12">
         <h2 className="mb-6 text-lg font-semibold text-neutral-900">Bize Yazın</h2>

@@ -26,7 +26,7 @@ export default function Footer() {
             </p>
             <div className="flex gap-3" role="list" aria-label="Sosyal medya">
               <a
-                href="https://instagram.com/jonquil"
+                href="https://www.instagram.com/jonquilstudio"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0f3f44] shadow-sm transition-colors hover:bg-[#0f3f44] hover:text-white"
