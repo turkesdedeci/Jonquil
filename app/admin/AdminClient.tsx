@@ -103,6 +103,13 @@ export default function AdminPage() {
   const [setupMessage, setSetupMessage] = useState<{type: 'success' | 'error' | 'info', text: string, sql?: string} | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
+  const getCustomerName = (order: Order) => {
+    const name = `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim();
+    if (name) return name;
+    if (order.user_email) return order.user_email.split('@')[0];
+    return 'Müşteri';
+  };
+
   // New product states
   const [showProductModal, setShowProductModal] = useState(false);
   const [savingProduct, setSavingProduct] = useState(false);
@@ -993,10 +1000,10 @@ export default function AdminPage() {
                             <td className="px-6 py-4">
                               <div>
                                 <p className="font-medium text-gray-900">
-                                  {order.customer_first_name} {order.customer_last_name}
+                                  {getCustomerName(order)}
                                 </p>
                                 <div className="flex items-center gap-2">
-                                  <p className="text-sm text-gray-500">{order.user_email}</p>
+                                  <p className="text-sm text-gray-500">{order.user_email || '—'}</p>
                                   {!order.user_id && (
                                     <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
                                       Misafir
@@ -1407,9 +1414,9 @@ export default function AdminPage() {
                 <h3 className="mb-3 text-sm font-medium text-gray-500">Müşteri Bilgileri</h3>
                 <div className="rounded-lg bg-gray-50 p-4">
                   <p className="font-medium text-gray-900">
-                    {selectedOrder.customer_first_name} {selectedOrder.customer_last_name}
+                    {getCustomerName(selectedOrder)}
                   </p>
-                  <p className="text-sm text-gray-600">{selectedOrder.user_email}</p>
+                  <p className="text-sm text-gray-600">{selectedOrder.user_email || '—'}</p>
                   {selectedOrder.customer_phone && (
                     <p className="text-sm text-gray-600">{selectedOrder.customer_phone}</p>
                   )}
