@@ -338,9 +338,6 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-[#e8e6e3]/50 bg-white/80 backdrop-blur-xl" role="banner">
-        <div className="bg-[#0f3f44] px-6 py-2 text-center text-[11px] font-medium tracking-wide text-white">
-          500 TL üzeri ücretsiz kargo
-        </div>
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-4">
           <Link href="/" className="flex items-center" aria-label="Ana sayfa">
             <Image
