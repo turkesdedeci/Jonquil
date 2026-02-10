@@ -208,6 +208,7 @@ export default function Page() {
           galleryIndex={galleryIndex}
           bestSellers={bestSellers}
           gallerySet={gallerySet}
+          galleryKey={galleryKey}
         />
       );
   }
@@ -231,6 +232,7 @@ function Homepage({
   galleryIndex,
   bestSellers,
   gallerySet,
+  galleryKey,
 }: {
   onGo: (r: Route) => void;
   allProducts: any[];
@@ -240,6 +242,7 @@ function Homepage({
   galleryIndex: number;
   bestSellers: any[];
   gallerySet: string[];
+  galleryKey: number;
 }) {
   const galleryVisible = gallerySet;
 
