@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { useCart } from '@/contexts/CartContext';
-import { AnimatePresence, motion } from 'framer-motion';
 import { X, Minus, Plus, ShoppingBag } from 'lucide-react';
 
 interface CartDrawerProps {
@@ -15,24 +14,17 @@ export function CartDrawer({ open, onClose, onCheckout }: CartDrawerProps) {
   const { items, removeFromCart, updateQuantity, totalItems, totalPrice } = useCart();
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
         <>
           {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
             onClick={onClose}
           />
 
           {/* Drawer */}
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+          <div
             className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-white shadow-2xl"
             role="dialog"
             aria-modal="true"
@@ -168,9 +160,9 @@ export function CartDrawer({ open, onClose, onCheckout }: CartDrawerProps) {
                 </p>
               </div>
             )}
-          </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 }

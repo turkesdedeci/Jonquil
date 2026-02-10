@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { allProducts as staticProducts } from '@/data/products';
 
 export interface Product {
   id: string;
@@ -37,9 +36,7 @@ interface ProductsContextType {
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
 export function ProductsProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(() =>
-    staticProducts.map(p => ({ ...p, inStock: true, isFromDatabase: false } as Product))
-  );
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +56,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('Failed to fetch products:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
-      // Keep using static products as fallback
+      // Keep empty list on error
     } finally {
       setLoading(false);
     }

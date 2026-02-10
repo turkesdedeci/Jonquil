@@ -3,7 +3,6 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, Search, User, ShoppingBag, X,
   ChevronDown, ChevronRight, ArrowRight
@@ -43,21 +42,14 @@ function MobileNav({
   const [collectionsOpen, setCollectionsOpen] = useState(false);
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
         <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
             onClick={onClose}
           />
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+          <div
             className="fixed right-0 top-0 z-50 flex h-full w-[85%] max-w-sm flex-col bg-white shadow-2xl"
             role="dialog"
             aria-modal="true"
@@ -127,14 +119,8 @@ function MobileNav({
                     Ürünler
                     <ChevronDown className={`h-4 w-4 text-[#999] transition-transform ${productsOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  <AnimatePresence>
-                    {productsOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
+                  {productsOpen && (
+                      <div className="overflow-hidden">
                         <div className="ml-4 space-y-1 border-l-2 border-[#e8e6e3] py-2 pl-4">
                           <Link
                             href="/urunler"
@@ -155,9 +141,8 @@ function MobileNav({
                             </Link>
                           ))}
                         </div>
-                      </motion.div>
+                      </div>
                     )}
-                  </AnimatePresence>
                 </div>
 
                 {/* Collections with submenu */}
@@ -170,14 +155,8 @@ function MobileNav({
                     Koleksiyonlar
                     <ChevronDown className={`h-4 w-4 text-[#999] transition-transform ${collectionsOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  <AnimatePresence>
-                    {collectionsOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
+                  {collectionsOpen && (
+                      <div className="overflow-hidden">
                         <div className="ml-4 space-y-1 border-l-2 border-[#e8e6e3] py-2 pl-4">
                           <Link
                             href="/koleksiyon/aslan"
@@ -200,9 +179,8 @@ function MobileNav({
                             Ottoman Koleksiyonu
                           </Link>
                         </div>
-                      </motion.div>
+                      </div>
                     )}
-                  </AnimatePresence>
                 </div>
 
                 <Link href="/hakkimizda" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
@@ -213,10 +191,10 @@ function MobileNav({
                 </Link>
               </div>
             </nav>
-          </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 
@@ -243,9 +221,9 @@ function CollectionDropdown({
   }, [open, onClose, anchorRef]);
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
-        <motion.div ref={dropdownRef} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute left-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+        <div ref={dropdownRef} className="absolute left-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
           <div className="p-3">
             <Link href="/koleksiyon/aslan" onClick={onClose} className="flex w-full items-center gap-4 rounded-xl p-3 text-left hover:bg-[#faf8f5]">
               <div className="relative h-16 w-16 overflow-hidden rounded-lg">
@@ -266,9 +244,9 @@ function CollectionDropdown({
               </div>
             </Link>
           </div>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 
@@ -305,9 +283,9 @@ function ProductsDropdown({
   ];
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
-        <motion.div ref={dropdownRef} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+        <div ref={dropdownRef} className="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
           <div className="p-3">
             {categories.map((cat) => (
               <Link key={cat.id} href={`/kategori/${cat.id}`} onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium text-[#2a2a2a] transition-colors hover:bg-[#faf8f5]">
@@ -321,9 +299,9 @@ function ProductsDropdown({
               </Link>
             </div>
           </div>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }
 

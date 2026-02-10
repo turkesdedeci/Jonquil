@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { useProducts, Product } from '@/hooks/useProducts';
@@ -137,24 +136,17 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
   };
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
         <>
           {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
 
           {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          <div
             className="fixed left-1/2 top-24 z-50 w-full max-w-2xl -translate-x-1/2 px-4"
             role="dialog"
             aria-modal="true"
@@ -269,9 +261,9 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
                 )}
               </div>
             </div>
-          </motion.div>
+          </div>
         </>
       )}
-    </AnimatePresence>
+    </>
   );
 }

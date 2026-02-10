@@ -1,6 +1,5 @@
 import React from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import {
   ArrowRight,
   ChevronLeft,
@@ -64,8 +63,7 @@ export function CollectionCard({
   onClick: () => void;
 }) {
   return (
-    <motion.div
-      whileHover={{ y: -8 }}
+    <div
       onClick={onClick}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
       className="group relative cursor-pointer overflow-hidden rounded-3xl bg-white shadow-lg transition-all hover:shadow-2xl"
@@ -92,7 +90,7 @@ export function CollectionCard({
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -124,8 +122,7 @@ export function ProductCard({
   };
 
   return (
-    <motion.div
-      whileHover={{ y: -6 }}
+    <div
       className={`group cursor-pointer overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:shadow-xl ${
         inStock ? 'border-[#e8e6e3]' : 'border-red-200'
       }`}
@@ -212,6 +209,6 @@ export function ProductCard({
           {product.price}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
