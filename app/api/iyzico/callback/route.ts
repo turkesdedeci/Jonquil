@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { retrieveCheckoutFormResult } from '@/lib/iyzico';
 import { sendOrderEmails, type OrderEmailData } from '@/lib/resend';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimitAsync, getClientIP } from '@/lib/security';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -63,6 +64,10 @@ async function sendOrderConfirmationEmails(orderId: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    const clientIP = getClientIP(request);
+    const rateLimitResponse = await checkRateLimitAsync(clientIP, 'auth');
+    if (rateLimitResponse) return rateLimitResponse;
+
     // Get form data from iyzico callback
     const formData = await request.formData();
     const token = formData.get('token') as string;
@@ -147,6 +152,10 @@ export async function POST(request: NextRequest) {
 
 // Also handle GET requests (some payment gateways use GET for callbacks)
 export async function GET(request: NextRequest) {
+  const clientIP = getClientIP(request);
+  const rateLimitResponse = await checkRateLimitAsync(clientIP, 'auth');
+  if (rateLimitResponse) return rateLimitResponse;
+
   const searchParams = request.nextUrl.searchParams;
   const token = searchParams.get('token');
 

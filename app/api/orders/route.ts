@@ -29,6 +29,10 @@ export async function GET(request: NextRequest) {
 
     const { userId } = await auth();
 
+    if (!userId) {
+      return NextResponse.json({ error: 'Giriş gerekli' }, { status: 401 });
+    }
+
     if (!supabase) {
       return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
     }
