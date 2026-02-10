@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   },
   // Allow external images from Supabase
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
