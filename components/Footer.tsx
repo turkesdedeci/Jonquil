@@ -18,7 +18,7 @@ export default function Footer() {
                 alt={`${BRAND.name} logo`}
                 width={300}
                 height={110}
-                className="ml-2 h-auto w-[240px] md:ml-4 md:w-[280px]"
+                className="ml-2 h-auto w-[220px] md:ml-4 md:w-[260px]"
               />
             </div>
             <p className="mb-6 text-sm leading-relaxed text-[#666]">

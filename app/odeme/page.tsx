@@ -536,7 +536,7 @@ export default function CheckoutPage() {
                           />
                           <span>güvenli ödeme ile anında onay</span>
                         </div>
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
                           <div className="flex h-6 items-center rounded bg-white px-2 shadow-sm">
                             <Image
                               src="/images/iyzico_ile_ode_colored.png"
@@ -546,13 +546,25 @@ export default function CheckoutPage() {
                               className="h-4 w-auto"
                             />
                           </div>
-                          <div className="flex h-6 items-center rounded bg-white px-2 text-xs font-bold text-[#1a1f71] shadow-sm">
-                            VISA
+                          <div className="flex h-6 items-center rounded bg-white px-2 shadow-sm">
+                            <Image
+                              src="/images/visa-brandmark-blue-1960x622.webp"
+                              alt="Visa"
+                              width={73}
+                              height={20}
+                              className="h-4 w-auto"
+                            />
                           </div>
                           <div className="flex h-6 items-center rounded bg-white px-2 shadow-sm">
-                            <span className="text-xs font-bold text-[#eb001b]">Master</span>
-                            <span className="text-xs font-bold text-[#f79e1b]">card</span>
+                            <Image
+                              src="/images/ma_symbol_opt_73_3x.png"
+                              alt="Mastercard"
+                              width={73}
+                              height={20}
+                              className="h-4 w-auto"
+                            />
                           </div>
+                          <span className="text-xs text-[#666]">Güvenli ödeme ile anında onay</span>
                         </div>
                       </div>
                     </div>
