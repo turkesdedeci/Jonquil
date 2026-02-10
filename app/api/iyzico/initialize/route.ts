@@ -5,6 +5,7 @@ import { getProductByIdServer, getProductPriceServer } from '@/lib/products-serv
 import {
   checkRateLimitAsync,
   getClientIP,
+  requireSameOrigin,
   sanitizeString,
   sanitizeEmail,
   sanitizePhone,
@@ -21,6 +22,8 @@ export async function POST(request: NextRequest) {
     const clientIP = getClientIP(request);
     const rateLimitResponse = await checkRateLimitAsync(clientIP, 'auth');
     if (rateLimitResponse) return rateLimitResponse;
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     // Check if iyzico is configured
     if (!isIyzicoConfigured()) {

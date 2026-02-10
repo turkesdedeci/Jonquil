@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   checkRateLimitAsync,
   getClientIP,
+  requireSameOrigin,
   sanitizeEmail,
   escapeHtml,
   safeErrorResponse
@@ -77,6 +78,8 @@ export async function POST(request: NextRequest) {
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     const body = await request.json();
     const { email } = body;

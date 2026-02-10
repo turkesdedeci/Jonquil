@@ -3,6 +3,7 @@ import { sendContactEmail, isResendConfigured, type ContactFormData } from '@/li
 import {
   checkRateLimitAsync,
   getClientIP,
+  requireSameOrigin,
   sanitizeString,
   sanitizeEmail,
   escapeHtml,
@@ -17,6 +18,8 @@ export async function POST(request: NextRequest) {
     if (rateLimitResponse) {
       return rateLimitResponse;
     }
+    const originCheck = requireSameOrigin(request);
+    if (originCheck) return originCheck;
 
     // Check if Resend is configured
     if (!isResendConfigured()) {
