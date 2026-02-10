@@ -9,9 +9,17 @@ const hasClerkConfig = !!(
 
 // Content Security Policy
 // Allows: self, Clerk auth, Supabase storage, iyzico payment
+const scriptSrc = [
+  "'self'",
+  "'unsafe-inline'",
+  ...(process.env.NODE_ENV === 'production' ? [] : ["'unsafe-eval'"]),
+  'https://*.clerk.accounts.dev',
+  'https://challenges.cloudflare.com',
+];
+
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+  `script-src ${scriptSrc.join(' ')}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co https://img.clerk.com",
   "font-src 'self' data:",

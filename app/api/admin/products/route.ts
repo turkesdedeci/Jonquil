@@ -39,6 +39,11 @@ async function ensureTableExists() {
 
 // GET - Fetch all product stock statuses
 export async function GET() {
+  // Admin check
+  if (!await isAdmin()) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
+  }
+
   if (!supabase) {
     return NextResponse.json({ stockStatus: {}, stockDetails: {}, tableExists: false });
   }
