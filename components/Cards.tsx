@@ -144,8 +144,7 @@ export function ProductCard({
             className={`object-cover transition-opacity duration-300 ${
               idx === currentImgIndex ? "opacity-100" : "opacity-0"
             } ${!inStock && idx === currentImgIndex ? 'opacity-60' : ''}`}
-            loading={idx === 0 ? "eager" : "lazy"}
-            priority={idx === 0}
+            loading="lazy"
           />
         ))}
 

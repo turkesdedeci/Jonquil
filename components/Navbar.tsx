@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   Menu, Search, User, ShoppingBag, X,
   ChevronDown, ChevronRight, ArrowRight
@@ -11,8 +12,9 @@ import { SignedIn, SignedOut, SignInButton } from "@/hooks/useClerkUser";
 import { BRAND, ASSETS } from "@/constants/brand";
 import { useCart } from "@/contexts/CartContext";
 import { UserDropdown } from './UserDropdown';
-import SearchModal from './SearchModal';
-import { CartDrawer } from './CartDrawer';
+
+const SearchModal = dynamic(() => import('./SearchModal'), { ssr: false });
+const CartDrawer = dynamic(() => import('./CartDrawer').then((mod) => mod.CartDrawer), { ssr: false });
 
 // Yardımcı Fonksiyon
 function cx(...classes: Array<string | false | null | undefined>) {
