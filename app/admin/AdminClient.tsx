@@ -42,6 +42,7 @@ interface Order {
   customer_first_name?: string;
   customer_last_name?: string;
   customer_phone?: string;
+  payment_method?: string;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   payment_status?: string;
   total_amount: number;
@@ -1425,6 +1426,11 @@ export default function AdminPage() {
                   <p className="text-sm text-gray-600">{getCustomerEmail(selectedOrder) || '—'}</p>
                   {selectedOrder.customer_phone && (
                     <p className="text-sm text-gray-600">{selectedOrder.customer_phone}</p>
+                  )}
+                  {selectedOrder.payment_method && (
+                    <p className="text-sm text-gray-600">
+                      Ödeme Yöntemi: {selectedOrder.payment_method === 'bank' ? 'Havale/EFT' : 'Kredi/Banka Kartı'}
+                    </p>
                   )}
                 </div>
               </div>
