@@ -11,6 +11,7 @@ const hasClerkConfig = !!(
 // Allows: self, Clerk auth, Supabase storage, iyzico payment
 const scriptSrc = [
   "'self'",
+  "'unsafe-inline'",
   ...(process.env.NODE_ENV === 'production' ? [] : ["'unsafe-eval'"]),
   'https://*.clerk.accounts.dev',
   'https://challenges.cloudflare.com',
