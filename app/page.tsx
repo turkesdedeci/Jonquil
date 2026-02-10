@@ -259,11 +259,14 @@ function Homepage({
             transition={{ duration: 1.2 }}
             className="absolute inset-0 z-0"
           >
-            <img
+            <Image
               src={slides[currentSlide]}
               alt="Jonquil Collection"
-              className="h-full w-full object-cover"
-              loading={currentSlide === 0 ? "eager" : "lazy"}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={currentSlide === 0}
+              quality={70}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
           </motion.div>
@@ -494,11 +497,13 @@ function Homepage({
               transition={{ delay: 0.1 }}
             >
               {galleryVisible[0] && (
-                <img
+                <Image
                   src={galleryVisible[0]}
                   alt="Gallery image 1"
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
                 />
               )}
             </motion.div>
@@ -510,11 +515,13 @@ function Homepage({
               transition={{ delay: 0.2 }}
             >
               {galleryVisible[1] && (
-                <img
+                <Image
                   src={galleryVisible[1]}
                   alt="Gallery image 2"
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
                 />
               )}
             </motion.div>
@@ -526,11 +533,13 @@ function Homepage({
               transition={{ delay: 0.3 }}
             >
               {galleryVisible[2] && (
-                <img
+                <Image
                   src={galleryVisible[2]}
                   alt="Gallery image 3"
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
                 />
               )}
             </motion.div>
@@ -542,11 +551,13 @@ function Homepage({
               transition={{ delay: 0.4 }}
             >
               {galleryVisible[3] && (
-                <img
+                <Image
                   src={galleryVisible[3]}
                   alt="Gallery image 4"
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
                 />
               )}
             </motion.div>
@@ -558,11 +569,13 @@ function Homepage({
               transition={{ delay: 0.5 }}
             >
               {galleryVisible[4] && (
-                <img
+                <Image
                   src={galleryVisible[4]}
                   alt="Gallery image 5"
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
                 />
               )}
             </motion.div>
