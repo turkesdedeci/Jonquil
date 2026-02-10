@@ -33,6 +33,15 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
+const globalStyles = (
+  <style>{`
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  `}</style>
+);
+
 const FOOTER_SLIDES = [
   "image00001.jpeg",
   "image00002.jpeg",
@@ -186,6 +195,7 @@ export default function Page() {
 
   return (
     <PageShell>
+      {globalStyles}
       {content}
       <Footer />
     </PageShell>
@@ -214,9 +224,15 @@ function Homepage({
   const galleryVisible = useMemo(() => {
     if (galleryImages.length === 0) return [];
     const count = 5;
-    return Array.from({ length: count }, (_, i) => {
-      return galleryImages[(galleryIndex + i) % galleryImages.length];
-    });
+    const selected: string[] = [];
+    const used = new Set<number>();
+    while (selected.length < count && used.size < galleryImages.length) {
+      const idx = Math.floor(Math.random() * galleryImages.length);
+      if (used.has(idx)) continue;
+      used.add(idx);
+      selected.push(galleryImages[idx]);
+    }
+    return selected;
   }, [galleryImages, galleryIndex]);
 
   return (
@@ -276,20 +292,6 @@ function Homepage({
           </motion.div>
         </div>
 
-        {/* Carousel indicators */}
-        <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentSlide(i)}
-              className={cx(
-                "h-1.5 rounded-full transition-all",
-                i === currentSlide ? "w-8 bg-white" : "w-1.5 bg-white/40"
-              )}
-              aria-label={`Slide ${i + 1}`}
-            />
-          ))}
-        </div>
       </section>
 
       {/* Trust Badges */}
@@ -480,7 +482,7 @@ function Homepage({
               transition={{ delay: 0.1 }}
             >
               {galleryVisible[0] && (
-                <img src={galleryVisible[0]} alt="Gallery image 1" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+                <img src={galleryVisible[0]} alt="Gallery image 1" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
               )}
             </motion.div>
             <motion.div
@@ -491,7 +493,7 @@ function Homepage({
               transition={{ delay: 0.2 }}
             >
               {galleryVisible[1] && (
-                <img src={galleryVisible[1]} alt="Gallery image 2" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+                <img src={galleryVisible[1]} alt="Gallery image 2" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
               )}
             </motion.div>
             <motion.div
@@ -502,7 +504,7 @@ function Homepage({
               transition={{ delay: 0.3 }}
             >
               {galleryVisible[2] && (
-                <img src={galleryVisible[2]} alt="Gallery image 3" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+                <img src={galleryVisible[2]} alt="Gallery image 3" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
               )}
             </motion.div>
             <motion.div
@@ -513,7 +515,7 @@ function Homepage({
               transition={{ delay: 0.4 }}
             >
               {galleryVisible[3] && (
-                <img src={galleryVisible[3]} alt="Gallery image 4" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+                <img src={galleryVisible[3]} alt="Gallery image 4" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
               )}
             </motion.div>
             <motion.div
@@ -524,7 +526,7 @@ function Homepage({
               transition={{ delay: 0.5 }}
             >
               {galleryVisible[4] && (
-                <img src={galleryVisible[4]} alt="Gallery image 5" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+                <img src={galleryVisible[4]} alt="Gallery image 5" className="h-full w-full object-cover transition-all duration-700 ease-in-out opacity-0 animate-[fadeIn_0.8s_ease_forwards] hover:scale-105" />
               )}
             </motion.div>
           </div>

@@ -27,8 +27,8 @@ export default function HakkimizdaPage() {
         {/* Görsel */}
         <div className="relative aspect-[16/9] overflow-hidden rounded-3xl shadow-lg bg-neutral-100">
           <Image
-            src={`/images/products/GENEL FOTOLAR/✨ "Aslan Koleksiyonu ile yılbaşı sofralarınıza zamansız bir dokunuş katın. Koleksiyonun yeşil to.jpg`}
-            alt="Jonquil Studio Atölye"
+            src="/images/footerslayt/Jonquil foto galeri-ottoman seri (3).jpg"
+            alt="Jonquil Studio At?lye"
             fill
             sizes="(max-width: 768px) 100vw, 896px"
             className="object-cover"

@@ -16,7 +16,7 @@ export const ASSETS = {
   
   // Collection cover images
   aslanCover: "/images/products/GENEL FOTOLAR/Aslan Temsil.jpg",
-  ottomanCover: "/images/products/GENEL FOTOLAR/Ottoman Temsil.jpg",
+  ottomanCover: "/images/footerslayt/image00005.jpeg",
   
   // About page images
   aboutHero: "/images/products/GENEL FOTOLAR/Header-1.jpg",
