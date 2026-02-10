@@ -90,36 +90,36 @@ export default function HakkimizdaPage() {
           <dl className="grid gap-4 md:grid-cols-2">
             <div>
               <dt className="text-sm font-medium text-neutral-500">Ticaret Unvanı</dt>
-              <dd className="mt-1 text-neutral-900">JONQUIL STUDIO TİCARET LİMİTED ŞİRKETİ</dd>
+              <dd className="mt-1 text-neutral-900">JONQUİL TASARIM TİCARET LİMİTED ŞİRKETİ</dd>
             </div>
 
             <div>
               <dt className="text-sm font-medium text-neutral-500">MERSİS No</dt>
-              <dd className="mt-1 text-neutral-900">0123456789012345</dd>
+              <dd className="mt-1 text-neutral-900">—</dd>
             </div>
 
             <div>
               <dt className="text-sm font-medium text-neutral-500">Vergi Dairesi / No</dt>
-              <dd className="mt-1 text-neutral-900">Kadıköy V.D. / 1234567890</dd>
+              <dd className="mt-1 text-neutral-900">Cumhuriyet Vergi Dairesi / 484 212 2134</dd>
             </div>
 
             <div>
               <dt className="text-sm font-medium text-neutral-500">KEP Adresi</dt>
-              <dd className="mt-1 text-neutral-900">jonquil@hs01.kep.tr</dd>
+              <dd className="mt-1 text-neutral-900">—</dd>
             </div>
 
             <div className="md:col-span-2">
               <dt className="text-sm font-medium text-neutral-500">Merkez Adresi</dt>
               <dd className="mt-1 text-neutral-900">
-                Örnek Mahallesi, Örnek Sokak No: 1, 34710 Kadıköy / İstanbul
+                Kazım Özalp Mah. Kumkapı Sok. 31/4 Çankaya / Ankara
               </dd>
             </div>
 
             <div>
               <dt className="text-sm font-medium text-neutral-500">E-posta</dt>
               <dd className="mt-1">
-                <a href="mailto:info@jonquil.com" className="text-[#0f3f44] hover:underline">
-                  info@jonquil.com
+                <a href="mailto:info@jonquilstudio.co" className="text-[#0f3f44] hover:underline">
+                  info@jonquilstudio.co
                 </a>
               </dd>
             </div>
@@ -127,8 +127,8 @@ export default function HakkimizdaPage() {
             <div>
               <dt className="text-sm font-medium text-neutral-500">Telefon</dt>
               <dd className="mt-1">
-                <a href="tel:+905001234567" className="text-[#0f3f44] hover:underline">
-                  +90 (500) 123 45 67
+                <a href="tel:+905335101093" className="text-[#0f3f44] hover:underline">
+                  0 (533) 510 10 93
                 </a>
               </dd>
             </div>
