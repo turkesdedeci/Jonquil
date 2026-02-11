@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
 import crypto from 'crypto';
 import { getAllProductsServer } from '@/lib/products-server';
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse;
 
     const { userId } = await auth();
+    const clerkUser = userId ? await currentUser() : null;
 
     if (!userId) {
       return NextResponse.json({ error: 'Giriş gerekli' }, { status: 401 });
@@ -218,7 +219,7 @@ export async function POST(request: NextRequest) {
         order_note: sanitizedOrderNote,
         customer_first_name: sanitizeString(customer?.first_name || address?.full_name?.split(' ')[0] || '').slice(0, 100),
         customer_last_name: sanitizeString(customer?.last_name || address?.full_name?.split(' ').slice(1).join(' ') || '').slice(0, 100),
-        customer_email: sanitizeString(customer?.email || '').slice(0, 255),
+        customer_email: sanitizeString(customer?.email || clerkUser?.emailAddresses?.[0]?.emailAddress || '').slice(0, 255),
         customer_phone: sanitizeString(customer?.phone || address?.phone || '').slice(0, 30),
         shipping_address: userId ? address?.address_line : sanitizeString(shipping_address?.address_line || '').slice(0, 500),
         shipping_city: userId ? address?.city : sanitizeString(shipping_address?.city || '').slice(0, 100),
