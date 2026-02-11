@@ -58,7 +58,6 @@ const globalStyles = (
 
 const FOOTER_SLIDES = [
   "image00001.jpeg",
-  "image00002.jpeg",
   "image00003.jpeg",
   "image00004.jpeg",
   "image00005.jpeg",
@@ -83,14 +82,12 @@ const FOOTER_SLIDES = [
   "Jonquil foto galeri-ottoman seri (7).jpg",
   "Jonquil foto galeri-ottoman seri (8).jpg",
   "Jonquil foto galeri-ottoman seri (9).jpg",
-  "S (1).jpeg",
   "S (2).jpeg",
   "S (3).jpeg",
   "S (4).jpeg",
   "S (5).jpeg",
   "S (6).jpeg",
   "s10-2.jpg",
-  "s10.jpg",
   "S3.jpg",
   "s4-2.jpg",
   "s4.jpg",
@@ -304,7 +301,7 @@ function Homepage({
               alt="Jonquil Collection"
               fill
               sizes="100vw"
-              className="object-cover"
+              className="object-cover object-bottom"
               priority={currentSlide === 0}
               quality={70}
             />
