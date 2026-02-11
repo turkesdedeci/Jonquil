@@ -194,11 +194,19 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Fetch existing order for status comparison & email info
-    const { data: existingOrder } = await adminSupabase
+    const { data: existingOrder, error: existingOrderError } = await adminSupabase
       .from('orders')
       .select('id, order_number, status, customer_first_name, customer_last_name, customer_email, tracking_number, tracking_url')
       .eq('id', orderId)
       .single();
+
+    if (existingOrderError) {
+      console.error('[Admin Orders] Fetch error:', JSON.stringify(existingOrderError, null, 2));
+      return NextResponse.json(
+        { error: 'Veritabanı hatası', details: existingOrderError.message || 'fetch_failed' },
+        { status: 500 }
+      );
+    }
 
     if (existingOrder?.status === status) {
       return NextResponse.json(existingOrder);
@@ -213,7 +221,11 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      return handleDatabaseError(error);
+      console.error('[Admin Orders] Update error:', JSON.stringify(error, null, 2));
+      return NextResponse.json(
+        { error: 'Veritabanı hatası', details: error.message || 'update_failed' },
+        { status: 500 }
+      );
     }
 
     // Audit log: order status update
