@@ -10,6 +10,7 @@ import {
 } from '@/lib/security';
 import { logAuditEvent } from '@/lib/audit';
 import { isAdmin } from '@/lib/adminCheck';
+import { sendOrderStatusEmail } from '@/lib/resend';
 
 // GET - Tüm siparişleri getir
 export async function GET(request: NextRequest) {
@@ -185,6 +186,17 @@ export async function PATCH(request: NextRequest) {
       updateData.tracking_url = tracking_url;
     }
 
+    // Fetch existing order for status comparison & email info
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('id, order_number, status, customer_first_name, customer_last_name, customer_email, tracking_number, tracking_url')
+      .eq('id', orderId)
+      .single();
+
+    if (existingOrder?.status === status) {
+      return NextResponse.json(existingOrder);
+    }
+
     // Siparişi güncelle
     const { data, error } = await supabase
       .from('orders')
@@ -208,6 +220,22 @@ export async function PATCH(request: NextRequest) {
         tracking_url: tracking_url || null,
       },
     }, request);
+
+    // Send status update email (best-effort)
+    if (data?.customer_email) {
+      const customerName = `${data.customer_first_name || ''} ${data.customer_last_name || ''}`.trim() || 'Müşteri';
+      sendOrderStatusEmail({
+        orderId: data.id,
+        orderNumber: data.order_number,
+        customerName,
+        customerEmail: data.customer_email,
+        status: data.status,
+        trackingNumber: data.tracking_number || null,
+        trackingUrl: data.tracking_url || null,
+      }).catch((err) => {
+        console.error('Failed to send status email:', err);
+      });
+    }
 
     return NextResponse.json(data);
   } catch (error) {

@@ -55,6 +55,24 @@ export interface OrderEmailData {
   total: string;
 }
 
+export interface OrderStatusEmailData {
+  orderId: string;
+  orderNumber?: string;
+  customerName: string;
+  customerEmail: string;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
+}
+
+const ORDER_STATUS_LABELS: Record<OrderStatusEmailData['status'], string> = {
+  pending: 'Ödeme Bekleniyor',
+  processing: 'Hazırlanıyor',
+  shipped: 'Kargoya Verildi',
+  delivered: 'Teslim Edildi',
+  cancelled: 'İptal Edildi',
+};
+
 // Email Templates
 export function getContactEmailHtml(data: ContactFormData): string {
   return `
@@ -354,6 +372,66 @@ export function getNewOrderNotificationHtml(data: OrderEmailData): string {
   `.trim();
 }
 
+export function getOrderStatusUpdateHtml(data: OrderStatusEmailData): string {
+  const statusLabel = ORDER_STATUS_LABELS[data.status];
+  const trackingBlock = data.status === 'shipped'
+    ? `
+      <div style="background-color: #faf8f5; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+        <h3 style="color: #1a1a1a; font-size: 14px; margin: 0 0 8px;">Kargo Takip Bilgileri</h3>
+        ${data.trackingNumber ? `<p style="margin: 0 0 6px; color: #666; font-size: 14px;"><strong>Takip No:</strong> ${escapeHtml(data.trackingNumber)}</p>` : ''}
+        ${data.trackingUrl ? `<p style="margin: 0; font-size: 14px;"><a href="${escapeHtml(data.trackingUrl)}" style="color: #0f3f44; text-decoration: none;">Kargo Takip Linki</a></p>` : ''}
+      </div>
+    `
+    : '';
+
+  const feedbackBlock = data.status === 'delivered'
+    ? `
+      <div style="background-color: #f0fdf4; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+        <h3 style="color: #166534; font-size: 14px; margin: 0 0 8px;">Geri Bildirim</h3>
+        <p style="margin: 0 0 8px; color: #166534; font-size: 14px;">Siparişiniz hakkında kısa bir geri bildirim paylaşmak ister misiniz?</p>
+        <a href="mailto:${escapeHtml(EMAIL_ADMIN)}?subject=${encodeURIComponent('Jonquil - Sipariş Geri Bildirim')}"
+           style="color: #0f3f44; text-decoration: none; font-weight: 600;">Geri bildirim gönder</a>
+      </div>
+    `
+    : '';
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <div style="background-color: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h1 style="color: #0f3f44; font-size: 24px; margin: 0;">Sipariş Durumu Güncellendi</h1>
+      </div>
+
+      <div style="margin-bottom: 24px;">
+        <p style="margin: 0; color: #666; font-size: 14px;">Merhaba ${escapeHtml(data.customerName)},</p>
+        <p style="margin: 8px 0 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">
+          Sipariş durumunuz: ${escapeHtml(statusLabel)}
+        </p>
+        <p style="margin: 8px 0 0; color: #666; font-size: 14px;">
+          Sipariş No: <strong>${escapeHtml(data.orderNumber || data.orderId)}</strong>
+        </p>
+      </div>
+
+      ${trackingBlock}
+      ${feedbackBlock}
+
+      <div style="border-top: 1px solid #e8e6e3; padding-top: 20px; text-align: center;">
+        <p style="margin: 0; color: #999; font-size: 12px;">Jonquil Studio</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+}
+
 // Send functions
 export async function sendContactEmail(data: ContactFormData): Promise<{ success: boolean; error?: string }> {
   if (!resend) {
@@ -413,5 +491,26 @@ export async function sendOrderEmails(data: OrderEmailData): Promise<{ success: 
   } catch (error) {
     console.error('Error sending order emails:', error);
     return { success: false, error: 'Failed to send email' };
+  }
+}
+
+export async function sendOrderStatusEmail(data: OrderStatusEmailData): Promise<{ success: boolean; error?: string }> {
+  if (!resend) {
+    console.error('Resend not configured');
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  try {
+    const statusLabel = ORDER_STATUS_LABELS[data.status];
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: data.customerEmail,
+      subject: `Sipariş Durumu Güncellendi - ${statusLabel}`,
+      html: getOrderStatusUpdateHtml(data),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending status email:', error);
+    return { success: false, error: 'Failed to send status email' };
   }
 }
