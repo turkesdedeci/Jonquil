@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { getAllProductsServer } from '@/lib/products-server';
 import AllProductsClient from './AllProductsClient';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 300;
 
 export const metadata: Metadata = {
