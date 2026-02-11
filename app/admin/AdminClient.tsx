@@ -196,9 +196,12 @@ export default function AdminPage() {
     canvas.height = targetHeight;
     const ctx = canvas.getContext('2d');
     if (!ctx) return file;
-    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-
     const preferredType = file.type === 'image/png' ? 'image/jpeg' : file.type;
+    if (preferredType === 'image/jpeg') {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+    }
+    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
     let quality = 0.85;
 
     const toBlob = (q: number) =>

@@ -51,7 +51,6 @@ function generateJsonLd(productCount: number) {
 
 export default async function AllProductsPage() {
   const nonce = headers().get('x-nonce') || undefined;
-  const nonce = headers().get('x-nonce') || undefined;
   const products = await getAllProductsServer();
   const jsonLd = generateJsonLd(products.length);
 
