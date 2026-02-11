@@ -36,7 +36,6 @@ export async function GET(request: NextRequest) {
     if (rateLimitResponse) return rateLimitResponse;
 
     const { userId } = await auth();
-    const clerkUser = userId ? await currentUser() : null;
 
     if (!userId) {
       return NextResponse.json({ error: 'Giriş gerekli' }, { status: 401 });
@@ -81,8 +80,9 @@ export async function POST(request: NextRequest) {
     if (originCheck) return originCheck;
 
     const { userId } = await auth();
+    const clerkUser = userId ? await currentUser() : null;
 
-    if (!supabase) {
+    if (!serverSupabase) {
       return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
     }
 
@@ -373,3 +373,4 @@ export async function PATCH(request: NextRequest) {
     return safeErrorResponse(error, 'Sipariş güncellenemedi');
   }
 }
+
