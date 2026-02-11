@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import {
   checkRateLimitAsync,
   getClientIP,
@@ -11,6 +12,12 @@ import {
 import { logAuditEvent } from '@/lib/audit';
 import { isAdmin } from '@/lib/adminCheck';
 import { sendOrderStatusEmail } from '@/lib/resend';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const adminSupabase = supabaseUrl && supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : supabase;
 
 // GET - Tüm siparişleri getir
 export async function GET(request: NextRequest) {
@@ -28,12 +35,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Supabase bağlantı kontrolü
-    if (!supabase) {
+    if (!adminSupabase) {
       return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
     }
 
     // Tüm siparişleri çek (en yeniden eskiye)
-    const { data: orders, error } = await supabase
+    const { data: orders, error } = await adminSupabase
       .from('orders')
       .select(`
         *,
@@ -53,7 +60,7 @@ export async function GET(request: NextRequest) {
     let addressMap = new Map<string, { full_name?: string; phone?: string }>();
 
     if (addressIds.length > 0) {
-      const { data: addresses } = await supabase
+      const { data: addresses } = await adminSupabase
         .from('addresses')
         .select('id, full_name, phone')
         .in('id', Array.from(new Set(addressIds)));
@@ -145,7 +152,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Supabase bağlantı kontrolü
-    if (!supabase) {
+    if (!adminSupabase) {
       return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
     }
 
@@ -187,7 +194,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Fetch existing order for status comparison & email info
-    const { data: existingOrder } = await supabase
+    const { data: existingOrder } = await adminSupabase
       .from('orders')
       .select('id, order_number, status, customer_first_name, customer_last_name, customer_email, tracking_number, tracking_url')
       .eq('id', orderId)
@@ -198,7 +205,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Siparişi güncelle
-    const { data, error } = await supabase
+    const { data, error } = await adminSupabase
       .from('orders')
       .update(updateData)
       .eq('id', orderId)
