@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { getAllProductsServer } from '@/lib/products-server';
 import { sendOrderEmails } from '@/lib/resend';
@@ -12,6 +13,12 @@ import {
   safeErrorResponse,
   handleDatabaseError
 } from '@/lib/security';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serverSupabase = supabaseUrl && supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey)
+  : supabase;
 
 // Generate cryptographically secure order number
 function generateOrderNumber(): string {
@@ -35,12 +42,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Giriş gerekli' }, { status: 401 });
     }
 
-    if (!supabase) {
+    if (!serverSupabase) {
       return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
     }
 
     // Siparişleri ve ürünleri tek sorguda getir (N+1 query fix)
-    const { data: orders, error: ordersError } = await supabase
+    const { data: orders, error: ordersError } = await serverSupabase
       .from('orders')
       .select(`
         *,
@@ -130,7 +137,7 @@ export async function POST(request: NextRequest) {
     // Fetch address for logged-in users
     let address: any = null;
     if (userId && shipping_address_id) {
-      const { data: addr, error: addressError } = await supabase
+      const { data: addr, error: addressError } = await serverSupabase
         .from('addresses')
         .select('*')
         .eq('id', shipping_address_id)
@@ -149,7 +156,7 @@ export async function POST(request: NextRequest) {
 
     // Check stock status for all items
     const productIds = items.map((item: any) => item.product_id);
-    const { data: stockData } = await supabase
+    const { data: stockData } = await serverSupabase
       .from('product_stock')
       .select('product_id, in_stock')
       .in('product_id', productIds);
@@ -206,7 +213,7 @@ export async function POST(request: NextRequest) {
     const orderNumber = generateOrderNumber();
 
     // Create order
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: orderError } = await serverSupabase
       .from('orders')
       .insert({
         user_id: userId || null,
@@ -237,14 +244,14 @@ export async function POST(request: NextRequest) {
       ...item,
     }));
 
-    const { error: itemsError } = await supabase
+    const { error: itemsError } = await serverSupabase
       .from('order_items')
       .insert(orderItems);
 
     if (itemsError) throw itemsError;
 
     // Fetch complete order with items
-    const { data: completeOrder } = await supabase
+    const { data: completeOrder } = await serverSupabase
       .from('orders')
       .select('*, order_items(*)')
       .eq('id', order.id)
