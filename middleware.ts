@@ -13,6 +13,7 @@ function buildCsp(nonce: string) {
   const scriptSrc = [
     "'self'",
     `'nonce-${nonce}'`,
+    "'unsafe-inline'",
     ...(process.env.NODE_ENV === 'production' ? [] : ["'unsafe-eval'"]),
     'https://*.clerk.accounts.dev',
     'https://challenges.cloudflare.com',
