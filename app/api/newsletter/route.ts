@@ -44,14 +44,10 @@ function getWelcomeEmailHtml(email: string): string {
         </p>
       </div>
 
-      <div style="background-color: #faf8f5; border-radius: 8px; padding: 24px; margin-bottom: 24px; text-align: center;">
-        <p style="color: #0f3f44; font-size: 16px; font-weight: 600; margin: 0 0 8px;">İlk Siparişinize Özel</p>
-        <p style="color: #1a1a1a; font-size: 32px; font-weight: 700; margin: 0;">%10 İNDİRİM</p>
-        <p style="color: #666; font-size: 13px; margin: 8px 0 0;">Kupon kodu: HOSGELDIN10</p>
-      </div>
-
       <div style="text-align: center; margin-bottom: 32px;">
-        <a href="https://jonquil.com" style="display: inline-block; background-color: #0f3f44; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 14px; font-weight: 600;">Alışverişe Başla</a>
+        <p style="color: #1a1a1a; font-size: 15px; line-height: 1.6; margin: 0;">
+          Yeni koleksiyonlar, özel fırsatlar ve duyurular için bizi takipte kalın.
+        </p>
       </div>
 
       <!-- Footer -->
@@ -132,20 +128,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Send welcome email
-    if (isResendConfigured() && resend) {
-      try {
-        await resend.emails.send({
-          from: EMAIL_FROM,
-          to: normalizedEmail,
-          subject: 'Jonquil Bültenine Hoş Geldiniz!',
-          html: getWelcomeEmailHtml(normalizedEmail),
-        });
-      } catch (emailError) {
-        console.error('Email error:', emailError);
-        // Continue even if email fails
-      }
-    }
+    // No welcome email for now (only collect emails)
 
     return NextResponse.json({
       success: true,
