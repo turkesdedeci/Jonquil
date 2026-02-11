@@ -58,6 +58,9 @@ export default function MesafeliSatisSozlesmesiPage() {
           <p className="mt-3">
             Sitede ilan edilen fiyatlar satış fiyatıdır; güncelleme yapılana kadar geçerlidir.
           </p>
+          <p className="mt-3">
+            Mesafeli satış sözleşmeleri 6502 sayılı Kanunun 48/1. Maddesinde "satıcı veya sağlayıcı ile tüketicinin eş zamanlı fiziksel varlığı olmaksızın, mal veya hizmetlerin uzaktan pazarlanmasına yönelik olarak oluşturulmuş bir sistem çerçevesinde, taraflar arasında sözleşmenin kurulduğu ana kadar ve kurulduğu an da dâhil olmak üzere uzaktan iletişim araçlarının kullanılması suretiyle kurulan sözleşmelerdir." şeklinde tanımlanmıştır.
+          </p>
         </section>
 
         <section>
@@ -94,8 +97,7 @@ export default function MesafeliSatisSozlesmesiPage() {
         <section>
           <h2 className="mb-4 text-lg font-semibold text-neutral-900">MADDE 7 - SÖZLEŞME KONUSU ÜRÜN/ÜRÜNLER</h2>
           <ul className="list-disc space-y-2 pl-5">
-            <li>Ürünlerin temel özellikleri (tür, miktar, marka/model, renk vb.) sitede yer alır.</li>
-            <li>Vergiler dâhil toplam bedel sipariş özetinde gösterilir.</li>
+            <li>Ürünler'in tanımı, birim tutarı, adedi ve ödeme koşullarına ilişkin bilgiler Ön Bilgilendirme Formu’nda/Satış Sözleşmesinde belirtildiği gibidir ve Alıcı tarafından da onaylanmıştır.</li>
             <li>Kargo ücreti ve kampanya koşulları varsa ödeme adımında belirtilir.</li>
           </ul>
         </section>
@@ -118,6 +120,20 @@ export default function MesafeliSatisSozlesmesiPage() {
             <li>Teslimat, yasal süreyi aşmamak kaydıyla sitede belirtilen süre içinde yapılır.</li>
             <li>Teslimat masrafları aksi belirtilmedikçe ALICI’ya aittir.</li>
             <li>Ödeme işlemleri için yetkisiz kullanım hallerinde banka hükümleri geçerlidir.</li>
+            <li>ALICI, İnternet Sitesi'nde belirtiği şekilde sözleşme konusu ürünün temel nitelikleri, tüm vergiler dahil satış fiyatı ve ödeme şekli ile teslimatı ve bunun masraflarının ALICI tarafından karşılanacağını, teslimatın gerçekleştirileceği süreye ve SATICI’nın tam ticari unvanı, açık adresi ve iletişim bilgilerine ilişkin ön bilgileri okuyup bilgi sahibi olduğunu ve elektronik ortamda gerekli teyidi verdiğini beyan eder.</li>
+            <li>SATICI, İnternet Sitesi’nin veya mobil uygulamanın ve diğer veriler ile programların kullanılması sebebiyle, sözleşmenin ihlali, haksız fiil, ya da başkaca sebeplere binaen, doğabilecek doğrudan ya da dolaylı hiçbir zarardan sorumlu değildir. SATICI, sözleşmenin ihlali, haksız fiil, ihmal veya diğer sebepler neticesinde; işlemin kesintiye uğraması, hata, ihmal, kesinti, silinme, kayıp, işlemin veya iletişimin gecikmesi, bilgisayar virüsü, telekomünikasyon hatlarında meydana gelen arızalar, iletişim hatası, hırsızlık, imha veya izinsiz olarak kayıtlara girilmesi, değiştirilmesi veya kullanılması hususlarında herhangi bir sorumluluk kabul etmez.</li>
+            <li>SATICI, İnternet Sitesi ve/veya Mobil Uygulama’da mevcut her tür hizmet, ürün, kullanma koşulları ile İnternet Sitesi ve/veya Mobil Uygulama’da sunulan bilgileri önceden bir ihtara gerek olmaksızın değiştirme, yeniden organize etme, yayını durdurma hakkını saklı tutar. Değişiklikler İnternet Sitesi’nde ve/veya Mobil Uygulama’da yayın tarihinde yürürlüğe girer. </li>
+            <li>SATICI, İnternet Sitesi ve Mobil Uygulama’nın genel görünüm ve tasarımı ile İnternet Sitesi ile Mobil Uygulama’daki tüm bilgi, resim, her türlü marka, İnternet Sitesi alan adı, logo, ikon, demonstratif, yazılı, elektronik, grafik veya makinede okunabilir şekilde sunulan teknik veriler, bilgisayar yazılımları, uygulanan satış sistemi, iş metodu ve iş modeli de dahil tüm materyallerin (“Materyaller”) ve bunlara ilişkin fikri ve sınai mülkiyet haklarının sahibi veya lisans sahibidir ve Materyaller yasal koruma altındadır. İnternet Sitesi ve/veya Mobil Uygulama’da bulunan hiçbir Materyal; önceden izin alınmadan ve kaynak gösterilmeden, kod ve yazılım da dahil olmak üzere, değiştirilemez, kopyalanamaz, çoğaltılamaz, başka bir lisana çevrilemez, yeniden yayımlanamaz, başka bir bilgisayara yüklenemez, postalanamaz, iletilemez, sunulamaz veya dağıtılamaz. İnternet Sitesi ve/veya Mobil Uygulama’nın bütünü veya bir kısmı başka bir internet sitesi veya mobil uygulamada izinsiz olarak kullanılamaz. Aksine herhangi bir durumun tespiti halinde, SATICI’nın hukuki ve cezai sorumluluğa ilişkin ve burada açıkça belirtilmeyen diğer tüm hakları saklıdır.</li>
+            <li>ALICI’nın kişisel bilgileri, ancak resmi makamlarca usulü dairesinde bu bilgilerin talep edilmesi halinde ve yürürlükteki emredici mevzuat hükümleri gereğince resmi makamlara açıklama yapmak zorunda olduğu durumlarda resmi makamlara açıklanabilecektir.</li>
+            <li>Sözleşme konusu ürün(ler), ALICI'dan başka bir kişi/kuruluşa teslim edilecek ise, teslim edilecek kişi/kuruluşun teslimatı kabul etmemesinden ve bundan kaynaklanabilecek zararlardan SATICI sorumlu tutulamaz.</li>
+            <li>Ürünün(lerin) ALICI’ya gönderimi aşamasında sevkiyat işleminden sorumlu kargo firmasının hata ve ihmallerinden kaynaklı olarak ortaya çıkabilecek zararlardan ve/veya bunların ALICI'ya teslim edilememesinden dolayı SATICI sorumlu tutulamaz. Alıcı, Ürünler'i teslim aldığı anda kontrol etmek ve gördüğü ayıpları derhal Satıcı'ya bildirmekle yükümlüdür.</li>
+            <li>SATICI, sözleşme konusu ürünün(lerin) sağlam, eksiksiz, siparişte belirtilen niteliklere uygun ve varsa garanti belgeleri ve kullanım kılavuzları ile teslim edilmesinden sorumludur.</li>
+            <li>SATICI, sipariş konusu ürün veya hizmetin yerine getirilmesinin imkansızlaşması halinde sözleşme konusu yükümlülüklerini yerine getiremezse, bu durumu, sözleşmeden doğan ifa yükümlülüğünün süresi dolmadan ALICI’ya bildirir ve stoklarında bulunması halinde ALICI’ya eşit kalite ve fiyatta farklı bir ürün tedarik edebilir.</li>
+            <li>ALICI tarafından satın alınmış ürün ya da hizmetin SATICI’nın hizmet aldığı tedarikçi firma stoklarında olmaması ve eşit kalitede ve fiyatta muadil ürünün de bulunmaması halinde, SATICI’nın ALICI’nın ödemiş olduğu bedeli iade etme hakkı saklıdır.</li>
+            <li>ALICI’nın kredi kartı ile yaptığı ödemelerde ise, ürün(ler) tutarı, siparişin ALICI tarafından iptal edilmesinden sonra 14 (on dört) gün içerisinde ilgili bankaya iade edilir. Bu tutarın bankaya iadesinden sonra ALICI hesaplarına yansıması tamamen banka işlem süreci ile ilgili olduğundan, ALICI olası gecikmeler için SATICI'nın herhangi bir şekilde müdahalede bulunmasının mümkün olamayacağını ve SATICI tarafından kredi kartına iade edilen tutarın banka tarafından ALICI hesabına yansıtılmasının ortalama 2 ile 3 haftayı bulabileceğini peşinen kabul etmektedir.</li>
+            <li>SATICI, İnternet Sitesi üzerinden ALICI ihtiyacını aşan alımları iptal etme hakkını saklı tutar. ALICI’nın ihtiyacını aşan, toptan nitelikteki alımlarda satın alınanların 3 (üç) adet ürünü aşması halinde SATICI, siparişi tamamen iptal etme ya da perakende alım sınırında kalan yalnızca 3 (üç) adet ürün gönderimini sağlama hakkını saklı tutar.</li>
+            <li>Ürün fiyatlarının açık bir hata olduğu ortalama bir kişi tarafından anlaşılacak seviyede piyasa fiyatının çok altında yazılması durumunda, işbu hatalı fiyata göre verilen tüm siparişlerin SATICI tarafından iptal edilme hakkı vardır. ALICI böylesi bir durumda açık bir hata olması nedeniyle hiçbir hak ve talepte bulunmayacağını kabul ve beyan eder.</li>
+
           </ul>
         </section>
 
@@ -127,9 +143,9 @@ export default function MesafeliSatisSozlesmesiPage() {
             <p>
               ALICI, teslim tarihinden itibaren 14 gün içinde cayma hakkını kullanabilir.
             </p>
-            <p>
               Cayma bildirimi yazılı olarak (e-posta vb.) yapılmalıdır.
-            </p>
+            <p>
+              ALICI, teslim tarihinden itibaren 14 gün içinde cayma hakkını kullanabilir." ibaresi yerine "ALICI, 14 gün içinde herhangi bir gerekçe göstermeksizin ve cezai şart ödemeksizin sözleşmeden cayma hakkına sahiptir. Cayma hakkı teslim tarihinden itibaren başlayacaktır. Cayma hakkının kullanıldığına dair bildirimin teslimden 14 gün içinde satıcıya yöneltilmiş olması gerekir. Mesafeli Sözleşmeler Yönetmeliğinin 13/2. maddesi gereği cayma hakkının kullanılmasında mutat kullanımı aşan bozulmalar halinde ALICI kendisi sorumludur.            </p>
             <ul className="list-disc pl-5">
               <li>E-posta: fulyaozzturk@gmail.com</li>
               <li>Adres: Kazım Özalp Mah. Kumkapı Sok. 31/4 Çankaya / Ankara</li>
@@ -143,6 +159,17 @@ export default function MesafeliSatisSozlesmesiPage() {
             <li>Kişiye özel hazırlanan veya kişisel ihtiyaçlara göre üretilen ürünler</li>
             <li>Teslimden sonra ambalajı açılmış ve iadesi hijyen açısından uygun olmayan ürünler</li>
             <li>Çabuk bozulabilen veya son kullanma tarihi geçebilecek ürünler</li>
+            <li>Taraflarca aksi kararlaştırılmadıkça, tüketici aşağıdaki sözleşmelerde cayma hakkını kullanamaz,</li>
+            <li>a) Tüketicinin istekleri doğrultusunda hazırlanan özel üretim ürünlerinin ayıplı durumlar dışında iadesi ve değişimi mümkün değildir. Bu ürünlerde cayma hakkı kullanılamaz.
+</li>
+            <li>b) Tüketicinin istekleri veya kişisel ihtiyaçları doğrultusunda hazırlanan mallara ilişkin sözleşmeler.
+</li>
+            <li> c) Çabuk bozulabilen veya son kullanma tarihi geçebilecek malların teslimine ilişkin sözleşmeler.
+</li>
+            <li> d) Tesliminden sonra ambalaj, bant, mühür, paket gibi koruyucu unsurları açılmış olan mallardan; iadesi sağlık ve hijyen açısından uygun olmayanların teslimine ilişkin sözleşmeler.
+</li>
+
+
           </ul>
         </section>
 

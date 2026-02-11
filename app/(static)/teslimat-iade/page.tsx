@@ -83,9 +83,7 @@ export default function TeslimatIadePage() {
             <div className="flex items-start gap-3">
               <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
               <p>
-                <strong>14 gün içinde</strong> koşulsuz iade hakkınız bulunmaktadır.
-                Ürünü teslim aldığınız tarihten itibaren 14 gün içinde iade talebinde bulunabilirsiniz.
-              </p>
+14 gün içinde herhangi bir gerekçe göstermeksizin ve cezai şart ödemeksizin iade hakkınız bulunmaktadır. Niteliği ve kanun gereği iade edilemeyecek ürünler hariç, ürünü teslim aldığınız tarihten itibaren 14 gün içinde iade talebinde bulunabilirsiniz              </p>
             </div>
           </div>
 
@@ -102,7 +100,7 @@ export default function TeslimatIadePage() {
             <ol className="list-decimal space-y-3 pl-5">
               <li>
                 <strong>İade Talebi:</strong> Hesabınızdaki "Siparişlerim" bölümünden iade talebinde bulunun
-                veya <strong>info@jonquil.com</strong> adresine e-posta gönderin.
+                veya <strong>info@jonquilstudio.co</strong> adresine e-posta gönderin.
               </li>
               <li>
                 <strong>Onay:</strong> İade talebiniz 1-2 iş günü içinde değerlendirilecek ve
@@ -170,7 +168,7 @@ export default function TeslimatIadePage() {
             <li>Kullanılmış veya hasar görmüş ürünler</li>
             <li>Orijinal ambalajı açılmış veya bozulmuş ürünler</li>
             <li>Kişiye özel sipariş edilen ürünler</li>
-            <li>Hijyen açısından iade edilemeyecek ürünler</li>
+            <li>•	niteliği itibarıyla iade edilemeyecek, kullanım sırasında vücutla direkt temasa girmek suretiyle hijyen açısından hassas olan ürünler (gece elbisesi, iç giyim, çorap, mayo ve aksesuarlar v.b.),</li>
           </ul>
         </section>
 
@@ -186,11 +184,11 @@ export default function TeslimatIadePage() {
             <li>
               <strong>E-posta:</strong>{" "}
               <a href="mailto:info@jonquil.com" className="text-[#0f3f44] hover:underline">
-                info@jonquil.com
+                info@jonquilstudio.co
               </a>
             </li>
             <li>
-              <strong>Telefon:</strong> +90 (XXX) XXX XX XX
+              <strong>Telefon:</strong> +90 (533) 510 10 93
             </li>
             <li>
               <strong>Çalışma Saatleri:</strong> Pazartesi - Cuma, 09:00 - 18:00
