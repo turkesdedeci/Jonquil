@@ -9,10 +9,9 @@ const hasClerkConfig = !!(
 
 // Content Security Policy
 // Allows: self, Clerk auth, Supabase storage, iyzico payment
-function buildCsp(nonce: string) {
+function buildCsp(_nonce: string) {
   const scriptSrc = [
     "'self'",
-    `'nonce-${nonce}'`,
     "'unsafe-inline'",
     ...(process.env.NODE_ENV === 'production' ? [] : ["'unsafe-eval'"]),
     'https://*.clerk.accounts.dev',
