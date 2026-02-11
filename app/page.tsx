@@ -258,6 +258,33 @@ function Homepage({
   galleryKey: number;
 }) {
   const galleryVisible = gallerySet.length > 0 ? gallerySet : slides.slice(0, 5);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [newsletterError, setNewsletterError] = useState("");
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNewsletterStatus("loading");
+    setNewsletterError("");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNewsletterStatus("error");
+        setNewsletterError(data.error || "Abonelik başarısız");
+        return;
+      }
+      setNewsletterStatus("success");
+      setNewsletterEmail("");
+    } catch {
+      setNewsletterStatus("error");
+      setNewsletterError("Bağlantı hatası. Lütfen tekrar deneyin.");
+    }
+  };
 
   return (
     <main>
@@ -590,18 +617,31 @@ function Homepage({
               Yeni Koleksiyonlardan Haberdar Olun
             </h2>
             <p className="mb-8 text-[#666]">
-              İlk siparişinizde %10 indirim kazanın. Özel fırsatları kaçırmayın.
+              Özel fırsatları kaçırmayın. Yeni koleksiyonlar ve duyurulardan ilk siz haberdar olun.
             </p>
-            <div className="mx-auto flex max-w-md gap-3">
+            <form onSubmit={handleNewsletterSubmit} className="mx-auto flex max-w-md gap-3">
               <input
                 type="email"
+                required
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder="E-posta adresiniz"
                 className="flex-1 rounded-full border border-[#e8e6e3] bg-[#faf8f5] px-6 py-4 text-sm outline-none focus:border-[#0f3f44] focus:ring-2 focus:ring-[#0f3f44]/20"
               />
-              <button className="rounded-full bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] px-8 py-4 text-sm font-semibold tracking-wide text-white transition-opacity hover:opacity-90">
-                Abone Ol
+              <button
+                type="submit"
+                disabled={newsletterStatus === "loading"}
+                className="rounded-full bg-gradient-to-r from-[#0f3f44] to-[#0a2a2e] px-8 py-4 text-sm font-semibold tracking-wide text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {newsletterStatus === "loading" ? "Gönderiliyor..." : "Abone Ol"}
               </button>
-            </div>
+            </form>
+            {newsletterStatus === "error" && (
+              <p className="mt-3 text-sm text-red-600">{newsletterError}</p>
+            )}
+            {newsletterStatus === "success" && (
+              <p className="mt-3 text-sm text-green-700">Teşekkürler! Başarıyla kaydoldunuz.</p>
+            )}
             <p className="mt-4 text-xs text-[#999]">
               Abonelikten istediğiniz zaman çıkabilirsiniz.
             </p>
