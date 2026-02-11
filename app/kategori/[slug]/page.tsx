@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer } from '@/lib/products-server';
 import CategoryPageClient from './CategoryPageClient';
@@ -140,7 +139,6 @@ function generateJsonLd(slug: CategorySlug, productCount: number) {
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const nonce = headers().get('x-nonce') || undefined;
   const { slug } = await params;
 
   if (!categories[slug as CategorySlug]) {
@@ -161,7 +159,6 @@ export default async function CategoryPage({ params }: Props) {
       {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 

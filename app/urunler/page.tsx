@@ -1,5 +1,4 @@
 import { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { getAllProductsServer } from '@/lib/products-server';
 import AllProductsClient from './AllProductsClient';
 
@@ -51,7 +50,6 @@ function generateJsonLd(productCount: number) {
 }
 
 export default async function AllProductsPage() {
-  const nonce = headers().get('x-nonce') || undefined;
   const products = await getAllProductsServer();
   const jsonLd = generateJsonLd(products.length);
 
@@ -60,7 +58,6 @@ export default async function AllProductsPage() {
       {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
-        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
