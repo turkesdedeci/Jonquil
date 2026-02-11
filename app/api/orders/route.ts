@@ -236,7 +236,10 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
 
-    if (orderError) throw orderError;
+    if (orderError) {
+      console.error('[Orders] Create order error:', JSON.stringify(orderError, null, 2));
+      throw orderError;
+    }
 
     // Create order items
     const orderItems = normalizedItems.map((item) => ({
@@ -248,7 +251,10 @@ export async function POST(request: NextRequest) {
       .from('order_items')
       .insert(orderItems);
 
-    if (itemsError) throw itemsError;
+    if (itemsError) {
+      console.error('[Orders] Create order items error:', JSON.stringify(itemsError, null, 2));
+      throw itemsError;
+    }
 
     // Fetch complete order with items
     const { data: completeOrder } = await serverSupabase
