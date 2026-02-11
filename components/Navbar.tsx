@@ -1,3 +1,4 @@
+"use client";
 // components/Navbar.tsx - TAM VE DÜZELTİLMİŞ VERSİYON
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
@@ -188,9 +189,6 @@ function MobileNav({
                 <Link href="/hakkimizda" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   Hakkımızda <ChevronRight className="h-4 w-4 text-[#999]" />
                 </Link>
-                <Link href="/blog" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
-                  Blog <ChevronRight className="h-4 w-4 text-[#999]" />
-                </Link>
                 <Link href="/iletisim" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   İletişim <ChevronRight className="h-4 w-4 text-[#999]" />
                 </Link>
@@ -375,7 +373,6 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
                <ProductsDropdown open={productsOpen} anchorRef={productsBtnRef} onClose={() => setProductsOpen(false)} />
              </div>
              <Link href="/hakkimizda" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">Hakkımızda</Link>
-             <Link href="/blog" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">Blog</Link>
              <Link href="/iletisim" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">İletişim</Link>
           </nav>
 
@@ -457,3 +454,4 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
     </>
   );
 }
+
