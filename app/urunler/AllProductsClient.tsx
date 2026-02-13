@@ -304,6 +304,7 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                     {filteredProducts.map((product, index) => {
                       const inStock = isInStock(product.id);
                       const firstImage = product.images?.[0] || '/placeholder.jpg';
+                      const sizeLabel = product.setSingle || product.size;
 
                       return (
                         <Link key={product.id} href={`/urun/${product.id}`}>
@@ -327,6 +328,14 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                                 }`}
                                 loading={index < 12 ? 'eager' : 'lazy'}
                               />
+
+                              {sizeLabel && (
+                                <div className="absolute left-2 top-2 sm:left-3 sm:top-3">
+                                  <div className="max-w-[90px] truncate rounded-md bg-white/95 px-2 py-0.5 text-[9px] font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 backdrop-blur-sm sm:max-w-[110px] sm:px-2.5 sm:py-1 sm:text-[10px]">
+                                    {sizeLabel}
+                                  </div>
+                                </div>
+                              )}
 
                               {!inStock && (
                                 <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
@@ -361,6 +370,7 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                     {filteredProducts.map((product, index) => {
                       const inStock = isInStock(product.id);
                       const firstImage = product.images?.[0] || '/placeholder.jpg';
+                      const sizeLabel = product.setSingle || product.size;
 
                       return (
                         <Link key={product.id} href={`/urun/${product.id}`}>
@@ -383,6 +393,11 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                                 }`}
                                 loading={index < 8 ? 'eager' : 'lazy'}
                               />
+                              {sizeLabel && (
+                                <div className="absolute left-1.5 top-1.5 rounded-md bg-white/95 px-1.5 py-0.5 text-[8px] font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 backdrop-blur-sm sm:left-2 sm:top-2 sm:max-w-[90px] sm:truncate sm:px-2 sm:text-[10px]">
+                                  {sizeLabel}
+                                </div>
+                              )}
                             </div>
                             <div className="flex flex-1 flex-col justify-center">
                               <div className="mb-1 text-xs font-light uppercase tracking-wider text-[#d4af7a]">
