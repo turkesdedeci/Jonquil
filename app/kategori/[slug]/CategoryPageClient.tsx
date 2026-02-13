@@ -296,6 +296,7 @@ export default function CategoryPageClient({
                     {filteredProducts.map((product, index) => {
                       const inStock = isInStock(product.id);
                       const firstImage = product.images?.[0] || '/placeholder.jpg';
+                      const sizeLabel = product.setSingle || product.size;
 
                       return (
                         <Link key={product.id} href={`/urun/${product.id}`}>
@@ -320,10 +321,18 @@ export default function CategoryPageClient({
                                 loading={index < 12 ? 'eager' : 'lazy'}
                               />
 
+                              {inStock && sizeLabel && (
+                                <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
+                                  <div className="rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 sm:px-3 sm:py-1 sm:text-[10px]">
+                                    {sizeLabel}
+                                  </div>
+                                </div>
+                              )}
+
                               {!inStock && (
                                 <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
                                   <div className="rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm sm:px-3 sm:py-1 sm:text-[10px]">
-                                    Tükendi
+                                    Yakında
                                   </div>
                                 </div>
                               )}
@@ -353,6 +362,7 @@ export default function CategoryPageClient({
                     {filteredProducts.map((product, index) => {
                       const inStock = isInStock(product.id);
                       const firstImage = product.images?.[0] || '/placeholder.jpg';
+                      const sizeLabel = product.setSingle || product.size;
 
                       return (
                         <Link key={product.id} href={`/urun/${product.id}`}>
@@ -375,6 +385,16 @@ export default function CategoryPageClient({
                                 }`}
                                 loading={index < 8 ? 'eager' : 'lazy'}
                               />
+                              {inStock && sizeLabel && (
+                                <div className="absolute right-1.5 top-1.5 rounded-md bg-white/95 px-1.5 py-0.5 text-[8px] font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 sm:right-2 sm:top-2 sm:px-2 sm:text-[10px]">
+                                  {sizeLabel}
+                                </div>
+                              )}
+                              {!inStock && (
+                                <div className="absolute right-1.5 top-1.5 rounded-md bg-red-500 px-1.5 py-0.5 text-[8px] font-semibold text-white shadow-sm sm:right-2 sm:top-2 sm:px-2 sm:text-[10px]">
+                                  Yakında
+                                </div>
+                              )}
                             </div>
                             <div className="flex flex-1 flex-col justify-center">
                               <div className="mb-1 text-xs font-light uppercase tracking-wider text-[#d4af7a]">

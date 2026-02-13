@@ -173,7 +173,7 @@ export function ProductCard({
           </div>
           {!inStock && (
             <div className="rounded-full bg-red-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white shadow-sm">
-              Tükendi
+              Yakında
             </div>
           )}
         </div>
