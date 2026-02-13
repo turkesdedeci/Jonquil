@@ -340,7 +340,7 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                               {!inStock && (
                                 <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
                                   <div className="rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm sm:px-3 sm:py-1 sm:text-[10px]">
-                                    Tükendi
+                                    Stokta yok
                                   </div>
                                 </div>
                               )}
@@ -396,6 +396,11 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                               {sizeLabel && (
                                 <div className="absolute left-1.5 top-1.5 rounded-md bg-white/95 px-1.5 py-0.5 text-[8px] font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 backdrop-blur-sm sm:left-2 sm:top-2 sm:max-w-[90px] sm:truncate sm:px-2 sm:text-[10px]">
                                   {sizeLabel}
+                                </div>
+                              )}
+                              {!inStock && (
+                                <div className="absolute right-1.5 top-1.5 rounded-md bg-red-500 px-1.5 py-0.5 text-[8px] font-semibold text-white shadow-sm sm:right-2 sm:top-2 sm:px-2 sm:text-[10px]">
+                                  Stokta yok
                                 </div>
                               )}
                             </div>

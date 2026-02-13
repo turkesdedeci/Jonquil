@@ -103,6 +103,12 @@ export default function ProductPageClient({
   const images = hasVariants
     ? currentVariant?.images || product.images || ['/placeholder.jpg']
     : product.images || ['/placeholder.jpg'];
+  const sizeBadge =
+    (currentVariant?.setSingle ||
+      currentVariant?.size ||
+      product.setSingle ||
+      product.size ||
+      '').trim();
 
   // Change variant (color)
   const handleVariantChange = (index: number) => {
@@ -228,6 +234,11 @@ export default function ProductPageClient({
                           className="object-cover"
                           loading={idx === 0 ? 'eager' : 'lazy'}
                         />
+                        {sizeBadge && (
+                          <span className="absolute right-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 backdrop-blur-sm">
+                            {sizeBadge}
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -275,6 +286,11 @@ export default function ProductPageClient({
                   </button>
                 ))}
 
+                {sizeBadge && (
+                  <div className="absolute right-4 top-4 rounded-md bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 backdrop-blur-sm">
+                    {sizeBadge}
+                  </div>
+                )}
 
                 {/* Image Navigation Arrows */}
                 {images.length > 1 && (
@@ -559,7 +575,7 @@ export default function ProductPageClient({
                           <div className="flex justify-between">
                             <span className="text-[#999]">Boyut:</span>
                             <span className="font-medium text-[#1a1a1a]">
-                              {product.size}
+                              {sizeBadge || '-'}
                             </span>
                           </div>
                           <div className="flex justify-between">
