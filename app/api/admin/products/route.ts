@@ -16,9 +16,10 @@ async function ensureTableExists() {
 
   try {
     // Try to create the table if it doesn't exist
-    await supabase.rpc('create_product_stock_table_if_not_exists').catch(() => {
+    const rpcResult = await supabase.rpc('create_product_stock_table_if_not_exists');
+    if (rpcResult.error) {
       // RPC might not exist, that's okay
-    });
+    }
 
     // Check if table exists by trying a simple query
     const { error } = await supabase

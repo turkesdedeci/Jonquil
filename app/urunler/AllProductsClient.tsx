@@ -16,11 +16,11 @@ interface Product {
   family: string;
   images?: string[];
   title: string;
-  subtitle: string;
-  color: string;
+  subtitle: string | null;
+  color: string | null;
   price: string;
-  material: string;
-  productType: string;
+  material: string | null;
+  productType: string | null;
   size?: string | null;
   capacity?: string | null;
   setSingle?: string | null;
@@ -61,15 +61,21 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
   }, [products]);
 
   const productTypes = useMemo(() => {
-    return [...new Set(products.map((p) => p.productType))].filter(Boolean);
+    return [...new Set(products.map((p) => (p.productType || '').trim()))].filter(
+      (value): value is string => Boolean(value)
+    );
   }, [products]);
 
   const colors = useMemo(() => {
-    return [...new Set(products.map((p) => p.color))].filter(Boolean);
+    return [...new Set(products.map((p) => (p.color || '').trim()))].filter(
+      (value): value is string => Boolean(value)
+    );
   }, [products]);
 
   const materials = useMemo(() => {
-    return [...new Set(products.map((p) => (p.material || '').trim()))].filter(Boolean);
+    return [...new Set(products.map((p) => (p.material || '').trim()))].filter(
+      (value): value is string => Boolean(value)
+    );
   }, [products]);
 
   const sizes = useMemo(() => {
@@ -99,10 +105,10 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
       result = result.filter((p) => filterCollection.includes(p.collection));
     }
     if (filterType.length > 0) {
-      result = result.filter((p) => filterType.includes(p.productType));
+      result = result.filter((p) => filterType.includes((p.productType || '').trim()));
     }
     if (filterColor.length > 0) {
-      result = result.filter((p) => filterColor.includes(p.color));
+      result = result.filter((p) => filterColor.includes((p.color || '').trim()));
     }
     if (filterMaterial.length > 0) {
       result = result.filter((p) => filterMaterial.includes((p.material || '').trim()));
@@ -370,7 +376,7 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                                 {product.title}
                               </h3>
                               <p className="mb-2 hidden min-h-[1.25rem] line-clamp-1 text-xs text-[#666] sm:block">
-                                {product.subtitle}
+                                {product.subtitle || ''}
                               </p>
                               <div className="mt-auto text-sm font-semibold text-[#0f3f44] sm:text-base">
                                 {product.price}
@@ -430,7 +436,7 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                                 {product.title}
                               </h3>
                               <p className="mb-2 text-xs text-[#666] sm:text-sm">
-                                {product.subtitle}
+                                {product.subtitle || ''}
                               </p>
                               <div className="text-base font-semibold text-[#0f3f44] sm:text-lg">
                                 {product.price}

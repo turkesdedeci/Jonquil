@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
@@ -27,7 +27,7 @@ function generateOrderNumber(): string {
   return `JQ${timestamp}${random}`;
 }
 
-// GET - Kullanıcının siparişlerini getir
+// GET - KullanÄ±cÄ±nÄ±n sipariÅŸlerini getir
 export async function GET(request: NextRequest) {
   try {
     // Rate limiting
@@ -38,14 +38,14 @@ export async function GET(request: NextRequest) {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json({ error: 'Giriş gerekli' }, { status: 401 });
+      return NextResponse.json({ error: 'GiriÅŸ gerekli' }, { status: 401 });
     }
 
     if (!serverSupabase) {
-      return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
+      return NextResponse.json({ error: 'VeritabanÄ± baÄŸlantÄ±sÄ± yok' }, { status: 500 });
     }
 
-    // Siparişleri ve ürünleri tek sorguda getir (N+1 query fix)
+    // SipariÅŸleri ve Ã¼rÃ¼nleri tek sorguda getir (N+1 query fix)
     const { data: orders, error: ordersError } = await serverSupabase
       .from('orders')
       .select(`
@@ -65,11 +65,11 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return safeErrorResponse(error, 'Siparişler yüklenemedi');
+    return safeErrorResponse(error, 'SipariÅŸler yÃ¼klenemedi');
   }
 }
 
-// POST - Yeni sipariş oluştur
+// POST - Yeni sipariÅŸ oluÅŸtur
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting - write operations
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     const clerkUser = userId ? await currentUser() : null;
 
     if (!serverSupabase) {
-      return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
+      return NextResponse.json({ error: 'VeritabanÄ± baÄŸlantÄ±sÄ± yok' }, { status: 500 });
     }
 
     const body = await request.json();
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     // Validation
     if ((!shipping_address_id && !shipping_address) || !items || items.length === 0) {
       return NextResponse.json(
-        { error: 'Eksik bilgi: Adres ve ürün gerekli' },
+        { error: 'Eksik bilgi: Adres ve Ã¼rÃ¼n gerekli' },
         { status: 400 }
       );
     }
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     // Input length validation to prevent DoS
     if (items.length > 50) {
       return NextResponse.json(
-        { error: 'Çok fazla ürün (maksimum 50)' },
+        { error: 'Ã‡ok fazla Ã¼rÃ¼n (maksimum 50)' },
         { status: 400 }
       );
     }
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     const validPaymentMethods = ['card', 'bank'];
     if (payment_method && !validPaymentMethods.includes(payment_method)) {
       return NextResponse.json(
-        { error: 'Geçersiz ödeme yöntemi' },
+        { error: 'GeÃ§ersiz Ã¶deme yÃ¶ntemi' },
         { status: 400 }
       );
     }
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (addressError || !addr) {
-        return NextResponse.json({ error: 'Adres bulunamadı' }, { status: 404 });
+        return NextResponse.json({ error: 'Adres bulunamadÄ±' }, { status: 404 });
       }
       address = addr;
     }
@@ -178,17 +178,27 @@ export async function POST(request: NextRequest) {
     if (outOfStockItems.length > 0) {
       const outOfStockNames = outOfStockItems.map((item: any) => item.product_title).join(', ');
       return NextResponse.json(
-        { error: `Stokta olmayan ürünler: ${outOfStockNames}` },
+        { error: `Stokta olmayan Ã¼rÃ¼nler: ${outOfStockNames}` },
         { status: 400 }
       );
     }
 
     // Server-side price validation
     let serverSubtotal = 0;
-    const normalizedItems = items.map((item: any) => {
+    type NormalizedOrderItem = {
+      product_id: string;
+      product_title: string;
+      product_subtitle: string | null;
+      product_image: string | null;
+      quantity: number;
+      unit_price: number;
+      total_price: number;
+    };
+
+    const normalizedItems: NormalizedOrderItem[] = items.map((item: any): NormalizedOrderItem => {
       const product = productById.get(item.product_id);
       if (!product) {
-        throw new Error(`Ürün bulunamadı: ${item.product_id}`);
+        throw new Error(`ÃœrÃ¼n bulunamadÄ±: ${item.product_id}`);
       }
       const quantity = parseInt(item.quantity) || 1;
       const priceMatch = product.price.match(/[\d.]+/);
@@ -242,7 +252,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create order items
-    const orderItems = normalizedItems.map((item) => ({
+    const orderItems = normalizedItems.map((item: NormalizedOrderItem) => ({
       order_id: order.id,
       ...item,
     }));
@@ -265,7 +275,7 @@ export async function POST(request: NextRequest) {
 
     if (payment_method === 'bank') {
       try {
-        const formatPrice = (value: number) => `${value.toLocaleString('tr-TR')} ₺`;
+        const formatPrice = (value: number) => `${value.toLocaleString('tr-TR')} â‚º`;
         await sendOrderEmails({
           orderId: order.order_number || order.id,
           customerName: `${order.customer_first_name || ''} ${order.customer_last_name || ''}`.trim(),
@@ -293,11 +303,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(completeOrder, { status: 201 });
   } catch (error) {
-    return safeErrorResponse(error, 'Sipariş oluşturulamadı');
+    return safeErrorResponse(error, 'SipariÅŸ oluÅŸturulamadÄ±');
   }
 }
 
-// PATCH - Sipariş durumunu güncelle (kullanıcı sadece iptal edebilir)
+// PATCH - SipariÅŸ durumunu gÃ¼ncelle (kullanÄ±cÄ± sadece iptal edebilir)
 export async function PATCH(request: NextRequest) {
   try {
     // Rate limiting
@@ -310,11 +320,11 @@ export async function PATCH(request: NextRequest) {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json({ error: 'Giriş yapmanız gerekiyor' }, { status: 401 });
+      return NextResponse.json({ error: 'GiriÅŸ yapmanÄ±z gerekiyor' }, { status: 401 });
     }
 
     if (!supabase) {
-      return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
+      return NextResponse.json({ error: 'VeritabanÄ± baÄŸlantÄ±sÄ± yok' }, { status: 500 });
     }
 
     const body = await request.json();
@@ -330,7 +340,7 @@ export async function PATCH(request: NextRequest) {
     // Users can only cancel orders (not change to other statuses)
     if (status !== 'cancelled') {
       return NextResponse.json(
-        { error: 'Bu işlem için yetkiniz yok' },
+        { error: 'Bu iÅŸlem iÃ§in yetkiniz yok' },
         { status: 403 }
       );
     }
@@ -344,13 +354,13 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (!existingOrder) {
-      return NextResponse.json({ error: 'Sipariş bulunamadı' }, { status: 404 });
+      return NextResponse.json({ error: 'SipariÅŸ bulunamadÄ±' }, { status: 404 });
     }
 
     // Can only cancel pending or processing orders
     if (!['pending', 'processing'].includes(existingOrder.status)) {
       return NextResponse.json(
-        { error: 'Bu sipariş artık iptal edilemez' },
+        { error: 'Bu sipariÅŸ artÄ±k iptal edilemez' },
         { status: 400 }
       );
     }
@@ -370,7 +380,8 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    return safeErrorResponse(error, 'Sipariş güncellenemedi');
+    return safeErrorResponse(error, 'SipariÅŸ gÃ¼ncellenemedi');
   }
 }
+
 

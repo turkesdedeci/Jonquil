@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,11 +16,11 @@ interface Product {
   family: string;
   images?: string[];
   title: string;
-  subtitle: string;
-  color: string;
+  subtitle: string | null;
+  color: string | null;
   price: string;
-  material: string;
-  productType: string;
+  material: string | null;
+  productType: string | null;
   size?: string | null;
   capacity?: string | null;
   setSingle?: string | null;
@@ -48,7 +48,6 @@ const getMeasurementLabel = (product: Product): string => {
 };
 
 export default function CollectionPageClient({
-  slug,
   name,
   description,
   products,
@@ -61,18 +60,25 @@ export default function CollectionPageClient({
   const [filterSize, setFilterSize] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const mobileFiltersPanelRef = useRef<HTMLDivElement>(null);
 
   // Get unique values for filters
   const productTypes = useMemo(() => {
-    return [...new Set(products.map((p) => p.productType))].filter(Boolean);
+    return [...new Set(products.map((p) => (p.productType || '').trim()))].filter(
+      (value): value is string => Boolean(value)
+    );
   }, [products]);
 
   const colors = useMemo(() => {
-    return [...new Set(products.map((p) => p.color))].filter(Boolean);
+    return [...new Set(products.map((p) => (p.color || '').trim()))].filter(
+      (value): value is string => Boolean(value)
+    );
   }, [products]);
 
   const materials = useMemo(() => {
-    return [...new Set(products.map((p) => (p.material || '').trim()))].filter(Boolean);
+    return [...new Set(products.map((p) => (p.material || '').trim()))].filter(
+      (value): value is string => Boolean(value)
+    );
   }, [products]);
 
   const sizes = useMemo(() => {
@@ -99,10 +105,10 @@ export default function CollectionPageClient({
     let result = [...products];
 
     if (filterType.length > 0) {
-      result = result.filter((p) => filterType.includes(p.productType));
+      result = result.filter((p) => filterType.includes((p.productType || '').trim()));
     }
     if (filterColor.length > 0) {
-      result = result.filter((p) => filterColor.includes(p.color));
+      result = result.filter((p) => filterColor.includes((p.color || '').trim()));
     }
     if (filterMaterial.length > 0) {
       result = result.filter((p) => filterMaterial.includes((p.material || '').trim()));
@@ -142,7 +148,7 @@ export default function CollectionPageClient({
     filterMaterial.length > 0 ||
     filterSize.length > 0;
 
-  const FiltersContent = () => (
+  const renderFiltersContent = () => (
     <div className="space-y-4">
       {hasActiveFilters && (
         <button
@@ -183,6 +189,30 @@ export default function CollectionPageClient({
       />
     </div>
   );
+
+  useEffect(() => {
+    if (!showMobileFilters) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousFocusedElement = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = 'hidden';
+    mobileFiltersPanelRef.current?.focus();
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setShowMobileFilters(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = previousOverflow;
+      previousFocusedElement?.focus();
+    };
+  }, [showMobileFilters]);
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -282,7 +312,7 @@ export default function CollectionPageClient({
               <aside className="hidden w-64 shrink-0 lg:block">
                 <div className="sticky top-24">
                   <h3 className="mb-4 text-lg font-semibold text-[#1a1a1a]">Filtreler</h3>
-                  <FiltersContent />
+                  {renderFiltersContent()}
                 </div>
               </aside>
 
@@ -355,7 +385,7 @@ export default function CollectionPageClient({
                                 {product.title}
                               </h3>
                               <p className="mb-2 hidden min-h-[1.25rem] line-clamp-1 text-xs text-[#666] sm:block">
-                                {product.subtitle}
+                                {product.subtitle || ''}
                               </p>
                               <div className="mt-auto text-sm font-semibold text-[#0f3f44] sm:text-base">
                                 {product.price}
@@ -415,7 +445,7 @@ export default function CollectionPageClient({
                                 {product.title}
                               </h3>
                               <p className="mb-2 text-xs text-[#666] sm:text-sm">
-                                {product.subtitle}
+                                {product.subtitle || ''}
                               </p>
                               <div className="text-base font-semibold text-[#0f3f44] sm:text-lg">
                                 {product.price}
@@ -450,9 +480,14 @@ export default function CollectionPageClient({
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="fixed bottom-0 right-0 top-0 z-50 w-[85%] max-w-sm overflow-y-auto bg-white p-6 shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="collection-mobile-filters-title"
+              tabIndex={-1}
+              ref={mobileFiltersPanelRef}
             >
               <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-[#1a1a1a]">Filtreler</h3>
+                <h3 id="collection-mobile-filters-title" className="text-lg font-semibold text-[#1a1a1a]">Filtreler</h3>
                 <button
                   onClick={() => setShowMobileFilters(false)}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[#1a1a1a] hover:bg-[#e8e6e3]"
@@ -460,7 +495,7 @@ export default function CollectionPageClient({
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <FiltersContent />
+              {renderFiltersContent()}
               <div className="mt-6">
                 <button
                   onClick={() => setShowMobileFilters(false)}

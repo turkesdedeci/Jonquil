@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
+import type { ComponentProps } from 'react';
 import {
   useUser as useClerkUser,
   useClerk as useClerkHook,
@@ -124,15 +125,11 @@ export function SignedOut({ children }: { children: ReactNode }) {
   return <ClerkSignedOut>{children}</ClerkSignedOut>;
 }
 
-export function SignInButton({
-  children,
-  mode,
-}: {
-  children?: ReactNode;
-  mode?: 'modal' | 'redirect';
-}) {
+type SignInButtonProps = ComponentProps<typeof ClerkSignInButton>;
+
+export function SignInButton({ children, ...props }: SignInButtonProps) {
   if (!hasClerkKey) {
     return <>{children}</>;
   }
-  return <ClerkSignInButton mode={mode}>{children}</ClerkSignInButton>;
+  return <ClerkSignInButton {...props}>{children}</ClerkSignInButton>;
 }

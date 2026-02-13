@@ -1,5 +1,5 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
-import { NextResponse, NextRequest } from "next/server";
+import { clerkMiddleware } from '@clerk/nextjs/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Check if Clerk is configured
 const hasClerkConfig = !!(
@@ -9,7 +9,7 @@ const hasClerkConfig = !!(
 
 // Content Security Policy
 // Allows: self, Clerk auth, Supabase storage, iyzico payment
-function buildCsp(_nonce: string) {
+function buildCsp() {
   const scriptSrc = [
     "'self'",
     "'unsafe-inline'",
@@ -38,7 +38,7 @@ function buildCsp(_nonce: string) {
   ].join('; ');
 }
 
-function buildSecurityHeaders(nonce: string): Record<string, string> {
+function buildSecurityHeaders(): Record<string, string> {
   const reportTo = JSON.stringify({
     group: 'csp-endpoint',
     max_age: 10886400,
@@ -48,9 +48,9 @@ function buildSecurityHeaders(nonce: string): Record<string, string> {
 
   return {
     // Content Security Policy
-    'Content-Security-Policy': buildCsp(nonce),
+    'Content-Security-Policy': buildCsp(),
     // CSP Report-Only (for observing violations)
-    'Content-Security-Policy-Report-Only': buildCsp(nonce),
+    'Content-Security-Policy-Report-Only': buildCsp(),
     'Report-To': reportTo,
     // Prevent clickjacking (redundant with CSP frame-ancestors but good for older browsers)
     'X-Frame-Options': 'DENY',
@@ -65,8 +65,8 @@ function buildSecurityHeaders(nonce: string): Record<string, string> {
   };
 }
 
-function applySecurityHeaders(response: NextResponse, nonce: string) {
-  const headers = buildSecurityHeaders(nonce);
+function applySecurityHeaders(response: NextResponse) {
+  const headers = buildSecurityHeaders();
   // Add HSTS header in production (HTTPS required)
   if (process.env.NODE_ENV === 'production') {
     // Strict Transport Security - force HTTPS for 1 year, include subdomains
@@ -100,7 +100,7 @@ function simpleMiddleware(request: NextRequest) {
   });
 
   // Add security headers to all responses
-  applySecurityHeaders(response, nonce);
+  applySecurityHeaders(response);
   response.headers.set('x-nonce', nonce);
 
   return response;
@@ -119,7 +119,7 @@ const clerkMiddlewareHandler = clerkMiddleware(async (auth, request) => {
   });
 
   // Add security headers to all responses
-  applySecurityHeaders(response, nonce);
+  applySecurityHeaders(response);
   response.headers.set('x-nonce', nonce);
 
   return response;

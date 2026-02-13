@@ -37,7 +37,7 @@ export function UserDropdown() {
   }, [isOpen]);
 
   if (!user) return null;
-  const emailAddress = user.emailAddresses?.[0]?.emailAddress;
+  const emailAddress = user.primaryEmailAddress?.emailAddress;
   const fallbackInitial = emailAddress ? emailAddress[0].toUpperCase() : '?';
   const userInitial = user.firstName?.[0] || fallbackInitial;
 

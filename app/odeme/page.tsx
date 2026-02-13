@@ -289,7 +289,7 @@ export default function CheckoutPage() {
         customer: {
           first_name: user?.firstName || guestFirstName,
           last_name: user?.lastName || guestLastName,
-          email: user?.emailAddresses?.[0]?.emailAddress || guestEmail,
+          email: user?.primaryEmailAddress?.emailAddress || guestEmail,
           phone: selectedAddress?.phone || guestPhone,
         },
         shipping_address: isGuest ? {
@@ -337,7 +337,7 @@ export default function CheckoutPage() {
               id: user?.id || `guest_${Date.now()}`,
               firstName,
               lastName,
-              email: user?.emailAddresses?.[0]?.emailAddress || guestEmail || 'guest@jonquil.com',
+              email: user?.primaryEmailAddress?.emailAddress || guestEmail || 'guest@jonquil.com',
               phone: selectedAddress?.phone || guestPhone || '+905000000000',
             },
             shippingAddress: {

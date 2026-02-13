@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Search, X, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { useProducts, Product } from '@/hooks/useProducts';
@@ -8,15 +8,17 @@ import { useProducts, Product } from '@/hooks/useProducts';
 interface SearchModalProps {
   open: boolean;
   onClose: () => void;
-  onProductClick: (product: any) => void;
+  onProductClick: (product: Product) => void;
 }
 
 export default function SearchModal({ open, onClose, onProductClick }: SearchModalProps) {
   const { products: allProducts } = useProducts();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Product[]>([]);
-  const [lastSearchMs, setLastSearchMs] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const handleClose = useCallback(() => {
+    setQuery('');
+    onClose();
+  }, [onClose]);
 
   const normalizeText = (value: string) =>
     value
@@ -79,22 +81,14 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
     if (open && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-    if (!open) {
-      setQuery('');
-      setResults([]);
-    }
   }, [open]);
 
-  // Search logic
-  useEffect(() => {
+  const results = useMemo(() => {
     if (!query.trim()) {
-      setResults([]);
-      setLastSearchMs(null);
-      return;
+      return [] as Product[];
     }
 
     const searchTerm = normalizeText(query);
-    const startTime = performance.now();
     const filtered = searchIndex
       .filter(({ searchableText, tokens }) => {
         if (searchableText.includes(searchTerm)) return true;
@@ -108,16 +102,13 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
       })
       .map(({ product }) => product);
 
-    // Limit to 10 results
-    const endTime = performance.now();
-    setLastSearchMs(Math.round(endTime - startTime));
-    setResults(filtered.slice(0, 10));
+    return filtered.slice(0, 10);
   }, [query, searchIndex]);
 
   // Handle keyboard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') handleClose();
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         if (!open) {
@@ -128,11 +119,11 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
+  }, [open, handleClose]);
 
-  const handleProductClick = (product: any) => {
+  const handleProductClick = (product: Product) => {
     onProductClick(product);
-    onClose();
+    handleClose();
   };
 
   return (
@@ -142,7 +133,7 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
           {/* Backdrop */}
           <div
             className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-            onClick={onClose}
+            onClick={handleClose}
           />
 
           {/* Modal */}
@@ -167,7 +158,7 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
                   aria-describedby="search-results-info"
                 />
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="ml-3 flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5f5f5] text-[#666] hover:bg-[#e8e6e3]"
                   aria-label="Aramayı kapat"
                 >
@@ -179,15 +170,15 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
               <div className="max-h-[60vh] overflow-y-auto">
                 {query && results.length === 0 && (
                   <div className="p-8 text-center">
-                    <p className="text-[#999]">"{query}" için sonuç bulunamadı</p>
+                    <p className="text-[#999]">&quot;{query}&quot; için sonuç bulunamadı</p>
                     <p className="mt-2 text-sm text-[#ccc]">Farklı bir arama terimi deneyin</p>
                   </div>
                 )}
 
                 {results.length > 0 && (
-                  <ul className="p-2" role="listbox" aria-label="Arama sonuçları">
+                  <ul className="p-2" aria-label="Arama sonuçları">
                     {results.map((product) => (
-                      <li key={product.id} role="option">
+                      <li key={product.id}>
                         <button
                           onClick={() => handleProductClick(product)}
                           className="flex w-full items-center gap-4 rounded-xl p-3 text-left transition-colors hover:bg-[#faf8f5]"
@@ -254,11 +245,6 @@ export default function SearchModal({ open, onClose, onProductClick }: SearchMod
                     {' '}kapatmak için
                   </span>
                 </div>
-                {lastSearchMs !== null && (
-                  <div className="mt-1 text-[11px] text-[#bbb]">
-                    Arama süresi: {lastSearchMs} ms
-                  </div>
-                )}
               </div>
             </div>
           </div>

@@ -10,7 +10,9 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
   .map((email) => email.trim().toLowerCase())
   .filter(Boolean);
 const ADMIN_EMAIL_SET = new Set(ADMIN_EMAILS);
-const isDevMode = process.env.NODE_ENV !== 'production';
+const allowDevAdminFallback =
+  process.env.NODE_ENV === 'development' &&
+  process.env.ALLOW_DEV_ADMIN === 'true';
 
 /**
  * Check if the current user is an admin
@@ -34,11 +36,11 @@ export async function isAdmin(): Promise<boolean> {
       .map((email) => email.emailAddress?.trim().toLowerCase())
       .filter(Boolean);
 
-    // Local development fallback:
-    // if ADMIN_EMAILS is empty, allow signed-in users to access admin panel.
-    // Production remains strict and still requires explicit ADMIN_EMAILS.
+    // Optional local-development fallback:
+    // If ADMIN_EMAILS is empty, only allow signed-in users when ALLOW_DEV_ADMIN=true.
+    // This prevents accidental admin access in preview/staging environments.
     if (ADMIN_EMAIL_SET.size === 0) {
-      return isDevMode;
+      return allowDevAdminFallback;
     }
 
     return userEmails.some((email) => ADMIN_EMAIL_SET.has(email));

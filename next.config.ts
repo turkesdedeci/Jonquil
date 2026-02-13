@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Skip type checking during build (handled separately)
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   // Allow external images from Supabase
   images: {
     remotePatterns: [

@@ -61,6 +61,7 @@ interface Order {
 
 interface OrderItem {
   id: string;
+  product_id?: string;
   product_title: string;
   product_subtitle?: string;
   product_image?: string;
@@ -82,6 +83,30 @@ const statusOrder: Order['status'][] = ['pending', 'processing', 'shipped', 'del
 type Tab = 'orders' | 'products';
 const CROP_BOX_SIZE = 320;
 const CROP_MAX_ZOOM = 2.5;
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const EMPTY_PRODUCT = {
+  title: '',
+  subtitle: '',
+  price: '',
+  collection: 'aslan',
+  family: '',
+  product_type: '',
+  material: 'Porselen',
+  color: '',
+  size: '',
+  capacity: '',
+  code: '',
+  images: [] as string[],
+  in_stock: true,
+  stock_quantity: 0,
+  low_stock_threshold: 5
+};
+
+const getFocusableElements = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (element) => !element.hasAttribute('aria-hidden')
+  );
 
 export default function AdminPage() {
   const { user, isLoaded } = useUser();
@@ -137,6 +162,11 @@ export default function AdminPage() {
   const [cropZoom, setCropZoom] = useState(1);
   const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
   const [croppingImage, setCroppingImage] = useState(false);
+  const orderDialogRef = useRef<HTMLDivElement>(null);
+  const trackingDialogRef = useRef<HTMLDivElement>(null);
+  const productDialogRef = useRef<HTMLDivElement>(null);
+  const cropDialogRef = useRef<HTMLDivElement>(null);
+  const deleteDialogRef = useRef<HTMLDivElement>(null);
   const cropDragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -161,25 +191,6 @@ export default function AdminPage() {
     stock_quantity: 0,
     low_stock_threshold: 5
   });
-
-  // Default empty product for reset
-  const emptyProduct = {
-    title: '',
-    subtitle: '',
-    price: '',
-    collection: 'aslan',
-    family: '',
-    product_type: '',
-    material: 'Porselen',
-    color: '',
-    size: '',
-    capacity: '',
-    code: '',
-    images: [] as string[],
-    in_stock: true,
-    stock_quantity: 0,
-    low_stock_threshold: 5
-  };
 
   const normalizeImageSrc = (src?: string) => {
     if (!src) return '';
@@ -292,14 +303,106 @@ export default function AdminPage() {
       image.src = normalizedSrc;
     });
 
-  const closeCropModal = () => {
+  const closeCropModal = useCallback(() => {
     setCropTarget(null);
     setCropSourceSize(null);
     setCropZoom(1);
     setCropOffset({ x: 0, y: 0 });
     setCroppingImage(false);
     cropDragRef.current = null;
-  };
+  }, []);
+
+  const closeOrderDialog = useCallback(() => {
+    setSelectedOrder(null);
+  }, []);
+
+  const closeTrackingDialog = useCallback(() => {
+    setTrackingModal(null);
+  }, []);
+
+  const closeProductDialog = useCallback(() => {
+    setShowProductModal(false);
+    setProductFormMessage(null);
+    setEditingProductId(null);
+    setNewProduct(EMPTY_PRODUCT);
+    closeCropModal();
+  }, [closeCropModal]);
+
+  const closeDeleteDialog = useCallback(() => {
+    setDeleteConfirmId(null);
+  }, []);
+
+  useEffect(() => {
+    const activeModal =
+      (cropTarget && { ref: cropDialogRef, close: closeCropModal }) ||
+      (deleteConfirmId && { ref: deleteDialogRef, close: closeDeleteDialog }) ||
+      (showProductModal && { ref: productDialogRef, close: closeProductDialog }) ||
+      (trackingModal && { ref: trackingDialogRef, close: closeTrackingDialog }) ||
+      (selectedOrder && { ref: orderDialogRef, close: closeOrderDialog }) ||
+      null;
+
+    if (!activeModal) return;
+
+    const container = activeModal.ref.current;
+    if (!container) return;
+
+    const previousFocusedElement = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    requestAnimationFrame(() => {
+      const focusable = getFocusableElements(container);
+      (focusable[0] || container).focus();
+    });
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        activeModal.close();
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const focusable = getFocusableElements(container);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        container.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const current = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey && current === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && current === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previousFocusedElement?.focus();
+    };
+  }, [
+    cropTarget,
+    deleteConfirmId,
+    selectedOrder,
+    showProductModal,
+    trackingModal,
+    closeCropModal,
+    closeDeleteDialog,
+    closeOrderDialog,
+    closeProductDialog,
+    closeTrackingDialog,
+  ]);
 
   const cropPreviewMetrics = useMemo(() => {
     if (!cropSourceSize?.width || !cropSourceSize?.height) return null;
@@ -601,10 +704,11 @@ export default function AdminPage() {
     const counts = new Map<string, { qty: number; revenue: number }>();
     orders.forEach(order => {
       (order.items || []).forEach(item => {
-        const current = counts.get(item.product_id) || { qty: 0, revenue: 0 };
+        const itemKey = item.product_id || item.id;
+        const current = counts.get(itemKey) || { qty: 0, revenue: 0 };
         const qty = item.quantity || 0;
         const revenue = item.total_price || 0;
-        counts.set(item.product_id, { qty: current.qty + qty, revenue: current.revenue + revenue });
+        counts.set(itemKey, { qty: current.qty + qty, revenue: current.revenue + revenue });
       });
     });
     const productMap = new Map(allCombinedProducts.map(p => [p.id, p]));
@@ -772,11 +876,7 @@ export default function AdminPage() {
         }
 
         setTimeout(() => {
-          setShowProductModal(false);
-          setProductFormMessage(null);
-          setEditingProductId(null);
-          setNewProduct(emptyProduct);
-          closeCropModal();
+          closeProductDialog();
         }, 1500);
       } else {
         setProductFormMessage({ type: 'error', text: data.error || 'İşlem başarısız' });
@@ -818,7 +918,7 @@ export default function AdminPage() {
   const openNewProductModal = () => {
     closeCropModal();
     setEditingProductId(null);
-    setNewProduct(emptyProduct);
+    setNewProduct(EMPTY_PRODUCT);
     setShowProductModal(true);
   };
 
@@ -1695,14 +1795,21 @@ export default function AdminPage() {
       {/* Order Detail Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+          <div
+            ref={orderDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-order-detail-title"
+            tabIndex={-1}
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl"
+          >
             <div className="sticky top-0 flex items-center justify-between border-b bg-white p-6">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">{selectedOrder.order_number}</h2>
+                <h2 id="admin-order-detail-title" className="text-lg font-bold text-gray-900">{selectedOrder.order_number}</h2>
                 <p className="text-sm text-gray-500">{formatDate(selectedOrder.created_at)}</p>
               </div>
               <button
-                onClick={() => setSelectedOrder(null)}
+                onClick={closeOrderDialog}
                 className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />
@@ -1846,11 +1953,18 @@ export default function AdminPage() {
       {/* Tracking Modal */}
       {trackingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <div
+            ref={trackingDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-tracking-dialog-title"
+            tabIndex={-1}
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+          >
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Kargo Bilgisi Ekle</h2>
+              <h2 id="admin-tracking-dialog-title" className="text-lg font-bold text-gray-900">Kargo Bilgisi Ekle</h2>
               <button
-                onClick={() => setTrackingModal(null)}
+                onClick={closeTrackingDialog}
                 className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />
@@ -1909,19 +2023,20 @@ export default function AdminPage() {
       {/* New Product Modal */}
       {showProductModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+          <div
+            ref={productDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-product-dialog-title"
+            tabIndex={-1}
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl"
+          >
             <div className="sticky top-0 flex items-center justify-between border-b bg-white p-6">
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 id="admin-product-dialog-title" className="text-lg font-bold text-gray-900">
                 {editingProductId ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}
               </h2>
               <button
-                onClick={() => {
-                  setShowProductModal(false);
-                  setProductFormMessage(null);
-                  setEditingProductId(null);
-                  setNewProduct(emptyProduct);
-                  closeCropModal();
-                }}
+                onClick={closeProductDialog}
                 className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
               >
                 <X className="h-5 w-5" />
@@ -2335,10 +2450,17 @@ export default function AdminPage() {
       {/* Image Crop Modal */}
       {cropTarget && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl">
+          <div
+            ref={cropDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-crop-dialog-title"
+            tabIndex={-1}
+            className="w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl"
+          >
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Görseli Kırp</h3>
+                <h3 id="admin-crop-dialog-title" className="text-lg font-bold text-gray-900">Görseli Kırp</h3>
                 <p className="text-sm text-gray-500">Sürükleyin veya slider ile konum/zoom ayarlayın.</p>
               </div>
               <button
@@ -2473,17 +2595,24 @@ export default function AdminPage() {
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <div
+            ref={deleteDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-delete-dialog-title"
+            tabIndex={-1}
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+          >
             <div className="mb-4 flex items-center gap-3 text-red-600">
               <AlertTriangle className="h-6 w-6" />
-              <h3 className="text-lg font-bold">Ürünü Sil</h3>
+              <h3 id="admin-delete-dialog-title" className="text-lg font-bold">Ürünü Sil</h3>
             </div>
             <p className="mb-6 text-gray-600">
               Bu ürünü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => setDeleteConfirmId(null)}
+                onClick={closeDeleteDialog}
                 disabled={deletingProduct}
                 className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >

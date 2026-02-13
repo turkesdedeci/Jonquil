@@ -34,7 +34,12 @@ const MotionDiv = ({
 }: any) => <div {...rest} />;
 
 const motion = { div: MotionDiv };
-const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const AnimatePresence = ({
+  children,
+}: {
+  children: React.ReactNode;
+  mode?: string;
+}) => <>{children}</>;
 
 interface Route {
   name: "home" | "collections" | "collection" | "product" | "about" | "contact" | "allProducts" | "category";
@@ -695,6 +700,18 @@ function CollectionsPage({ onGo, products }: { onGo: (r: Route) => void; product
   );
 }
 
+function CollectionPage({
+  slug,
+  products,
+  onGo,
+}: {
+  slug: 'aslan' | 'ottoman';
+  products: any[];
+  onGo: (r: Route) => void;
+}) {
+  return <AllProductsPage products={products} onGo={onGo} />;
+}
+
 // All Products Page (Tüm Ürünler)
 function AllProductsPage({
   products,
@@ -984,6 +1001,7 @@ function CategoryPage({
     priceRange: [0, 5000],
     materials: [] as string[],
     colors: [] as string[],
+    productTypes: [] as string[],
     sizes: [] as string[],
     collections: [] as string[],
     inStock: true,
@@ -999,6 +1017,7 @@ function CategoryPage({
     return {
       materials: [...new Set(categoryProducts.map(p => p.material))].filter(Boolean),
       colors: [...new Set(categoryProducts.map(p => p.color))].filter(Boolean),
+      productTypes: [...new Set(categoryProducts.map(p => p.productType))].filter(Boolean),
       sizes: [...new Set(categoryProducts.map(p => p.setSingle))].filter(Boolean),
       collections: [...new Set(categoryProducts.map(p => p.collection))].filter(Boolean),
     };
@@ -1022,6 +1041,11 @@ function CategoryPage({
     // Color filter
     if (filters.colors.length > 0) {
       filtered = filtered.filter(p => filters.colors.includes(p.color));
+    }
+
+    // Product type filter
+    if (filters.productTypes.length > 0) {
+      filtered = filtered.filter(p => filters.productTypes.includes(p.productType));
     }
 
     // Size filter
@@ -1339,7 +1363,7 @@ function CategoryPage({
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onClick={() => onGo({ name: "product", slug, id: product.id })}
+                    onClick={() => onGo({ name: "product", slug: category, id: product.id })}
                   />
                 ))}
               </div>
@@ -1356,6 +1380,7 @@ function CategoryPage({
                         colors: [],
                         productTypes: [],
                         sizes: [],
+                        collections: [],
                         inStock: true,
                       });
                       setCurrentPage(1);

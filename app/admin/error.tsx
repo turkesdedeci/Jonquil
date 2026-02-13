@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 
 export default function AdminError({
@@ -39,13 +40,13 @@ export default function AdminError({
             <RefreshCw className="h-4 w-4" />
             Tekrar Dene
           </button>
-          <a
+          <Link
             href="/"
             className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0f3f44] px-4 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e]"
           >
             <Home className="h-4 w-4" />
             Ana Sayfa
-          </a>
+          </Link>
         </div>
       </div>
     </div>
