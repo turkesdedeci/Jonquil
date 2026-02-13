@@ -1,9 +1,12 @@
 import { Metadata } from 'next';
 import { getAllProductsServer } from '@/lib/products-server';
+import { absoluteUrl, getSiteUrl, SITE_NAME } from '@/lib/site';
 import AllProductsClient from './AllProductsClient';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
+
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   title: 'Tüm Ürünler | Jonquil - El Yapımı Türk Porseleni',
@@ -22,29 +25,41 @@ export const metadata: Metadata = {
     description: 'El yapımı porselen ürünlerimizi keşfedin.',
     type: 'website',
     locale: 'tr_TR',
+    url: absoluteUrl('/urunler'),
+    images: [
+      {
+        url: absoluteUrl('/images/og-default.jpg'),
+        alt: 'Tüm Ürünler | Jonquil',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Tüm Ürünler | Jonquil',
+    description: 'El yapımı porselen ürünlerimizi keşfedin.',
+    images: [absoluteUrl('/images/og-default.jpg')],
   },
   alternates: {
-    canonical: 'https://jonquil.com.tr/urunler',
+    canonical: absoluteUrl('/urunler'),
   },
 };
 
-// JSON-LD for product listing
 function generateJsonLd(productCount: number) {
   return {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Tüm Ürünler',
     description: 'Jonquil koleksiyonlarından tüm el yapımı porselen ürünleri.',
-    url: 'https://jonquil.com.tr/urunler',
+    url: absoluteUrl('/urunler'),
     numberOfItems: productCount,
     isPartOf: {
       '@type': 'WebSite',
-      name: 'Jonquil',
-      url: 'https://jonquil.com.tr',
+      name: SITE_NAME,
+      url: siteUrl,
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Jonquil',
+      name: SITE_NAME,
     },
   };
 }
@@ -55,13 +70,10 @@ export default async function AllProductsPage() {
 
   return (
     <>
-      {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-
-      {/* Client Component */}
       <AllProductsClient products={products} />
     </>
   );

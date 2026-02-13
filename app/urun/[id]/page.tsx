@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer, getProductByIdServer, ServerProduct } from '@/lib/products-server';
+import { absoluteUrl, SITE_NAME } from '@/lib/site';
 import ProductPageClient from './ProductPageClient';
 
 export const dynamic = 'force-dynamic';
@@ -55,7 +56,6 @@ function normalizeProduct(product: ServerProduct): Product {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  console.log(`[generateMetadata] Params received: ${JSON.stringify(params)}`);
   const { id: paramId } = await params;
   const queryId = typeof searchParams?.id === 'string'
     ? searchParams.id
@@ -64,7 +64,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       : undefined;
   const id = paramId || queryId;
   if (!id) {
-    console.error('[generateMetadata] ID is undefined, cannot generate metadata.');
     return {
       title: 'Ürün Bulunamadı | Jonquil',
       description: 'Ürün bilgileri yüklenemedi.',
@@ -74,7 +73,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const product = await getProductByIdServer(id);
 
   if (!product) {
-    console.warn(`[generateMetadata] Product not found for ID: ${id}`);
     return {
       title: 'Ürün Bulunamadı | Jonquil',
     };
@@ -104,10 +102,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       description,
       type: 'website',
       locale: 'tr_TR',
-      siteName: 'Jonquil',
+      url: absoluteUrl(`/urun/${id}`),
+      siteName: SITE_NAME,
       images: [
         {
-          url: imageUrl,
+          url: absoluteUrl(imageUrl),
           width: 1200,
           height: 630,
           alt: normalizedProduct.title,
@@ -118,7 +117,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       card: 'summary_large_image',
       title,
       description,
-      images: [imageUrl],
+      images: [absoluteUrl(imageUrl)],
+    },
+    alternates: {
+      canonical: absoluteUrl(`/urun/${id}`),
     },
   };
 }
@@ -135,7 +137,7 @@ function generateJsonLd(product: Product) {
     sku: product.code,
     brand: {
       '@type': 'Brand',
-      name: 'Jonquil',
+      name: SITE_NAME,
     },
     material: product.material,
     size: product.size,
@@ -143,13 +145,13 @@ function generateJsonLd(product: Product) {
     category: product.productType,
     offers: {
       '@type': 'Offer',
-      url: `https://jonquil.com.tr/urun/${product.id}`,
+      url: absoluteUrl(`/urun/${product.id}`),
       priceCurrency: 'TRY',
       price: numericPrice,
       availability: 'https://schema.org/InStock',
       seller: {
         '@type': 'Organization',
-        name: 'Jonquil',
+        name: SITE_NAME,
       },
     },
     aggregateRating: {
@@ -169,17 +171,14 @@ export default async function ProductPage({ params, searchParams }: Props) {
       ? searchParams?.id[0]
       : undefined;
   const id = paramId || queryId;
-  console.log(`[ProductPage] Initial ID from params: ${id}`);
-  
+
   if (!id) {
-    console.error('[ProductPage] ID is undefined, returning notFound.');
     notFound();
   }
 
   const product = await getProductByIdServer(id);
 
   if (!product) {
-    console.warn(`[ProductPage] Product not found for ID: ${id}`);
     if (debugMode) {
       return (
         <div style={{ padding: 24, fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif' }}>
@@ -243,3 +242,4 @@ export default async function ProductPage({ params, searchParams }: Props) {
     </>
   );
 }
+

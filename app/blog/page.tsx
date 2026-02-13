@@ -1,5 +1,37 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { absoluteUrl, SITE_NAME } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Blog | Jonquil Studio",
+  description:
+    "Porselen bakimi, sofra stili ve hediye secimi konularinda Jonquil Studio blog yazilari.",
+  alternates: {
+    canonical: absoluteUrl("/blog"),
+  },
+  openGraph: {
+    title: "Blog | Jonquil Studio",
+    description:
+      "Porselen bakimi, sofra stili ve hediye secimi konularinda Jonquil Studio blog yazilari.",
+    type: "website",
+    url: absoluteUrl("/blog"),
+    siteName: SITE_NAME,
+    images: [
+      {
+        url: absoluteUrl("/images/og-default.jpg"),
+        alt: "Jonquil Studio Blog",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Blog | Jonquil Studio",
+    description:
+      "Porselen bakimi, sofra stili ve hediye secimi konularinda Jonquil Studio blog yazilari.",
+    images: [absoluteUrl("/images/og-default.jpg")],
+  },
+};
 
 const posts = [
   {

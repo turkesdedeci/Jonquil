@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer } from '@/lib/products-server';
+import { absoluteUrl, getSiteUrl, SITE_NAME } from '@/lib/site';
 import CategoryPageClient from './CategoryPageClient';
 
 // Category mapping (slug -> display name & metadata)
@@ -64,6 +65,7 @@ interface Props {
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
+const siteUrl = getSiteUrl();
 
 // Generate static params for all categories
 export async function generateStaticParams() {
@@ -94,10 +96,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: 'website',
       locale: 'tr_TR',
-      siteName: 'Jonquil',
+      url: absoluteUrl(`/kategori/${slug}`),
+      siteName: SITE_NAME,
       images: [
         {
-          url: imageUrl,
+          url: absoluteUrl(imageUrl),
           width: 1200,
           height: 630,
           alt: title,
@@ -108,10 +111,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      images: [imageUrl],
+      images: [absoluteUrl(imageUrl)],
     },
     alternates: {
-      canonical: `https://jonquil.com.tr/kategori/${slug}`,
+      canonical: absoluteUrl(`/kategori/${slug}`),
     },
   };
 }
@@ -124,16 +127,16 @@ function generateJsonLd(slug: CategorySlug, productCount: number) {
     '@type': 'CollectionPage',
     name: category.name,
     description: category.description,
-    url: `https://jonquil.com.tr/kategori/${slug}`,
+    url: absoluteUrl(`/kategori/${slug}`),
     isPartOf: {
       '@type': 'WebSite',
-      name: 'Jonquil',
-      url: 'https://jonquil.com.tr',
+      name: SITE_NAME,
+      url: siteUrl,
     },
     numberOfItems: productCount,
     publisher: {
       '@type': 'Organization',
-      name: 'Jonquil',
+      name: SITE_NAME,
     },
   };
 }

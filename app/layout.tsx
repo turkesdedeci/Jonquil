@@ -5,10 +5,13 @@ import { FavoritesProvider } from '@/contexts/FavoritesContext';
 import { StockProvider } from '@/contexts/StockContext';
 import { RecentlyViewedProvider } from '@/contexts/RecentlyViewedContext';
 import { ProductsProvider } from '@/hooks/useProducts';
+import { absoluteUrl, getSiteUrl, SITE_NAME } from '@/lib/site';
 import "./globals.css";
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.jonquilstudio.co'),
+  metadataBase: new URL(siteUrl),
   title: {
     default: 'Jonquil Studio - El Yapımı Türk Porseleni',
     template: '%s | Jonquil',
@@ -25,9 +28,12 @@ export const metadata: Metadata = {
     'Ottoman',
     'Aslan koleksiyonu',
   ],
-  authors: [{ name: 'Jonquil Studio' }],
-  creator: 'Jonquil Studio',
-  publisher: 'Jonquil Studio',
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  alternates: {
+    canonical: siteUrl,
+  },
   formatDetection: {
     email: false,
     address: false,
@@ -36,13 +42,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'tr_TR',
-    url: 'https://www.jonquilstudio.co',
-    siteName: 'Jonquil Studio',
+    url: siteUrl,
+    siteName: SITE_NAME,
     title: 'Jonquil Studio - El Yapımı Türk Porseleni',
     description: 'Premium el yapımı porselen tabak setleri ve tasarım objeleri.',
     images: [
       {
-        url: '/images/products/GENEL FOTOLAR/Header-1.jpg',
+        url: absoluteUrl('/images/og-default.jpg'),
         alt: 'Jonquil Studio - El Yapımı Türk Porseleni',
       },
     ],
@@ -51,7 +57,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Jonquil Studio - El Yapımı Türk Porseleni',
     description: 'Premium el yapımı porselen tabak setleri ve tasarım objeleri.',
-    images: ['/images/products/GENEL FOTOLAR/Header-1.jpg'],
+    images: [absoluteUrl('/images/og-default.jpg')],
   },
   robots: {
     index: true,

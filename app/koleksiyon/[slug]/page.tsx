@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer } from '@/lib/products-server';
+import { absoluteUrl, getSiteUrl, SITE_NAME } from '@/lib/site';
 import CollectionPageClient from './CollectionPageClient';
 
 // Collection data
@@ -29,6 +30,7 @@ interface Props {
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 300;
+const siteUrl = getSiteUrl();
 
 // Generate static params for collections
 export async function generateStaticParams() {
@@ -59,10 +61,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: 'website',
       locale: 'tr_TR',
-      siteName: 'Jonquil',
+      url: absoluteUrl(`/koleksiyon/${slug}`),
+      siteName: SITE_NAME,
       images: [
         {
-          url: imageUrl,
+          url: absoluteUrl(imageUrl),
           width: 1200,
           height: 630,
           alt: collection.name,
@@ -73,10 +76,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      images: [imageUrl],
+      images: [absoluteUrl(imageUrl)],
     },
     alternates: {
-      canonical: `https://jonquil.com.tr/koleksiyon/${slug}`,
+      canonical: absoluteUrl(`/koleksiyon/${slug}`),
     },
   };
 }
@@ -89,19 +92,19 @@ function generateJsonLd(slug: CollectionSlug, productCount: number) {
     '@type': 'CollectionPage',
     name: collection.name,
     description: collection.description,
-    url: `https://jonquil.com.tr/koleksiyon/${slug}`,
+    url: absoluteUrl(`/koleksiyon/${slug}`),
     isPartOf: {
       '@type': 'WebSite',
-      name: 'Jonquil',
-      url: 'https://jonquil.com.tr',
+      name: SITE_NAME,
+      url: siteUrl,
     },
     numberOfItems: productCount,
     publisher: {
       '@type': 'Organization',
-      name: 'Jonquil',
+      name: SITE_NAME,
       logo: {
         '@type': 'ImageObject',
-        url: 'https://jonquil.com.tr/images/logo.png',
+        url: absoluteUrl('/images/logo.png'),
       },
     },
   };
