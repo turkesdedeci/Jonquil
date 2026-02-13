@@ -321,27 +321,29 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                       const sizeLabel = getMeasurementLabel(product);
 
                       return (
-                        <Link key={product.id} href={`/urun/${product.id}`}>
+                        <Link key={product.id} href={`/urun/${product.id}`} className="block h-full">
                           <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: Math.min(index * 0.03, 0.5) }}
                             whileHover={{ y: -4 }}
-                            className={`group cursor-pointer overflow-hidden rounded-xl border border-[#e8e6e3] bg-white shadow-sm transition-all hover:shadow-xl sm:rounded-2xl ${
+                            className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-[#789d94] bg-[#d3e5df] shadow-[0_8px_18px_rgba(10,70,62,0.16)] transition-all hover:shadow-[0_16px_30px_rgba(10,70,62,0.24)] sm:rounded-2xl ${
                               !inStock ? 'opacity-75' : ''
                             }`}
                           >
-                            <div className="relative aspect-square overflow-hidden bg-[#faf8f5]">
-                              <Image
-                                src={firstImage}
-                                alt={product.title}
-                                fill
-                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                className={`object-cover transition-transform duration-500 group-hover:scale-110 ${
-                                  !inStock ? 'grayscale' : ''
-                                }`}
-                                loading={index < 12 ? 'eager' : 'lazy'}
-                              />
+                            <div className="relative aspect-square overflow-hidden bg-[#faf8f5] p-2 sm:p-2.5">
+                              <div className="relative h-full w-full overflow-hidden rounded-lg sm:rounded-xl">
+                                <Image
+                                  src={firstImage}
+                                  alt={product.title}
+                                  fill
+                                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                  className={`object-cover transition-transform duration-500 group-hover:scale-110 ${
+                                    !inStock ? 'grayscale' : ''
+                                  }`}
+                                  loading={index < 12 ? 'eager' : 'lazy'}
+                                />
+                              </div>
 
                               {sizeLabel && (
                                 <div className="absolute left-2 top-2 sm:left-3 sm:top-3">
@@ -360,17 +362,17 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                               )}
                             </div>
 
-                            <div className="p-3 sm:p-4">
+                            <div className="flex flex-1 flex-col p-3 sm:p-4">
                               <div className="mb-1 text-[10px] font-light uppercase tracking-wider text-[#d4af7a] sm:text-xs">
                                 {product.family}
                               </div>
-                              <h3 className="mb-1 line-clamp-2 text-xs font-medium leading-snug text-[#1a1a1a] sm:text-sm">
+                              <h3 className="mb-1 line-clamp-2 min-h-[2rem] text-xs font-medium leading-snug text-[#1a1a1a] sm:min-h-[2.5rem] sm:text-sm">
                                 {product.title}
                               </h3>
-                              <p className="mb-2 hidden text-xs text-[#666] sm:block">
+                              <p className="mb-2 hidden min-h-[1.25rem] line-clamp-1 text-xs text-[#666] sm:block">
                                 {product.subtitle}
                               </p>
-                              <div className="text-sm font-semibold text-[#0f3f44] sm:text-base">
+                              <div className="mt-auto text-sm font-semibold text-[#0f3f44] sm:text-base">
                                 {product.price}
                               </div>
                             </div>
@@ -392,21 +394,23 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.03 }}
-                            className={`group flex gap-4 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white p-4 shadow-sm transition-all hover:shadow-lg sm:gap-6 ${
+                            className={`group flex gap-4 overflow-hidden rounded-2xl border border-[#789d94] bg-[#d3e5df] p-4 shadow-[0_8px_18px_rgba(10,70,62,0.16)] transition-all hover:shadow-[0_16px_30px_rgba(10,70,62,0.24)] sm:gap-6 ${
                               !inStock ? 'opacity-75' : ''
                             }`}
                           >
-                            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#faf8f5] sm:h-32 sm:w-32">
-                              <Image
-                                src={firstImage}
-                                alt={product.title}
-                                fill
-                                sizes="128px"
-                                className={`object-cover transition-transform duration-300 group-hover:scale-110 ${
-                                  !inStock ? 'grayscale' : ''
-                                }`}
-                                loading={index < 8 ? 'eager' : 'lazy'}
-                              />
+                            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#faf8f5] p-1.5 sm:h-32 sm:w-32 sm:p-2">
+                              <div className="relative h-full w-full overflow-hidden rounded-[10px] sm:rounded-lg">
+                                <Image
+                                  src={firstImage}
+                                  alt={product.title}
+                                  fill
+                                  sizes="128px"
+                                  className={`object-cover transition-transform duration-300 group-hover:scale-110 ${
+                                    !inStock ? 'grayscale' : ''
+                                  }`}
+                                  loading={index < 8 ? 'eager' : 'lazy'}
+                                />
+                              </div>
                               {sizeLabel && (
                                 <div className="absolute left-1.5 top-1.5 rounded-md bg-white/95 px-1.5 py-0.5 text-[8px] font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 backdrop-blur-sm sm:left-2 sm:top-2 sm:max-w-[90px] sm:truncate sm:px-2 sm:text-[10px]">
                                   {sizeLabel}

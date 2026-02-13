@@ -25,11 +25,13 @@ import {
   Plus,
   Save,
   Trash2,
-  Upload,
   ImagePlus,
   Edit2,
   AlertTriangle,
-  Database
+  Database,
+  ArrowUp,
+  ArrowDown,
+  Crop
 } from 'lucide-react';
 import { allProducts } from '@/data/products';
 
@@ -78,6 +80,8 @@ const statusConfig = {
 const statusOrder: Order['status'][] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
 type Tab = 'orders' | 'products';
+const CROP_BOX_SIZE = 320;
+const CROP_MAX_ZOOM = 2.5;
 
 export default function AdminPage() {
   const { user, isLoaded } = useUser();
@@ -126,6 +130,20 @@ export default function AdminPage() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingProduct, setDeletingProduct] = useState(false);
+  const [draggingImageIndex, setDraggingImageIndex] = useState<number | null>(null);
+  const [dragOverImageIndex, setDragOverImageIndex] = useState<number | null>(null);
+  const [cropTarget, setCropTarget] = useState<{ index: number; src: string } | null>(null);
+  const [cropSourceSize, setCropSourceSize] = useState<{ width: number; height: number } | null>(null);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
+  const [croppingImage, setCroppingImage] = useState(false);
+  const cropDragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startOffsetX: number;
+    startOffsetY: number;
+  } | null>(null);
   const [newProduct, setNewProduct] = useState({
     title: '',
     subtitle: '',
@@ -220,6 +238,265 @@ export default function AdminPage() {
     return new File([blob], name, { type: preferredType });
   };
 
+  const clampValue = (value: number, min: number, max: number) => {
+    if (min > max) return min;
+    return Math.min(max, Math.max(min, value));
+  };
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof Error && error.message) return error.message;
+    return fallback;
+  };
+
+  const uploadImageFile = async (file: File) => {
+    const optimizedFile = await compressImage(file);
+    const formData = new FormData();
+    formData.append('file', optimizedFile);
+
+    const res = await fetch('/api/admin/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error.error || 'Yükleme hatası');
+    }
+
+    const data = await res.json();
+    if (!data?.url) {
+      throw new Error('Yüklenen görsel URL alınamadı');
+    }
+
+    return data.url as string;
+  };
+
+  const loadImageElement = (src: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = document.createElement('img');
+      const normalizedSrc = normalizeImageSrc(src);
+
+      if (normalizedSrc.startsWith('http://') || normalizedSrc.startsWith('https://')) {
+        try {
+          const origin = new URL(normalizedSrc).origin;
+          if (origin !== window.location.origin) {
+            image.crossOrigin = 'anonymous';
+          }
+        } catch {
+          // ignore malformed urls
+        }
+      }
+
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Görsel yüklenemedi'));
+      image.src = normalizedSrc;
+    });
+
+  const closeCropModal = () => {
+    setCropTarget(null);
+    setCropSourceSize(null);
+    setCropZoom(1);
+    setCropOffset({ x: 0, y: 0 });
+    setCroppingImage(false);
+    cropDragRef.current = null;
+  };
+
+  const cropPreviewMetrics = useMemo(() => {
+    if (!cropSourceSize?.width || !cropSourceSize?.height) return null;
+
+    const baseScale = Math.max(CROP_BOX_SIZE / cropSourceSize.width, CROP_BOX_SIZE / cropSourceSize.height);
+    const scale = baseScale * cropZoom;
+    const renderedWidth = cropSourceSize.width * scale;
+    const renderedHeight = cropSourceSize.height * scale;
+    const maxOffsetX = Math.max(0, (renderedWidth - CROP_BOX_SIZE) / 2);
+    const maxOffsetY = Math.max(0, (renderedHeight - CROP_BOX_SIZE) / 2);
+
+    return {
+      scale,
+      renderedWidth,
+      renderedHeight,
+      maxOffsetX,
+      maxOffsetY,
+    };
+  }, [cropSourceSize, cropZoom]);
+
+  useEffect(() => {
+    if (!cropPreviewMetrics) return;
+    setCropOffset((prev) => ({
+      x: clampValue(prev.x, -cropPreviewMetrics.maxOffsetX, cropPreviewMetrics.maxOffsetX),
+      y: clampValue(prev.y, -cropPreviewMetrics.maxOffsetY, cropPreviewMetrics.maxOffsetY),
+    }));
+  }, [cropPreviewMetrics]);
+
+  const openCropModal = async (index: number, src: string) => {
+    setProductFormMessage(null);
+    setCropTarget({ index, src });
+    setCropSourceSize(null);
+    setCropZoom(1);
+    setCropOffset({ x: 0, y: 0 });
+
+    try {
+      const image = await loadImageElement(src);
+      setCropSourceSize({
+        width: image.naturalWidth || image.width,
+        height: image.naturalHeight || image.height,
+      });
+    } catch (error: unknown) {
+      closeCropModal();
+      setProductFormMessage({
+        type: 'error',
+        text: getErrorMessage(error, 'Kırpma için görsel açılamadı'),
+      });
+    }
+  };
+
+  const handleCropPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!cropPreviewMetrics || croppingImage) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    cropDragRef.current = {
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startOffsetX: cropOffset.x,
+      startOffsetY: cropOffset.y,
+    };
+  };
+
+  const handleCropPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const dragState = cropDragRef.current;
+    if (!dragState || dragState.pointerId !== e.pointerId || !cropPreviewMetrics || croppingImage) return;
+
+    const deltaX = e.clientX - dragState.startX;
+    const deltaY = e.clientY - dragState.startY;
+
+    setCropOffset({
+      x: clampValue(dragState.startOffsetX + deltaX, -cropPreviewMetrics.maxOffsetX, cropPreviewMetrics.maxOffsetX),
+      y: clampValue(dragState.startOffsetY + deltaY, -cropPreviewMetrics.maxOffsetY, cropPreviewMetrics.maxOffsetY),
+    });
+  };
+
+  const handleCropPointerEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    const dragState = cropDragRef.current;
+    if (!dragState || dragState.pointerId !== e.pointerId) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    cropDragRef.current = null;
+  };
+
+  const applyImageCrop = async () => {
+    if (!cropTarget || !cropSourceSize || !cropPreviewMetrics) return;
+
+    setCroppingImage(true);
+    setProductFormMessage(null);
+
+    try {
+      const sourceImage = await loadImageElement(cropTarget.src);
+
+      const imageLeft = (CROP_BOX_SIZE - cropPreviewMetrics.renderedWidth) / 2 + cropOffset.x;
+      const imageTop = (CROP_BOX_SIZE - cropPreviewMetrics.renderedHeight) / 2 + cropOffset.y;
+      const sourceWidth = CROP_BOX_SIZE / cropPreviewMetrics.scale;
+      const sourceHeight = CROP_BOX_SIZE / cropPreviewMetrics.scale;
+
+      const safeSourceWidth = Math.min(sourceWidth, cropSourceSize.width);
+      const safeSourceHeight = Math.min(sourceHeight, cropSourceSize.height);
+
+      const sourceX = clampValue(
+        (0 - imageLeft) / cropPreviewMetrics.scale,
+        0,
+        Math.max(0, cropSourceSize.width - safeSourceWidth)
+      );
+      const sourceY = clampValue(
+        (0 - imageTop) / cropPreviewMetrics.scale,
+        0,
+        Math.max(0, cropSourceSize.height - safeSourceHeight)
+      );
+
+      const canvas = document.createElement('canvas');
+      const outputSize = 1200;
+      canvas.width = outputSize;
+      canvas.height = outputSize;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Kırpma işlemi başlatılamadı');
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, outputSize, outputSize);
+      ctx.drawImage(
+        sourceImage,
+        sourceX,
+        sourceY,
+        safeSourceWidth,
+        safeSourceHeight,
+        0,
+        0,
+        outputSize,
+        outputSize
+      );
+
+      const croppedBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+      if (!croppedBlob) {
+        throw new Error('Kırpılan görsel üretilemedi');
+      }
+
+      const croppedFile = new File([croppedBlob], `crop-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      const uploadedUrl = await uploadImageFile(croppedFile);
+      const targetIndex = cropTarget.index;
+
+      setNewProduct((prev) => {
+        if (targetIndex < 0 || targetIndex >= prev.images.length) return prev;
+        const nextImages = [...prev.images];
+        nextImages[targetIndex] = uploadedUrl;
+        return { ...prev, images: nextImages };
+      });
+
+      closeCropModal();
+      setProductFormMessage({ type: 'success', text: 'Görsel kırpıldı ve güncellendi' });
+    } catch (error: unknown) {
+      setProductFormMessage({
+        type: 'error',
+        text: getErrorMessage(error, 'Görsel kırpılamadı'),
+      });
+      setCroppingImage(false);
+    }
+  };
+
+  const moveImage = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    setNewProduct((prev) => {
+      if (
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= prev.images.length ||
+        toIndex >= prev.images.length
+      ) {
+        return prev;
+      }
+
+      const nextImages = [...prev.images];
+      const [moved] = nextImages.splice(fromIndex, 1);
+      nextImages.splice(toIndex, 0, moved);
+      return { ...prev, images: nextImages };
+    });
+  };
+
+  const handleImageDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverImageIndex !== index) {
+      setDragOverImageIndex(index);
+    }
+  };
+
+  const handleImageDrop = (index: number) => {
+    if (draggingImageIndex === null) return;
+    moveImage(draggingImageIndex, index);
+    setDraggingImageIndex(null);
+    setDragOverImageIndex(null);
+  };
+
   // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -232,22 +509,8 @@ export default function AdminPage() {
       const uploadedUrls: string[] = [];
 
       for (const file of Array.from(files)) {
-        const optimizedFile = await compressImage(file);
-        const formData = new FormData();
-        formData.append('file', optimizedFile);
-
-        const res = await fetch('/api/admin/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          uploadedUrls.push(data.url);
-        } else {
-          const error = await res.json();
-          throw new Error(error.error || 'Yükleme hatası');
-        }
+        const uploadedUrl = await uploadImageFile(file);
+        uploadedUrls.push(uploadedUrl);
       }
 
       setNewProduct(prev => ({
@@ -271,6 +534,13 @@ export default function AdminPage() {
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
+
+    setCropTarget((prev) => {
+      if (!prev) return prev;
+      if (prev.index === index) return null;
+      if (prev.index > index) return { ...prev, index: prev.index - 1 };
+      return prev;
+    });
   };
 
   // Extract unique values from existing products for dropdown suggestions
@@ -506,6 +776,7 @@ export default function AdminPage() {
           setProductFormMessage(null);
           setEditingProductId(null);
           setNewProduct(emptyProduct);
+          closeCropModal();
         }, 1500);
       } else {
         setProductFormMessage({ type: 'error', text: data.error || 'İşlem başarısız' });
@@ -519,6 +790,7 @@ export default function AdminPage() {
 
   // Open edit modal with product data
   const openEditModal = (product: any) => {
+    closeCropModal();
     const override = productOverrides[product.id] || {};
     const stockInfo = stockDetails[product.id];
     setEditingProductId(product.id);
@@ -544,6 +816,7 @@ export default function AdminPage() {
 
   // Open new product modal
   const openNewProductModal = () => {
+    closeCropModal();
     setEditingProductId(null);
     setNewProduct(emptyProduct);
     setShowProductModal(true);
@@ -1647,6 +1920,7 @@ export default function AdminPage() {
                   setProductFormMessage(null);
                   setEditingProductId(null);
                   setNewProduct(emptyProduct);
+                  closeCropModal();
                 }}
                 className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
               >
@@ -1871,9 +2145,26 @@ export default function AdminPage() {
 
                 {/* Uploaded Images Preview */}
                 {newProduct.images.length > 0 && (
-                  <div className="mb-3 grid grid-cols-4 gap-2">
+                  <div className="mb-3">
+                    <div className="mb-2 text-xs text-gray-500">
+                      Sürükle-bırak ile sıralayın. İlk görsel vitrin görseli olarak kullanılır.
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {newProduct.images.map((url, idx) => (
-                      <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+                      <div
+                        key={`${url}-${idx}`}
+                        className={`group relative aspect-square overflow-hidden rounded-lg border bg-gray-100 ${
+                          dragOverImageIndex === idx ? 'border-[#0f3f44] ring-2 ring-[#0f3f44]/20' : 'border-transparent'
+                        }`}
+                        draggable
+                        onDragStart={() => setDraggingImageIndex(idx)}
+                        onDragOver={(e) => handleImageDragOver(e, idx)}
+                        onDrop={() => handleImageDrop(idx)}
+                        onDragEnd={() => {
+                          setDraggingImageIndex(null);
+                          setDragOverImageIndex(null);
+                        }}
+                      >
                         <Image
                           src={url}
                           alt={`Ürün resmi ${idx + 1}`}
@@ -1881,14 +2172,48 @@ export default function AdminPage() {
                           className="object-cover"
                           sizes="80px"
                         />
+                        <span className="absolute left-1 top-1 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">
+                          {idx + 1}
+                        </span>
+                        <div className="absolute inset-x-1 bottom-1 grid grid-cols-2 gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => moveImage(idx, Math.max(0, idx - 1))}
+                            disabled={idx === 0}
+                            className="flex items-center justify-center rounded-md bg-white/90 py-1 text-gray-700 shadow disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Öne taşı"
+                          >
+                            <ArrowUp className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveImage(idx, Math.min(newProduct.images.length - 1, idx + 1))}
+                            disabled={idx === newProduct.images.length - 1}
+                            className="flex items-center justify-center rounded-md bg-white/90 py-1 text-gray-700 shadow disabled:cursor-not-allowed disabled:opacity-40"
+                            title="Sona taşı"
+                          >
+                            <ArrowDown className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                         <button
+                          type="button"
+                          onClick={() => openCropModal(idx, url)}
+                          className="absolute left-1 top-8 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[#0f3f44] shadow-sm opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+                          title="Kırp"
+                        >
+                          <Crop className="h-3 w-3" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => removeImage(idx)}
-                          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+                          title="Sil"
                         >
                           <X className="h-3 w-3" />
                         </button>
                       </div>
                     ))}
+                    </div>
                   </div>
                 )}
 
@@ -2002,6 +2327,144 @@ export default function AdminPage() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Crop Modal */}
+      {cropTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Görseli Kırp</h3>
+                <p className="text-sm text-gray-500">Sürükleyin veya slider ile konum/zoom ayarlayın.</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeCropModal}
+                disabled={croppingImage}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                title="Kapat"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+              <div className="mx-auto w-full max-w-[360px]">
+                <div
+                  className="relative mx-auto h-[320px] w-[320px] overflow-hidden rounded-xl border border-gray-200 bg-gray-100 touch-none"
+                  onPointerDown={handleCropPointerDown}
+                  onPointerMove={handleCropPointerMove}
+                  onPointerUp={handleCropPointerEnd}
+                  onPointerCancel={handleCropPointerEnd}
+                >
+                  {cropPreviewMetrics ? (
+                    <Image
+                      src={normalizeImageSrc(cropTarget.src)}
+                      alt="Kırpma önizleme"
+                      width={Math.max(1, cropSourceSize?.width || CROP_BOX_SIZE)}
+                      height={Math.max(1, cropSourceSize?.height || CROP_BOX_SIZE)}
+                      draggable={false}
+                      className="pointer-events-none absolute left-1/2 top-1/2 max-w-none select-none"
+                      style={{
+                        width: `${cropPreviewMetrics.renderedWidth}px`,
+                        height: `${cropPreviewMetrics.renderedHeight}px`,
+                        transform: `translate(-50%, -50%) translate(${cropOffset.x}px, ${cropOffset.y}px)`,
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500">
+                      Görsel yükleniyor...
+                    </div>
+                  )}
+                  <div className="pointer-events-none absolute inset-0 ring-2 ring-white/80" />
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div>
+                  <div className="mb-1 flex items-center justify-between text-sm text-gray-700">
+                    <span>Zoom</span>
+                    <span className="font-medium">{cropZoom.toFixed(2)}x</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1}
+                    max={CROP_MAX_ZOOM}
+                    step={0.01}
+                    value={cropZoom}
+                    onChange={(e) => setCropZoom(Number(e.target.value))}
+                    className="w-full"
+                    disabled={!cropPreviewMetrics || croppingImage}
+                  />
+                </div>
+
+                <div>
+                  <div className="mb-1 flex items-center justify-between text-sm text-gray-700">
+                    <span>Yatay Konum</span>
+                    <span className="font-medium">{Math.round(cropOffset.x)} px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={cropPreviewMetrics ? -cropPreviewMetrics.maxOffsetX : 0}
+                    max={cropPreviewMetrics ? cropPreviewMetrics.maxOffsetX : 0}
+                    step={1}
+                    value={cropOffset.x}
+                    onChange={(e) => setCropOffset((prev) => ({ ...prev, x: Number(e.target.value) }))}
+                    className="w-full"
+                    disabled={!cropPreviewMetrics || croppingImage}
+                  />
+                </div>
+
+                <div>
+                  <div className="mb-1 flex items-center justify-between text-sm text-gray-700">
+                    <span>Dikey Konum</span>
+                    <span className="font-medium">{Math.round(cropOffset.y)} px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={cropPreviewMetrics ? -cropPreviewMetrics.maxOffsetY : 0}
+                    max={cropPreviewMetrics ? cropPreviewMetrics.maxOffsetY : 0}
+                    step={1}
+                    value={cropOffset.y}
+                    onChange={(e) => setCropOffset((prev) => ({ ...prev, y: Number(e.target.value) }))}
+                    className="w-full"
+                    disabled={!cropPreviewMetrics || croppingImage}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeCropModal}
+                    disabled={croppingImage}
+                    className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Vazgeç
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyImageCrop}
+                    disabled={!cropPreviewMetrics || croppingImage}
+                    className="flex items-center gap-2 rounded-lg bg-[#0f3f44] px-4 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {croppingImage ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Kaydediliyor...
+                      </>
+                    ) : (
+                      <>
+                        <Crop className="h-4 w-4" />
+                        Kırp ve Kaydet
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

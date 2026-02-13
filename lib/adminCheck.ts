@@ -5,7 +5,12 @@ const hasClerkConfig = !!(
 );
 
 // Admin emails from environment variable (comma-separated)
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
+const ADMIN_EMAIL_SET = new Set(ADMIN_EMAILS);
+const isDevMode = process.env.NODE_ENV !== 'production';
 
 /**
  * Check if the current user is an admin
@@ -25,9 +30,18 @@ export async function isAdmin(): Promise<boolean> {
 
     if (!user) return false;
 
-    return user.emailAddresses.some(
-      email => ADMIN_EMAILS.includes(email.emailAddress)
-    );
+    const userEmails = user.emailAddresses
+      .map((email) => email.emailAddress?.trim().toLowerCase())
+      .filter(Boolean);
+
+    // Local development fallback:
+    // if ADMIN_EMAILS is empty, allow signed-in users to access admin panel.
+    // Production remains strict and still requires explicit ADMIN_EMAILS.
+    if (ADMIN_EMAIL_SET.size === 0) {
+      return isDevMode;
+    }
+
+    return userEmails.some((email) => ADMIN_EMAIL_SET.has(email));
   } catch (error) {
     console.error('Admin check error:', error);
     return false;
