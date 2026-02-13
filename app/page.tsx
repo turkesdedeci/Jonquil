@@ -301,7 +301,7 @@ function Homepage({
               alt="Jonquil Collection"
               fill
               sizes="100vw"
-              className="object-cover object-bottom"
+              className="object-cover"
               priority={currentSlide === 0}
               quality={70}
             />
