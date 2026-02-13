@@ -21,8 +21,9 @@ interface Product {
   price: string;
   material: string;
   productType: string;
-  size: string;
-  setSingle?: string;
+  size?: string | null;
+  capacity?: string | null;
+  setSingle?: string | null;
   tags: string[];
 }
 
@@ -32,6 +33,19 @@ interface CollectionPageClientProps {
   description: string;
   products: Product[];
 }
+
+const getMeasurementLabel = (product: Product): string => {
+  const capacity = (product.capacity || '').trim();
+  if (capacity) return capacity;
+
+  const size = (product.size || '').trim();
+  if (size) return size;
+
+  const setSingle = (product.setSingle || '').trim();
+  if (setSingle && !setSingle.toLocaleLowerCase('tr-TR').startsWith('tek par')) return setSingle;
+
+  return '';
+};
 
 export default function CollectionPageClient({
   slug,
@@ -58,11 +72,11 @@ export default function CollectionPageClient({
   }, [products]);
 
   const materials = useMemo(() => {
-    return [...new Set(products.map((p) => p.material))].filter(Boolean);
+    return [...new Set(products.map((p) => (p.material || '').trim()))].filter(Boolean);
   }, [products]);
 
   const sizes = useMemo(() => {
-    return [...new Set(products.map((p) => p.setSingle || p.size))].filter(Boolean);
+    return [...new Set(products.map((p) => getMeasurementLabel(p)))].filter(Boolean);
   }, [products]);
 
   // Parse price from string
@@ -91,10 +105,10 @@ export default function CollectionPageClient({
       result = result.filter((p) => filterColor.includes(p.color));
     }
     if (filterMaterial.length > 0) {
-      result = result.filter((p) => filterMaterial.includes(p.material));
+      result = result.filter((p) => filterMaterial.includes((p.material || '').trim()));
     }
     if (filterSize.length > 0) {
-      result = result.filter((p) => filterSize.includes(p.setSingle || p.size));
+      result = result.filter((p) => filterSize.includes(getMeasurementLabel(p)));
     }
 
     switch (sortBy) {
@@ -289,7 +303,7 @@ export default function CollectionPageClient({
                     {filteredProducts.map((product, index) => {
                       const inStock = isInStock(product.id);
                       const firstImage = product.images?.[0] || '/placeholder.jpg';
-                      const sizeLabel = product.setSingle || product.size;
+                      const sizeLabel = getMeasurementLabel(product);
 
                       return (
                         <Link key={product.id} href={`/urun/${product.id}`}>
@@ -355,7 +369,7 @@ export default function CollectionPageClient({
                     {filteredProducts.map((product, index) => {
                       const inStock = isInStock(product.id);
                       const firstImage = product.images?.[0] || '/placeholder.jpg';
-                      const sizeLabel = product.setSingle || product.size;
+                      const sizeLabel = getMeasurementLabel(product);
 
                       return (
                         <Link key={product.id} href={`/urun/${product.id}`}>

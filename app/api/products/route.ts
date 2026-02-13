@@ -38,6 +38,15 @@ function transformDbProduct(dbProduct: any) {
   };
 }
 
+function pickNonEmptyString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value !== 'string') continue;
+    const trimmed = value.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
 // GET - Fetch all products (static + database)
 export async function GET(request: NextRequest) {
   try {
@@ -96,13 +105,19 @@ export async function GET(request: NextRequest) {
     // Add stock status + overrides to static products
     const staticWithStock = staticProducts.map(product => {
       const override = overrides[product.id];
-      const overrideProductType = override?.product_type ?? override?.productType;
-      const overrideSetSingle = override?.set_single ?? override?.setSingle;
       const merged = { ...product, ...override };
+      const resolvedProductType =
+        pickNonEmptyString(override?.product_type, override?.productType, product.productType) ?? null;
+      const resolvedSetSingle =
+        pickNonEmptyString(override?.set_single, override?.setSingle, product.setSingle) ?? 'Tek Parça';
+      const resolvedMaterial =
+        pickNonEmptyString(override?.material, product.material) ?? 'Porselen';
+
       return {
         ...merged,
-        productType: overrideProductType ?? merged.productType,
-        setSingle: overrideSetSingle ?? merged.setSingle,
+        productType: resolvedProductType,
+        setSingle: resolvedSetSingle,
+        material: resolvedMaterial,
         inStock: stockStatus[product.id] !== false, // Default to in stock
         isFromDatabase: false,
       };
@@ -110,14 +125,20 @@ export async function GET(request: NextRequest) {
 
     const dbWithOverrides = dbProducts.map(product => {
       const override = overrides[product.id];
-      const overrideProductType = override?.product_type ?? override?.productType;
-      const overrideSetSingle = override?.set_single ?? override?.setSingle;
       const merged = { ...product, ...override };
       const stockOverride = stockStatus[product.id];
+      const resolvedProductType =
+        pickNonEmptyString(override?.product_type, override?.productType, product.productType) ?? null;
+      const resolvedSetSingle =
+        pickNonEmptyString(override?.set_single, override?.setSingle, product.setSingle) ?? 'Tek Parça';
+      const resolvedMaterial =
+        pickNonEmptyString(override?.material, product.material) ?? 'Porselen';
+
       return {
         ...merged,
-        productType: overrideProductType ?? merged.productType,
-        setSingle: overrideSetSingle ?? merged.setSingle,
+        productType: resolvedProductType,
+        setSingle: resolvedSetSingle,
+        material: resolvedMaterial,
         inStock: stockOverride !== undefined ? stockOverride : merged.inStock !== false,
         isFromDatabase: true,
       };

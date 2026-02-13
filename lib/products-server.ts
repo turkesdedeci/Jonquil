@@ -56,6 +56,15 @@ function transformDbProduct(dbProduct: any): ServerProduct {
   };
 }
 
+function pickNonEmptyString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value !== 'string') continue;
+    const trimmed = value.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
 // Get all products for server-side use (includes database products)
 export async function getAllProductsServer(): Promise<ServerProduct[]> {
   // Get database products
@@ -118,13 +127,19 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
   // Add stock status + overrides to static products
   const staticWithStock: ServerProduct[] = staticProducts.map(product => {
     const override = overrides[product.id];
-    const overrideProductType = override?.product_type ?? override?.productType;
-    const overrideSetSingle = override?.set_single ?? override?.setSingle;
     const merged = { ...product, ...override };
+    const resolvedProductType =
+      pickNonEmptyString(override?.product_type, override?.productType, product.productType) ?? null;
+    const resolvedSetSingle =
+      pickNonEmptyString(override?.set_single, override?.setSingle, product.setSingle) ?? 'Tek Parça';
+    const resolvedMaterial =
+      pickNonEmptyString(override?.material, product.material) ?? 'Porselen';
+
     return {
       ...merged,
-      productType: overrideProductType ?? merged.productType,
-      setSingle: overrideSetSingle ?? merged.setSingle,
+      productType: resolvedProductType,
+      setSingle: resolvedSetSingle,
+      material: resolvedMaterial,
       inStock: stockStatus[product.id] !== false,
       isFromDatabase: false,
     } as ServerProduct;
@@ -132,14 +147,20 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
 
   const dbWithOverrides: ServerProduct[] = dbProducts.map(product => {
     const override = overrides[product.id];
-    const overrideProductType = override?.product_type ?? override?.productType;
-    const overrideSetSingle = override?.set_single ?? override?.setSingle;
     const merged = { ...product, ...override } as any;
     const stockOverride = stockStatus[product.id];
+    const resolvedProductType =
+      pickNonEmptyString(override?.product_type, override?.productType, product.productType) ?? null;
+    const resolvedSetSingle =
+      pickNonEmptyString(override?.set_single, override?.setSingle, product.setSingle) ?? 'Tek Parça';
+    const resolvedMaterial =
+      pickNonEmptyString(override?.material, product.material) ?? 'Porselen';
+
     return {
       ...merged,
-      productType: overrideProductType ?? merged.productType,
-      setSingle: overrideSetSingle ?? merged.setSingle,
+      productType: resolvedProductType,
+      setSingle: resolvedSetSingle,
+      material: resolvedMaterial,
       inStock: stockOverride !== undefined ? stockOverride : merged.inStock !== false,
       isFromDatabase: true,
     } as ServerProduct;

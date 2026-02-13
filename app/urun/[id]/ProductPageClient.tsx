@@ -103,12 +103,18 @@ export default function ProductPageClient({
   const images = hasVariants
     ? currentVariant?.images || product.images || ['/placeholder.jpg']
     : product.images || ['/placeholder.jpg'];
+  const normalizedCapacity =
+    (currentVariant?.capacity || product.capacity || '').trim();
+  const normalizedSize =
+    (currentVariant?.size || product.size || '').trim();
+  const normalizedSetType =
+    (currentVariant?.setSingle || product.setSingle || '').trim();
   const sizeBadge =
-    (currentVariant?.setSingle ||
-      currentVariant?.size ||
-      product.setSingle ||
-      product.size ||
-      '').trim();
+    normalizedCapacity ||
+    normalizedSize ||
+    (normalizedSetType && !normalizedSetType.toLocaleLowerCase('tr-TR').startsWith('tek par')
+      ? normalizedSetType
+      : '');
 
   // Change variant (color)
   const handleVariantChange = (index: number) => {
