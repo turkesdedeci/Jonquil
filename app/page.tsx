@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -111,14 +111,14 @@ export default function Page() {
   const { products: allProducts } = useProducts();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [bestSellers, setBestSellers] = useState<any[]>([]);
-  const heroSlides = useMemo(
+  const slides = useMemo(
+    () => [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3],
+    []
+  );
+  const gallerySlides = useMemo(
     () => FOOTER_SLIDES.map(toFooterSlidePath),
     []
   );
-  const slides = heroSlides.length > 0 ? heroSlides : [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3];
-  const [galleryIndex, setGalleryIndex] = useState(0);
-  const [gallerySet, setGallerySet] = useState<string[]>([]);
-  const [galleryKey, setGalleryKey] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -126,29 +126,6 @@ export default function Page() {
     }, 6000);
     return () => clearInterval(interval);
   }, [slides.length]);
-
-  useEffect(() => {
-    if (slides.length === 0) return;
-    const interval = setInterval(() => {
-      setGalleryIndex((prev) => (prev + 1) % slides.length);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [slides.length]);
-
-  useEffect(() => {
-    if (slides.length === 0) return;
-    const count = 5;
-    const selected: string[] = [];
-    const used = new Set<number>();
-    while (selected.length < count && used.size < slides.length) {
-      const idx = Math.floor(Math.random() * slides.length);
-      if (used.has(idx)) continue;
-      used.add(idx);
-      selected.push(slides[idx]);
-    }
-    setGallerySet(selected);
-    setGalleryKey((prev) => prev + 1);
-  }, [galleryIndex, slides]);
 
   useEffect(() => {
     let isMounted = true;
@@ -218,12 +195,9 @@ export default function Page() {
           onGo={onGo}
           allProducts={allProducts} // Pass allProducts to Homepage
           currentSlide={currentSlide}
-          setCurrentSlide={setCurrentSlide}
           slides={slides}
-          galleryIndex={galleryIndex}
+          gallerySlides={gallerySlides.length > 0 ? gallerySlides : slides}
           bestSellers={bestSellers}
-          gallerySet={gallerySet}
-          galleryKey={galleryKey}
         />
       );
   }
@@ -242,88 +216,46 @@ function Homepage({
   onGo,
   allProducts,
   currentSlide,
-  setCurrentSlide,
   slides,
-  galleryIndex,
+  gallerySlides,
   bestSellers,
-  gallerySet,
-  galleryKey,
 }: {
   onGo: (r: Route) => void;
   allProducts: any[];
   currentSlide: number;
-  setCurrentSlide: React.Dispatch<React.SetStateAction<number>>;
   slides: string[];
-  galleryIndex: number;
+  gallerySlides: string[];
   bestSellers: any[];
-  gallerySet: string[];
-  galleryKey: number;
 }) {
-  const galleryVisible = gallerySet.length > 0 ? gallerySet : slides.slice(0, 5);
-  const desktopGalleryRef = useRef<HTMLDivElement>(null);
-  const mobileGalleryRef = useRef<HTMLDivElement>(null);
-  const mobileHintTimeoutRef = useRef<number | null>(null);
-  const desktopGalleryImages = useMemo(
-    () => [...galleryVisible, ...galleryVisible],
-    [galleryVisible]
-  );
-  const [isDesktopGalleryHovering, setIsDesktopGalleryHovering] = useState(false);
-  const [mobileHintPlayed, setMobileHintPlayed] = useState(false);
+  const gallerySource = gallerySlides.length > 0 ? gallerySlides : slides;
+  const galleryChunkSize = 5;
+  const galleryTotalPages = Math.max(1, Math.ceil(gallerySource.length / galleryChunkSize));
+  const [galleryPage, setGalleryPage] = useState(0);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [newsletterError, setNewsletterError] = useState("");
 
   useEffect(() => {
-    if (!isDesktopGalleryHovering) return;
-    const track = desktopGalleryRef.current;
-    if (!track) return;
+    setGalleryPage(0);
+  }, [gallerySource.length]);
 
-    const halfScrollWidth = track.scrollWidth / 2;
-    const intervalId = window.setInterval(() => {
-      track.scrollLeft += 1;
-      if (track.scrollLeft >= halfScrollWidth) {
-        track.scrollLeft -= halfScrollWidth;
-      }
-    }, 16);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [isDesktopGalleryHovering, desktopGalleryImages.length]);
-
-  useEffect(() => {
-    const track = desktopGalleryRef.current;
-    if (track) {
-      track.scrollLeft = 0;
+  const galleryVisible = useMemo(() => {
+    if (gallerySource.length === 0) return [];
+    const start = (galleryPage * galleryChunkSize) % gallerySource.length;
+    const items: string[] = [];
+    for (let i = 0; i < galleryChunkSize; i += 1) {
+      const index = (start + i) % gallerySource.length;
+      items.push(gallerySource[index]);
     }
-  }, [galleryKey]);
+    return items;
+  }, [galleryChunkSize, galleryPage, gallerySource]);
 
-  useEffect(() => {
-    if (mobileHintPlayed) return;
-    const track = mobileGalleryRef.current;
-    if (!track) return;
+  const showPrevGallery = () => {
+    setGalleryPage((prev) => (prev - 1 + galleryTotalPages) % galleryTotalPages);
+  };
 
-    const startTimeout = window.setTimeout(() => {
-      track.scrollTo({ left: 56, behavior: "smooth" });
-      mobileHintTimeoutRef.current = window.setTimeout(() => {
-        track.scrollTo({ left: 0, behavior: "smooth" });
-        mobileHintTimeoutRef.current = null;
-      }, 520);
-    }, 700);
-
-    return () => {
-      window.clearTimeout(startTimeout);
-      if (mobileHintTimeoutRef.current !== null) {
-        window.clearTimeout(mobileHintTimeoutRef.current);
-        mobileHintTimeoutRef.current = null;
-      }
-    };
-  }, [mobileHintPlayed]);
-
-  const handleMobileGalleryInteraction = () => {
-    if (!mobileHintPlayed) {
-      setMobileHintPlayed(true);
-    }
+  const showNextGallery = () => {
+    setGalleryPage((prev) => (prev + 1) % galleryTotalPages);
   };
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
@@ -593,70 +525,101 @@ function Homepage({
             </p>
           </motion.div>
 
-          <div className="hidden md:block">
-            <div
-              className="relative overflow-hidden rounded-3xl border border-[#e8e6e3] bg-white/80 p-3"
-              onMouseEnter={() => setIsDesktopGalleryHovering(true)}
-              onMouseLeave={() => setIsDesktopGalleryHovering(false)}
-            >
-              <div
-                key={galleryKey}
-                ref={desktopGalleryRef}
-                className="flex gap-4 overflow-x-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          <div className="mb-6 flex items-center justify-between">
+            <div className="text-xs font-medium tracking-[0.12em] text-[#8a8a8a]">
+              {galleryPage + 1} / {galleryTotalPages}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={showPrevGallery}
+                className="rounded-full border border-[#d7d7d7] bg-white p-2 text-[#0f3f44] transition hover:border-[#0f3f44] hover:bg-[#f5f6f6]"
+                aria-label="Önceki fotoğraflar"
               >
-                {desktopGalleryImages.map((image, index) => (
-                  <div
-                    key={`desktop-gallery-${galleryKey}-${index}`}
-                    className="relative aspect-[4/3] w-[42vw] min-w-[22rem] max-w-[34rem] shrink-0 overflow-hidden rounded-2xl"
-                  >
-                    <Image
-                      src={image}
-                      alt={`Gallery image ${index + 1}`}
-                      fill
-                      sizes="(max-width: 1279px) 42vw, 34rem"
-                      className="object-cover transition-transform duration-500 hover:scale-105"
-                      quality={70}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="pointer-events-none absolute bottom-5 right-5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-white backdrop-blur">
-                {isDesktopGalleryHovering ? "Kaydırma aktif" : "Üzerine gelince kayar"}
-              </div>
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={showNextGallery}
+                className="rounded-full border border-[#d7d7d7] bg-white p-2 text-[#0f3f44] transition hover:border-[#0f3f44] hover:bg-[#f5f6f6]"
+                aria-label="Sonraki fotoğraflar"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
-          <div className="md:hidden">
-            <div className="relative left-1/2 w-screen -translate-x-1/2">
-              <div
-                ref={mobileGalleryRef}
-                onTouchStart={handleMobileGalleryInteraction}
-                onMouseDown={handleMobileGalleryInteraction}
-                className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-              >
-                {galleryVisible.map((image, index) => (
-                  <div
-                    key={`mobile-gallery-${galleryKey}-${index}`}
-                    className="relative aspect-[3/4] w-[92vw] max-w-[460px] shrink-0 snap-center overflow-hidden rounded-2xl"
-                  >
-                    <Image
-                      src={image}
-                      alt={`Gallery image ${index + 1}`}
-                      fill
-                      sizes="92vw"
-                      className="object-cover"
-                      quality={70}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {!mobileHintPlayed && (
-                <div className="pointer-events-none absolute bottom-4 right-6 rounded-full bg-black/55 px-3 py-1.5 text-xs font-medium text-white shadow-lg animate-pulse">
-                  Sağa kaydır
-                </div>
+          <div key={galleryPage} className="grid grid-cols-2 gap-4 opacity-0 animate-[fadeIn_0.7s_ease_forwards] transition-opacity duration-700 ease-out md:grid-cols-4">
+            <motion.div
+              className="col-span-2 row-span-2 aspect-square overflow-hidden rounded-2xl relative"
+            >
+              {galleryVisible[0] && (
+                <Image
+                  src={galleryVisible[0]}
+                  alt="Gallery image 1"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
+                />
               )}
-            </div>
+            </motion.div>
+            <motion.div
+              className="aspect-square overflow-hidden rounded-2xl relative"
+            >
+              {galleryVisible[1] && (
+                <Image
+                  src={galleryVisible[1]}
+                  alt="Gallery image 2"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
+                />
+              )}
+            </motion.div>
+            <motion.div
+              className="aspect-square overflow-hidden rounded-2xl relative"
+            >
+              {galleryVisible[2] && (
+                <Image
+                  src={galleryVisible[2]}
+                  alt="Gallery image 3"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
+                />
+              )}
+            </motion.div>
+            <motion.div
+              className="aspect-square overflow-hidden rounded-2xl relative"
+            >
+              {galleryVisible[3] && (
+                <Image
+                  src={galleryVisible[3]}
+                  alt="Gallery image 4"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
+                />
+              )}
+            </motion.div>
+            <motion.div
+              className="aspect-square overflow-hidden rounded-2xl relative"
+            >
+              {galleryVisible[4] && (
+                <Image
+                  src={galleryVisible[4]}
+                  alt="Gallery image 5"
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  quality={70}
+                />
+              )}
+            </motion.div>
           </div>
         </div>
       </section>
