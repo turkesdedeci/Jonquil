@@ -47,6 +47,37 @@ const getMeasurementLabel = (product: Product): string => {
   return '';
 };
 
+function ProductImage({
+  src,
+  alt,
+  sizes,
+  className,
+  loading,
+}: {
+  src: string;
+  alt: string;
+  sizes: string;
+  className: string;
+  loading: 'eager' | 'lazy';
+}) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <>
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-[#ece8e4]" aria-hidden="true" />}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        loading={loading}
+        onLoad={() => setLoaded(true)}
+      />
+    </>
+  );
+}
+
 export default function CategoryPageClient({
   name,
   description,
@@ -225,16 +256,16 @@ export default function CategoryPageClient({
 
       <main className="flex-1 pt-20">
         {/* Hero Section */}
-        <section className="relative bg-gradient-to-br from-[#0f3f44] via-[#1a5a5f] to-[#0f3f44] py-16 text-white sm:py-20">
-          <div className="mx-auto max-w-7xl px-6">
+        <section className="relative bg-gradient-to-br from-[#0f3f44] via-[#1a5a5f] to-[#0f3f44] py-10 text-white sm:py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="text-center">
-              <p className="mb-4 text-xs font-light uppercase tracking-[0.3em] text-[#d4af7a]">
+              <p className="mb-3 text-[11px] font-light uppercase tracking-[0.28em] text-[#d4af7a] sm:mb-4 sm:text-xs">
                 Kategori
               </p>
-              <h1 className="mb-4 font-serif text-4xl font-light sm:mb-6 sm:text-5xl md:text-6xl">
+              <h1 className="mb-3 font-serif text-3xl font-light sm:mb-5 sm:text-5xl md:text-6xl">
                 {name}
               </h1>
-              <p className="mx-auto max-w-2xl text-sm text-white/80 sm:text-lg">
+              <p className="mx-auto max-w-2xl text-sm leading-relaxed text-white/80 sm:text-lg">
                 {description}
               </p>
             </div>
@@ -243,7 +274,7 @@ export default function CategoryPageClient({
 
         {/* Top Bar */}
         <section className="border-b border-[#e8e6e3] bg-[#faf8f5]">
-          <div className="mx-auto max-w-7xl px-6 py-4">
+          <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <span className="text-sm text-[#666]">
@@ -311,7 +342,7 @@ export default function CategoryPageClient({
 
         {/* Main Content with Sidebar */}
         <section className="py-8 sm:py-12">
-          <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="flex gap-8">
               {/* Desktop Sidebar */}
               <aside className="hidden w-64 shrink-0 lg:block">
@@ -334,65 +365,65 @@ export default function CategoryPageClient({
                     </button>
                   </div>
                 ) : viewMode === 'grid' ? (
-                  <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+                  <div
+                    className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3"
+                    style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 1200px' }}
+                  >
                     {filteredProducts.map((product, index) => {
                       const inStock = isInStock(product.id);
                       const firstImage = product.images?.[0] || '/placeholder.jpg';
-                      const sizeLabel = getMeasurementLabel(product);
+                      const badgeLabel = inStock ? getMeasurementLabel(product) : 'Yak1nda';
 
                       return (
                         <Link key={product.id} href={`/urun/${product.id}`} className="block h-full">
                           <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: Math.min(index * 0.03, 0.5) }}
+                            transition={{ delay: Math.min(index * 0.03, 0.35) }}
                             whileHover={{ y: -4 }}
                             className={`group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-[#789d94] bg-[#d3e5df] shadow-[0_8px_18px_rgba(10,70,62,0.16)] transition-all hover:shadow-[0_16px_30px_rgba(10,70,62,0.24)] sm:rounded-2xl ${
-                              !inStock ? 'opacity-75' : ''
+                              !inStock ? 'opacity-80' : ''
                             }`}
                           >
-                            <div className="relative aspect-square overflow-hidden bg-[#faf8f5] p-2 sm:p-2.5">
+                            <div className="relative h-44 overflow-hidden bg-[#faf8f5] p-2 sm:h-52 sm:p-2.5">
                               <div className="relative h-full w-full overflow-hidden rounded-lg sm:rounded-xl">
-                                <Image
+                                <ProductImage
                                   src={firstImage}
                                   alt={product.title}
-                                  fill
                                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                  className={`object-cover transition-transform duration-500 group-hover:scale-110 ${
+                                  loading={index < 4 ? 'eager' : 'lazy'}
+                                  className={`object-cover transition-transform duration-500 group-hover:scale-105 ${
                                     !inStock ? 'grayscale' : ''
                                   }`}
-                                  loading={index < 12 ? 'eager' : 'lazy'}
                                 />
                               </div>
 
-                              {inStock && sizeLabel && (
+                              {badgeLabel && (
                                 <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
-                                  <div className="rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 sm:px-3 sm:py-1 sm:text-[10px]">
-                                    {sizeLabel}
-                                  </div>
-                                </div>
-                              )}
-
-                              {!inStock && (
-                                <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
-                                  <div className="rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm sm:px-3 sm:py-1 sm:text-[10px]">
-                                    Yakında
+                                  <div
+                                    className={`max-w-[110px] truncate rounded-full px-2.5 py-1 text-[10px] font-semibold shadow-sm ring-1 backdrop-blur-sm sm:max-w-[120px] sm:px-3 sm:py-1.5 ${
+                                      inStock
+                                        ? 'bg-white/95 text-[#0f3f44] ring-[#0f3f44]/10'
+                                        : 'bg-red-500 text-white ring-red-300/30'
+                                    }`}
+                                  >
+                                    {badgeLabel}
                                   </div>
                                 </div>
                               )}
                             </div>
 
-                            <div className="flex flex-1 flex-col p-3 sm:p-4">
-                              <div className="mb-1 text-[10px] font-light uppercase tracking-wider text-[#d4af7a] sm:text-xs">
+                            <div className="flex min-h-[142px] flex-1 flex-col p-3 sm:min-h-[156px] sm:p-4">
+                              <div className="mb-1 text-[10px] font-light uppercase tracking-[0.16em] text-[#d4af7a] sm:text-xs">
                                 {product.family}
                               </div>
-                              <h3 className="mb-1 line-clamp-2 min-h-[2rem] text-xs font-medium leading-snug text-[#1a1a1a] sm:min-h-[2.5rem] sm:text-sm">
+                              <h3 className="mb-1 line-clamp-2 min-h-[2.3rem] text-[13px] font-medium leading-snug text-[#1a1a1a] sm:min-h-[2.6rem] sm:text-sm">
                                 {product.title}
                               </h3>
-                              <p className="mb-2 hidden min-h-[1.25rem] line-clamp-1 text-xs text-[#666] sm:block">
+                              <p className="mb-2 line-clamp-2 min-h-[2.2rem] text-[11px] text-[#666] sm:line-clamp-1 sm:min-h-[1.2rem] sm:text-xs">
                                 {product.subtitle || ''}
                               </p>
-                              <div className="mt-auto text-sm font-semibold text-[#0f3f44] sm:text-base">
+                              <div className="mt-auto text-base font-semibold text-[#0f3f44]">
                                 {product.price}
                               </div>
                             </div>
@@ -402,54 +433,54 @@ export default function CategoryPageClient({
                     })}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4" style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 900px' }}>
                     {filteredProducts.map((product, index) => {
                       const inStock = isInStock(product.id);
                       const firstImage = product.images?.[0] || '/placeholder.jpg';
-                      const sizeLabel = getMeasurementLabel(product);
+                      const badgeLabel = inStock ? getMeasurementLabel(product) : 'Yak1nda';
 
                       return (
                         <Link key={product.id} href={`/urun/${product.id}`}>
                           <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.03 }}
-                            className={`group flex gap-4 overflow-hidden rounded-2xl border border-[#789d94] bg-[#d3e5df] p-4 shadow-[0_8px_18px_rgba(10,70,62,0.16)] transition-all hover:shadow-[0_16px_30px_rgba(10,70,62,0.24)] sm:gap-6 ${
-                              !inStock ? 'opacity-75' : ''
+                            transition={{ delay: Math.min(index * 0.02, 0.28) }}
+                            className={`group flex gap-4 overflow-hidden rounded-2xl border border-[#789d94] bg-[#d3e5df] p-3 shadow-[0_8px_18px_rgba(10,70,62,0.16)] transition-all hover:shadow-[0_16px_30px_rgba(10,70,62,0.24)] sm:gap-6 sm:p-4 ${
+                              !inStock ? 'opacity-80' : ''
                             }`}
                           >
                             <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#faf8f5] p-1.5 sm:h-32 sm:w-32 sm:p-2">
                               <div className="relative h-full w-full overflow-hidden rounded-[10px] sm:rounded-lg">
-                                <Image
+                                <ProductImage
                                   src={firstImage}
                                   alt={product.title}
-                                  fill
                                   sizes="128px"
-                                  className={`object-cover transition-transform duration-300 group-hover:scale-110 ${
+                                  loading={index < 3 ? 'eager' : 'lazy'}
+                                  className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
                                     !inStock ? 'grayscale' : ''
                                   }`}
-                                  loading={index < 8 ? 'eager' : 'lazy'}
                                 />
                               </div>
-                              {inStock && sizeLabel && (
-                                <div className="absolute right-1.5 top-1.5 rounded-md bg-white/95 px-1.5 py-0.5 text-[8px] font-semibold text-[#0f3f44] shadow-sm ring-1 ring-[#0f3f44]/10 sm:right-2 sm:top-2 sm:px-2 sm:text-[10px]">
-                                  {sizeLabel}
-                                </div>
-                              )}
-                              {!inStock && (
-                                <div className="absolute right-1.5 top-1.5 rounded-md bg-red-500 px-1.5 py-0.5 text-[8px] font-semibold text-white shadow-sm sm:right-2 sm:top-2 sm:px-2 sm:text-[10px]">
-                                  Yakında
+                              {badgeLabel && (
+                                <div
+                                  className={`absolute right-1.5 top-1.5 max-w-[72px] truncate rounded-full px-1.5 py-0.5 text-[8px] font-semibold shadow-sm ring-1 sm:right-2 sm:top-2 sm:max-w-[94px] sm:px-2.5 sm:py-1 sm:text-[10px] ${
+                                    inStock
+                                      ? 'bg-white/95 text-[#0f3f44] ring-[#0f3f44]/10'
+                                      : 'bg-red-500 text-white ring-red-300/30'
+                                  }`}
+                                >
+                                  {badgeLabel}
                                 </div>
                               )}
                             </div>
                             <div className="flex flex-1 flex-col justify-center">
-                              <div className="mb-1 text-xs font-light uppercase tracking-wider text-[#d4af7a]">
+                              <div className="mb-1 text-[10px] font-light uppercase tracking-[0.16em] text-[#d4af7a] sm:text-xs">
                                 {product.family}
                               </div>
-                              <h3 className="mb-1 text-base font-medium text-[#1a1a1a] sm:text-lg">
+                              <h3 className="mb-1 line-clamp-2 text-sm font-medium text-[#1a1a1a] sm:text-base">
                                 {product.title}
                               </h3>
-                              <p className="mb-2 text-xs text-[#666] sm:text-sm">
+                              <p className="mb-2 line-clamp-1 text-xs text-[#666] sm:text-sm">
                                 {product.subtitle || ''}
                               </p>
                               <div className="text-base font-semibold text-[#0f3f44] sm:text-lg">
@@ -480,33 +511,42 @@ export default function CategoryPageClient({
               onClick={() => setShowMobileFilters(false)}
             />
             <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed bottom-0 right-0 top-0 z-50 w-[85%] max-w-sm overflow-y-auto bg-white p-6 shadow-2xl"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-hidden rounded-t-3xl bg-white shadow-2xl lg:hidden"
               role="dialog"
               aria-modal="true"
               aria-labelledby="category-mobile-filters-title"
               tabIndex={-1}
               ref={mobileFiltersPanelRef}
             >
-              <div className="mb-6 flex items-center justify-between">
-                <h3 id="category-mobile-filters-title" className="text-lg font-semibold text-[#1a1a1a]">Filtreler</h3>
+              <div className="flex items-center justify-between border-b border-[#e8e6e3] px-4 py-4 sm:px-6">
+                <h3 id="category-mobile-filters-title" className="text-base font-semibold text-[#1a1a1a] sm:text-lg">Filtreler</h3>
                 <button
                   onClick={() => setShowMobileFilters(false)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-[#1a1a1a] hover:bg-[#e8e6e3]"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-[#1a1a1a] hover:bg-[#e8e6e3]"
+                  aria-label="Filtre panelini kapat"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              {renderFiltersContent()}
-              <div className="mt-6">
+              <div className="max-h-[calc(85vh-148px)] overflow-y-auto px-4 py-4 sm:px-6">
+                {renderFiltersContent()}
+              </div>
+              <div className="sticky bottom-0 flex items-center gap-3 border-t border-[#e8e6e3] bg-white px-4 py-3 sm:px-6">
+                <button
+                  onClick={clearFilters}
+                  className="min-h-[44px] flex-1 rounded-full border border-[#d9d6d1] px-4 text-sm font-semibold text-[#4b4b4b] hover:bg-[#faf8f5]"
+                >
+                  Temizle
+                </button>
                 <button
                   onClick={() => setShowMobileFilters(false)}
-                  className="w-full rounded-full bg-[#0f3f44] py-3 text-sm font-semibold text-white hover:bg-[#0a2a2e]"
+                  className="min-h-[44px] flex-1 rounded-full bg-[#0f3f44] px-4 text-sm font-semibold text-white hover:bg-[#0a2a2e]"
                 >
-                  {filteredProducts.length} Ürün Göster
+                  Uygula ({filteredProducts.length})
                 </button>
               </div>
             </motion.div>
@@ -518,3 +558,5 @@ export default function CategoryPageClient({
     </div>
   );
 }
+
+

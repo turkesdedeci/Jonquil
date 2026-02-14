@@ -49,6 +49,7 @@ export default function CheckoutPage() {
   const [addressSaving, setAddressSaving] = useState(false);
   const [iyzicoFormContent, setIyzicoFormContent] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [mobileStep, setMobileStep] = useState<1 | 2 | 3>(1);
   const iyzicoFormRef = useRef<HTMLIFrameElement>(null);
   const [checkoutMode, setCheckoutMode] = useState<'login' | 'guest'>('login');
   const isGuest = !user && checkoutMode === 'guest';
@@ -82,6 +83,16 @@ export default function CheckoutPage() {
 
   const shippingCost = totalPrice >= 500 ? 0 : 49.90; // 500 TL üzeri ücretsiz kargo
   const grandTotal = totalPrice + shippingCost;
+  const guestAddressCompleted = Boolean(
+    guestFirstName &&
+    guestLastName &&
+    guestEmail &&
+    guestPhone &&
+    guestAddress &&
+    guestCity &&
+    guestDistrict
+  );
+  const hasAddressSelection = isGuest ? guestAddressCompleted : Boolean(selectedAddressId);
 
   // Adresleri yükle
   useEffect(() => {
@@ -94,12 +105,16 @@ export default function CheckoutPage() {
   }, [user]);
 
   useEffect(() => {
+    setMobileStep(1);
+  }, [checkoutMode, user?.id]);
+
+  useEffect(() => {
     const loadProvinces = async () => {
       try {
         const res = await fetch('/api/locations/provinces');
         const data = await res.json();
         const list = data?.data || [];
-        setProvinces(list.map((p: any) => ({ id: p.id, name: p.name })));
+        setProvinces(list.map((p: { id: number; name: string }) => ({ id: p.id, name: p.name })));
       } catch (error) {
         console.error('İller yüklenirken hata:', error);
       }
@@ -119,7 +134,7 @@ export default function CheckoutPage() {
         const res = await fetch(`/api/locations/districts?provinceId=${addressProvinceId}`);
         const data = await res.json();
         const list = data?.data || [];
-        setAddressDistricts(list.map((d: any) => ({ id: d.id, name: d.name })));
+        setAddressDistricts(list.map((d: { id: number; name: string }) => ({ id: d.id, name: d.name })));
       } catch (error) {
         console.error('İlçeler yüklenirken hata:', error);
       } finally {
@@ -141,7 +156,7 @@ export default function CheckoutPage() {
         const res = await fetch(`/api/locations/districts?provinceId=${guestProvinceId}`);
         const data = await res.json();
         const list = data?.data || [];
-        setGuestDistricts(list.map((d: any) => ({ id: d.id, name: d.name })));
+        setGuestDistricts(list.map((d: { id: number; name: string }) => ({ id: d.id, name: d.name })));
       } catch (error) {
         console.error('İlçeler yüklenirken hata:', error);
       } finally {
@@ -400,9 +415,9 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] py-12">
+    <div className="min-h-screen bg-[#faf8f5] py-8 sm:py-12">
       <AlertComponent />
-      <div className="mx-auto max-w-7xl px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         {/* Header */}
         <div className="mb-8">
           <div className="mb-4 flex items-center gap-2">
@@ -413,13 +428,48 @@ export default function CheckoutPage() {
               ← Alışverişe Devam Et
             </button>
           </div>
-          <h1 className="mb-2 font-serif text-4xl font-light text-[#1a1a1a]">
+          <h1 className="mb-2 font-serif text-3xl font-light text-[#1a1a1a] sm:text-4xl">
             Ödeme
           </h1>
           <p className="text-[#666]">Siparişinizi tamamlamak için bilgilerinizi kontrol edin</p>
 
           {/* Progress Steps */}
-          <div className="mt-6 flex items-center justify-center gap-4">
+          <div className="mt-4 grid grid-cols-3 gap-2 sm:hidden">
+            <button
+              onClick={() => setMobileStep(1)}
+              className={`min-h-[44px] rounded-xl border px-3 py-2 text-xs font-semibold ${
+                mobileStep === 1
+                  ? 'border-[#0f3f44] bg-[#0f3f44] text-white'
+                  : 'border-[#d9d6d1] bg-white text-[#666]'
+              }`}
+            >
+              1. Adres
+            </button>
+            <button
+              onClick={() => setMobileStep(2)}
+              disabled={!hasAddressSelection}
+              className={`min-h-[44px] rounded-xl border px-3 py-2 text-xs font-semibold disabled:opacity-40 ${
+                mobileStep === 2
+                  ? 'border-[#0f3f44] bg-[#0f3f44] text-white'
+                  : 'border-[#d9d6d1] bg-white text-[#666]'
+              }`}
+            >
+              2. Ödeme
+            </button>
+            <button
+              onClick={() => setMobileStep(3)}
+              disabled={!hasAddressSelection || !acceptedTerms}
+              className={`min-h-[44px] rounded-xl border px-3 py-2 text-xs font-semibold disabled:opacity-40 ${
+                mobileStep === 3
+                  ? 'border-[#0f3f44] bg-[#0f3f44] text-white'
+                  : 'border-[#d9d6d1] bg-white text-[#666]'
+              }`}
+            >
+              3. Onay
+            </button>
+          </div>
+
+          <div className="mt-6 hidden items-center justify-center gap-4 sm:flex">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0f3f44] text-sm font-bold text-white">
                 1
@@ -447,7 +497,7 @@ export default function CheckoutPage() {
           {/* Sol Taraf - Adres + Ödeme */}
           <div className="lg:col-span-2 space-y-6">
             {!user && (
-              <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+              <div className={`rounded-2xl border border-[#e8e6e3] bg-white p-6 ${mobileStep === 1 ? 'block' : 'hidden sm:block'}`}>
                 <div className="mb-4 flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3f44]">
                     <Lock className="h-5 w-5 text-white" />
@@ -487,7 +537,7 @@ export default function CheckoutPage() {
             )}
 
             {(user || isGuest) && (
-              <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+              <div className={`rounded-2xl border border-[#e8e6e3] bg-white p-6 ${mobileStep === 1 ? 'block' : 'hidden sm:block'}`}>
                 <div className="mb-6 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3f44]">
@@ -519,7 +569,7 @@ export default function CheckoutPage() {
                             value={addressForm.title}
                             onChange={(e) => setAddressForm({ ...addressForm, title: e.target.value })}
                             required
-                            className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                            className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                           />
                         </div>
                         <div>
@@ -528,8 +578,9 @@ export default function CheckoutPage() {
                             type="text"
                             value={addressForm.full_name}
                             onChange={(e) => setAddressForm({ ...addressForm, full_name: e.target.value })}
+                            autoComplete="name"
                             required
-                            className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                            className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                           />
                         </div>
                       </div>
@@ -540,10 +591,11 @@ export default function CheckoutPage() {
                           type="tel"
                           value={addressForm.phone}
                           onChange={(e) => setAddressForm({ ...addressForm, phone: formatPhone(e.target.value) })}
+                          autoComplete="tel"
                           placeholder="0(555)5555555"
                           pattern="0\(\d{3}\)\d{7}"
                           required
-                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                          className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                         />
                       </div>
 
@@ -552,9 +604,10 @@ export default function CheckoutPage() {
                         <textarea
                           value={addressForm.address_line}
                           onChange={(e) => setAddressForm({ ...addressForm, address_line: e.target.value })}
+                          autoComplete="street-address"
                           rows={3}
                           required
-                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                          className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                         />
                       </div>
 
@@ -571,8 +624,9 @@ export default function CheckoutPage() {
                               district: '',
                             });
                           }}
+                          autoComplete="address-level1"
                           required
-                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                          className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                         >
                           <option value="">İl seçin</option>
                           {provinces.map((province) => (
@@ -582,9 +636,10 @@ export default function CheckoutPage() {
                         <select
                           value={addressForm.district}
                           onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
+                          autoComplete="address-level2"
                           required
                           disabled={!addressProvinceId || addressDistrictLoading}
-                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44] disabled:bg-[#faf8f5]"
+                          className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44] disabled:bg-[#faf8f5]"
                         >
                           <option value="">{addressDistrictLoading ? 'Yükleniyor...' : 'İlçe seçin'}</option>
                           {addressDistricts.map((district) => (
@@ -595,8 +650,9 @@ export default function CheckoutPage() {
                           type="text"
                           value={addressForm.postal_code}
                           onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })}
+                          autoComplete="postal-code"
                           placeholder="Posta Kodu"
-                          className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                          className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                         />
                       </div>
 
@@ -614,14 +670,14 @@ export default function CheckoutPage() {
                         <button
                           type="submit"
                           disabled={addressSaving}
-                          className="flex-1 rounded-lg bg-[#0f3f44] px-4 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e] disabled:opacity-50"
+                          className="min-h-[44px] flex-1 rounded-lg bg-[#0f3f44] px-4 py-2 text-sm font-medium text-white hover:bg-[#0a2a2e] disabled:opacity-50"
                         >
                           {addressSaving ? 'Kaydediliyor...' : 'Kaydet'}
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowAddressForm(false)}
-                          className="flex-1 rounded-lg border border-[#e8e6e3] px-4 py-2 text-sm font-medium text-[#1a1a1a] hover:bg-white"
+                          className="min-h-[44px] flex-1 rounded-lg border border-[#e8e6e3] px-4 py-2 text-sm font-medium text-[#1a1a1a] hover:bg-white"
                         >
                           İptal
                         </button>
@@ -637,15 +693,17 @@ export default function CheckoutPage() {
                         type="text"
                         value={guestFirstName}
                         onChange={(e) => setGuestFirstName(e.target.value)}
+                        autoComplete="given-name"
                         placeholder="Ad"
-                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                       />
                       <input
                         type="text"
                         value={guestLastName}
                         onChange={(e) => setGuestLastName(e.target.value)}
+                        autoComplete="family-name"
                         placeholder="Soyad"
-                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                       />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -653,24 +711,27 @@ export default function CheckoutPage() {
                         type="email"
                         value={guestEmail}
                         onChange={(e) => setGuestEmail(e.target.value)}
+                        autoComplete="email"
                         placeholder="E-posta"
-                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                       />
                       <input
                         type="tel"
                         value={guestPhone}
                         onChange={(e) => setGuestPhone(formatPhone(e.target.value))}
+                        autoComplete="tel"
                         placeholder="0(555)5555555"
                         pattern="0\(\d{3}\)\d{7}"
-                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                       />
                     </div>
                     <textarea
                       value={guestAddress}
                       onChange={(e) => setGuestAddress(e.target.value)}
+                      autoComplete="street-address"
                       placeholder="Adres"
                       rows={3}
-                      className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                      className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                     />
                     <div className="grid gap-4 sm:grid-cols-3">
                       <select
@@ -682,7 +743,8 @@ export default function CheckoutPage() {
                           setGuestCity(province?.name || '');
                           setGuestDistrict('');
                         }}
-                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        autoComplete="address-level1"
+                        className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                       >
                         <option value="">İl seçin</option>
                         {provinces.map((province) => (
@@ -692,8 +754,9 @@ export default function CheckoutPage() {
                       <select
                         value={guestDistrict}
                         onChange={(e) => setGuestDistrict(e.target.value)}
+                        autoComplete="address-level2"
                         disabled={!guestProvinceId || guestDistrictLoading}
-                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44] disabled:bg-[#faf8f5]"
+                        className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44] disabled:bg-[#faf8f5]"
                       >
                         <option value="">{guestDistrictLoading ? 'Yükleniyor...' : 'İlçe seçin'}</option>
                         {guestDistricts.map((district) => (
@@ -704,8 +767,9 @@ export default function CheckoutPage() {
                         type="text"
                         value={guestPostalCode}
                         onChange={(e) => setGuestPostalCode(e.target.value)}
+                        autoComplete="postal-code"
                         placeholder="Posta Kodu"
-                        className="w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
+                        className="min-h-[44px] w-full rounded-lg border border-[#e8e6e3] px-4 py-3 text-sm outline-none focus:border-[#0f3f44]"
                       />
                     </div>
                   </div>
@@ -768,7 +832,17 @@ export default function CheckoutPage() {
             )}
 
             {/* Ödeme Yöntemi */}
-            <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+            {(user || isGuest) && mobileStep === 1 && (
+              <button
+                onClick={() => setMobileStep(2)}
+                disabled={!hasAddressSelection}
+                className="min-h-[44px] w-full rounded-full bg-[#0f3f44] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0a2a2e] disabled:cursor-not-allowed disabled:opacity-50 sm:hidden"
+              >
+                Ödeme Adımına Geç
+              </button>
+            )}
+
+            <div className={`rounded-2xl border border-[#e8e6e3] bg-white p-6 ${mobileStep === 2 ? 'block' : 'hidden sm:block'}`}>
               <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3f44]">
                   <CreditCard className="h-5 w-5 text-white" />
@@ -870,7 +944,7 @@ export default function CheckoutPage() {
 
             {/* iyzico Ödeme Formu */}
             {iyzicoFormContent && (
-              <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+              <div className={`rounded-2xl border border-[#e8e6e3] bg-white p-6 ${mobileStep === 2 ? 'block' : 'hidden sm:block'}`}>
                 <div className="mb-4 flex items-center gap-2">
                   <Lock className="h-5 w-5 text-[#0f3f44]" />
                   <span className="font-semibold text-[#1a1a1a]">Güvenli Ödeme</span>
@@ -885,7 +959,7 @@ export default function CheckoutPage() {
             )}
 
             {/* Sipariş Notu */}
-            <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
+            <div className={`rounded-2xl border border-[#e8e6e3] bg-white p-6 ${mobileStep === 2 ? 'block' : 'hidden sm:block'}`}>
               <h3 className="mb-4 font-semibold text-[#1a1a1a]">
                 Sipariş Notu (Opsiyonel)
               </h3>
@@ -894,13 +968,22 @@ export default function CheckoutPage() {
                 onChange={(e) => setOrderNote(e.target.value)}
                 placeholder="Siparişiniz hakkında not eklemek isterseniz buraya yazabilirsiniz..."
                 rows={4}
-                className="w-full rounded-xl border border-[#e8e6e3] p-4 text-sm focus:border-[#0f3f44] focus:outline-none"
+                className="min-h-[44px] w-full rounded-xl border border-[#e8e6e3] p-4 text-sm focus:border-[#0f3f44] focus:outline-none"
               />
             </div>
+            {mobileStep === 2 && (
+              <button
+                onClick={() => setMobileStep(3)}
+                disabled={!hasAddressSelection || !acceptedTerms}
+                className="min-h-[44px] w-full rounded-full bg-[#0f3f44] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0a2a2e] disabled:cursor-not-allowed disabled:opacity-50 sm:hidden"
+              >
+                Sipariş Özetine Geç
+              </button>
+            )}
           </div>
 
           {/* Sağ Taraf - Sipariş Özeti */}
-          <div className="lg:col-span-1">
+          <div className={`${mobileStep === 3 ? 'block' : 'hidden sm:block'} lg:col-span-1`}>
             <div className="sticky top-24 rounded-2xl border border-[#e8e6e3] bg-white p-6">
               <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3f44]">
@@ -909,6 +992,15 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-semibold text-[#1a1a1a]">
                   Sipariş Özeti
                 </h2>
+              </div>
+
+              <div className="mb-4 sm:hidden">
+                <button
+                  onClick={() => setMobileStep(2)}
+                  className="min-h-[44px] rounded-full border border-[#d9d6d1] px-4 py-2 text-sm font-medium text-[#4b4b4b]"
+                >
+                  Ödeme adımına dön
+                </button>
               </div>
 
               {/* Ürünler */}
@@ -986,11 +1078,11 @@ export default function CheckoutPage() {
                     <a href="/on-bilgilendirme-formu" target="_blank" className="text-[#0f3f44] hover:underline">
                       Ön Bilgilendirme Formu
                     </a>
-                    'nu ve{' '}
+                    &apos;nu ve{' '}
                     <a href="/mesafeli-satis-sozlesmesi" target="_blank" className="text-[#0f3f44] hover:underline">
                       Mesafeli Satış Sözleşmesi
                     </a>
-                    'ni okudum ve kabul ediyorum.
+                    &apos;ni okudum ve kabul ediyorum.
                   </span>
                 </label>
 
@@ -1015,7 +1107,7 @@ export default function CheckoutPage() {
 
                 <button
                   onClick={handleSubmitOrder}
-                  disabled={submitting || !selectedAddressId || !acceptedTerms}
+                  disabled={submitting || !hasAddressSelection || !acceptedTerms}
                   className="flex w-full items-center justify-center gap-2 rounded-full bg-[#0f3f44] py-4 font-semibold text-white transition-all hover:bg-[#0a2a2e] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {submitting ? (

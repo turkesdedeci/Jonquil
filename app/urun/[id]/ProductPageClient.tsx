@@ -115,6 +115,7 @@ export default function ProductPageClient({
     (normalizedSetType && !normalizedSetType.toLocaleLowerCase('tr-TR').startsWith('tek par')
       ? normalizedSetType
       : '');
+  const displayPrice = currentVariant?.price || product.price;
 
   // Change variant (color)
   const handleVariantChange = (index: number) => {
@@ -202,7 +203,7 @@ export default function ProductPageClient({
       <Navbar />
 
       <main className="flex-1 overflow-x-hidden pt-16 lg:pt-20">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-7xl px-4 py-6 pb-24 sm:px-6 sm:py-12 sm:pb-12">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
@@ -370,7 +371,7 @@ export default function ProductPageClient({
 
               {/* Price */}
               <div className="text-2xl font-semibold text-[#0f3f44] sm:text-3xl">
-                {product.price}
+                {displayPrice}
               </div>
 
               {/* Color Selector - Moved up for mobile visibility */}
@@ -451,7 +452,7 @@ export default function ProductPageClient({
                 <button
                   onClick={handleAddToCart}
                   disabled={addedToCart || !inStock}
-                  className={`flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all active:scale-98 disabled:opacity-70 sm:gap-3 sm:px-8 sm:py-4 ${
+                  className={`hidden min-h-[44px] w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-all active:scale-98 disabled:opacity-70 sm:flex sm:gap-3 sm:px-8 sm:py-4 ${
                     inStock
                       ? 'bg-[#0f3f44] text-white hover:bg-[#0a2a2e]'
                       : 'cursor-not-allowed bg-gray-300 text-gray-500'
@@ -478,7 +479,7 @@ export default function ProductPageClient({
                 <button
                   onClick={handleBuyNow}
                   disabled={!inStock}
-                  className={`flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-sm font-semibold transition-all active:scale-98 sm:gap-3 sm:px-8 sm:py-4 ${
+                  className={`hidden min-h-[44px] w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-sm font-semibold transition-all active:scale-98 sm:flex sm:gap-3 sm:px-8 sm:py-4 ${
                     inStock
                       ? 'border-[#0f3f44] bg-transparent text-[#0f3f44] hover:bg-[#0f3f44] hover:text-white'
                       : 'cursor-not-allowed border-gray-300 bg-transparent text-gray-400'
@@ -540,7 +541,7 @@ export default function ProductPageClient({
                         className="overflow-hidden pb-4"
                       >
                         <p className="text-sm leading-relaxed text-[#666]">
-                          Jonquil Studio'nun özenle tasarladığı bu eşsiz parça,
+                          Jonquil Studio&apos;nun özenle tasarladığı bu eşsiz parça,
                           modern yaşamın estetiğini klasik zanaatla buluşturuyor.
                           El işçiliği ve birinci sınıf porselen ile üretilen
                           ürünlerimiz, sofranıza zarafet katıyor.
@@ -681,6 +682,45 @@ export default function ProductPageClient({
           </section>
         </div>
       </main>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#e8e6e3] bg-white/95 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] backdrop-blur sm:hidden">
+        <div className="mx-auto flex max-w-7xl items-center gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[#8b8b8b]">
+              {inStock ? 'Fiyat' : 'Durum'}
+            </p>
+            <p className="truncate text-lg font-semibold text-[#0f3f44]">
+              {inStock ? displayPrice : 'Yakında'}
+            </p>
+          </div>
+          <button
+            onClick={handleAddToCart}
+            disabled={addedToCart || !inStock}
+            className={`min-h-[44px] flex-1 rounded-full px-4 py-3 text-sm font-semibold text-white transition-colors ${
+              inStock
+                ? 'bg-[#0f3f44] hover:bg-[#0a2a2e]'
+                : 'cursor-not-allowed bg-gray-300 text-gray-500'
+            }`}
+          >
+            {!inStock ? (
+              <span className="inline-flex items-center gap-2">
+                <XCircle className="h-4 w-4" />
+                Stokta Yok
+              </span>
+            ) : addedToCart ? (
+              <span className="inline-flex items-center gap-2">
+                <Check className="h-4 w-4" />
+                Sepete Eklendi!
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Sepete Ekle
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* Recently Viewed Products */}
       <RecentlyViewed currentProductId={product.id} />

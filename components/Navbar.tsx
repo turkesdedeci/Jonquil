@@ -18,10 +18,6 @@ const SearchModal = dynamic(() => import('./SearchModal'), { ssr: false });
 const CartDrawer = dynamic(() => import('./CartDrawer').then((mod) => mod.CartDrawer), { ssr: false });
 
 // Yardımcı Fonksiyon
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
 // Product categories for mobile nav
 const mobileCategories = [
   { id: "tabaklar", label: "Tabaklar" },
@@ -58,7 +54,7 @@ function MobileNav({
             aria-modal="true"
             aria-label="Mobil menü"
           >
-            <div className="flex items-center justify-between border-b border-[#e8e6e3] p-6">
+            <div className="flex items-center justify-between border-b border-[#e8e6e3] px-4 py-4 sm:px-6">
               <Image
                 src={ASSETS.logo}
                 alt={BRAND.name}
@@ -68,13 +64,13 @@ function MobileNav({
               />
               <button
                 onClick={onClose}
-                className="flex h-10 w-10 items-center justify-center rounded-full text-[#1a1a1a] hover:bg-[#e8e6e3]"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[#1a1a1a] hover:bg-[#e8e6e3]"
                 aria-label="Menüyü kapat"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <nav className="flex-1 overflow-y-auto p-6" aria-label="Mobil navigasyon">
+            <nav className="flex-1 overflow-y-auto p-4 sm:p-6" aria-label="Mobil navigasyon">
               {/* Auth Section - Mobile */}
               <div className="mb-6 space-y-2">
                 <SignedOut>
@@ -90,7 +86,7 @@ function MobileNav({
                       }
                     }}
                   >
-                    <button className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f44] px-4 py-3 text-sm font-medium text-white hover:bg-[#0a2a2e]">
+                    <button className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f44] px-4 py-3 text-sm font-medium text-white hover:bg-[#0a2a2e]">
                       <User className="h-4 w-4" />
                       Giriş Yap
                     </button>
@@ -329,21 +325,21 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
   };
 
   // Handle product click from search
-  const handleSearchProductClick = (product: any) => {
+  const handleSearchProductClick = (product: { id: string }) => {
     router.push(`/urun/${product.id}`);
   };
 
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-[#e8e6e3]/50 bg-white/80 backdrop-blur-xl" role="banner">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-6 sm:py-4">
           <Link href="/" className="flex items-center" aria-label="Ana sayfa">
             <Image
               src={ASSETS.logo}
               alt={BRAND.name}
-              width={144}
-              height={48}
-              className="h-12 w-auto object-contain"
+              width={132}
+              height={44}
+              className="h-10 w-auto object-contain sm:h-12"
             />
           </Link>
 
@@ -376,10 +372,10 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
              <Link href="/iletisim" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">İletişim</Link>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5] sm:h-10 sm:w-10"
               aria-label="Ürün ara"
             >
               <Search className="h-5 w-5" aria-hidden="true" />
@@ -388,7 +384,7 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
             {/* Sepet */}
             <button
               onClick={handleCartClick}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5]"
+              className="relative flex h-11 w-11 items-center justify-center rounded-full text-[#2a2a2a] hover:bg-[#faf8f5] sm:h-10 sm:w-10"
               aria-label={`Sepet${totalItems > 0 ? `, ${totalItems} ürün` : ''}`}
             >
               <ShoppingBag className="h-5 w-5" aria-hidden="true" />
@@ -413,7 +409,7 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
                   }
                 }}
               >
-                <button className="flex h-10 items-center gap-2 rounded-full bg-[#0f3f44] px-4 text-sm font-medium text-white hover:bg-[#0a2a2e]" aria-label="Giriş yap">
+                <button className="flex h-11 items-center gap-2 rounded-full bg-[#0f3f44] px-4 text-sm font-medium text-white hover:bg-[#0a2a2e] sm:h-10" aria-label="Giriş yap">
                   <User className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden lg:inline">Giriş Yap</span>
                 </button>
@@ -425,7 +421,7 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
             </SignedIn>
 
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e8e6e3] text-[#2a2a2a] md:hidden"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-[#e8e6e3] text-[#2a2a2a] md:hidden"
               onClick={() => setMenuOpen(true)}
               aria-label="Menüyü aç"
               aria-expanded={menuOpen}
