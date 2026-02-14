@@ -400,13 +400,13 @@ export default function CollectionPageClient({
                               <div className="mb-1 text-[10px] font-light uppercase tracking-[0.16em] text-[#d4af7a] sm:text-xs">
                                 {product.family}
                               </div>
-                              <h3 className="mb-1 line-clamp-2 min-h-[2.3rem] text-[13px] font-medium leading-snug text-[#1a1a1a] sm:min-h-[2.6rem] sm:text-sm">
+                              <h3 className="mb-1 line-clamp-2 min-h-[2.3rem] text-[13px] font-medium leading-snug text-[#13373c] sm:min-h-[2.6rem] sm:text-sm">
                                 {product.title}
                               </h3>
-                              <p className="mb-2 line-clamp-2 min-h-[2.2rem] text-[11px] text-[#666] sm:line-clamp-1 sm:min-h-[1.2rem] sm:text-xs">
+                              <p className="mb-2 line-clamp-2 min-h-[2.2rem] text-[11px] text-[#4d6769] sm:line-clamp-1 sm:min-h-[1.2rem] sm:text-xs">
                                 {product.subtitle || ''}
                               </p>
-                              <div className="mt-auto text-base font-semibold text-[#0f3f44]">
+                              <div className="mt-auto text-base font-semibold text-[#0e4550]">
                                 {product.price}
                               </div>
                             </div>
@@ -460,13 +460,13 @@ export default function CollectionPageClient({
                               <div className="mb-1 text-[10px] font-light uppercase tracking-[0.16em] text-[#d4af7a] sm:text-xs">
                                 {product.family}
                               </div>
-                              <h3 className="mb-1 line-clamp-2 text-sm font-medium text-[#1a1a1a] sm:text-base">
+                              <h3 className="mb-1 line-clamp-2 text-sm font-medium text-[#13373c] sm:text-base">
                                 {product.title}
                               </h3>
-                              <p className="mb-2 line-clamp-1 text-xs text-[#666] sm:text-sm">
+                              <p className="mb-2 line-clamp-1 text-xs text-[#4d6769] sm:text-sm">
                                 {product.subtitle || ''}
                               </p>
-                              <div className="text-base font-semibold text-[#0f3f44] sm:text-lg">
+                              <div className="text-base font-semibold text-[#0e4550] sm:text-lg">
                                 {product.price}
                               </div>
                             </div>
