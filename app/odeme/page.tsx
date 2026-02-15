@@ -89,8 +89,7 @@ export default function CheckoutPage() {
     guestEmail &&
     guestPhone &&
     guestAddress &&
-    guestCity &&
-    guestDistrict
+    guestCity
   );
   const hasAddressSelection = isGuest ? guestAddressCompleted : Boolean(selectedAddressId);
 
@@ -458,7 +457,7 @@ export default function CheckoutPage() {
             </button>
             <button
               onClick={() => setMobileStep(3)}
-              disabled={!hasAddressSelection || !acceptedTerms}
+              disabled={!hasAddressSelection}
               className={`min-h-[44px] rounded-xl border px-3 py-2 text-xs font-semibold disabled:opacity-40 ${
                 mobileStep === 3
                   ? 'border-[#0f3f44] bg-[#0f3f44] text-white'
@@ -974,7 +973,7 @@ export default function CheckoutPage() {
             {mobileStep === 2 && (
               <button
                 onClick={() => setMobileStep(3)}
-                disabled={!hasAddressSelection || !acceptedTerms}
+                disabled={!hasAddressSelection}
                 className="min-h-[44px] w-full rounded-full bg-[#0f3f44] px-6 py-3 text-sm font-semibold text-white hover:bg-[#0a2a2e] disabled:cursor-not-allowed disabled:opacity-50 sm:hidden"
               >
                 Sipariş Özetine Geç
@@ -1141,5 +1140,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
 
