@@ -52,6 +52,9 @@ interface ProductPageClientProps {
   relatedProducts: Product[];
 }
 
+const PRODUCT_IMAGE_QUALITY = 95;
+const PRODUCT_THUMB_QUALITY = 85;
+
 export default function ProductPageClient({
   product,
   relatedProducts,
@@ -238,6 +241,7 @@ export default function ProductPageClient({
                           alt={product.title}
                           fill
                           sizes="100vw"
+                          quality={PRODUCT_IMAGE_QUALITY}
                           className="object-cover"
                           loading={idx === 0 ? 'eager' : 'lazy'}
                         />
@@ -286,6 +290,7 @@ export default function ProductPageClient({
                       alt={product.title}
                       fill
                       sizes="(max-width: 1024px) 100vw, 50vw"
+                      quality={PRODUCT_IMAGE_QUALITY}
                       className="object-cover"
                       priority={idx === 0}
                       loading={idx === 0 ? 'eager' : 'lazy'}
@@ -343,6 +348,7 @@ export default function ProductPageClient({
                         alt=""
                         fill
                         sizes="80px"
+                        quality={PRODUCT_THUMB_QUALITY}
                         className="object-cover"
                         loading="lazy"
                       />
@@ -655,6 +661,7 @@ export default function ProductPageClient({
                             alt={relatedProduct.title}
                             fill
                             sizes="(max-width: 640px) 160px, (max-width: 1024px) 50vw, 25vw"
+                            quality={PRODUCT_THUMB_QUALITY}
                             className="object-cover transition-transform duration-500 group-hover:scale-110"
                             loading="lazy"
                           />
@@ -749,6 +756,7 @@ export default function ProductPageClient({
                   alt={product.title}
                   fill
                   sizes="100vw"
+                  quality={PRODUCT_IMAGE_QUALITY}
                   className="object-contain"
                 />
                 {images.length > 1 && (

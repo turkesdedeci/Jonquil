@@ -199,8 +199,9 @@ export default function AdminPage() {
     return `/${src}`;
   };
 
-  const compressImage = async (file: File, maxBytes = 4 * 1024 * 1024, maxDimension = 2000) => {
+  const compressImage = async (file: File, maxBytes = 4 * 1024 * 1024, maxDimension = 2600) => {
     if (!file.type.startsWith('image/')) return file;
+    if (file.type === 'image/gif') return file;
 
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -216,7 +217,12 @@ export default function AdminPage() {
       image.src = dataUrl;
     });
 
-    const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));
+    const longestEdge = Math.max(img.width, img.height);
+    if (file.size <= maxBytes && longestEdge <= maxDimension) {
+      return file;
+    }
+
+    const scale = Math.min(1, maxDimension / longestEdge);
     const targetWidth = Math.max(1, Math.round(img.width * scale));
     const targetHeight = Math.max(1, Math.round(img.height * scale));
 
@@ -225,26 +231,35 @@ export default function AdminPage() {
     canvas.height = targetHeight;
     const ctx = canvas.getContext('2d');
     if (!ctx) return file;
-    const preferredType = file.type === 'image/png' ? 'image/jpeg' : file.type;
+    const preferredType =
+      file.type === 'image/png' && file.size > maxBytes
+        ? 'image/jpeg'
+        : file.type;
     if (preferredType === 'image/jpeg') {
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, targetWidth, targetHeight);
     }
     ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-    let quality = 0.85;
+    let quality = preferredType === 'image/webp' ? 0.9 : 0.92;
+    const minQuality = 0.65;
 
     const toBlob = (q: number) =>
       new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, preferredType, q));
 
     let blob = await toBlob(quality);
-    while (blob && blob.size > maxBytes && quality > 0.5) {
-      quality -= 0.1;
+    while (blob && blob.size > maxBytes && quality > minQuality) {
+      quality -= 0.05;
       blob = await toBlob(quality);
     }
 
     if (!blob || blob.size > maxBytes) return file;
 
-    const ext = preferredType === 'image/webp' ? 'webp' : 'jpg';
+    const extByType: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+    const ext = extByType[preferredType] || 'jpg';
     const name = file.name.replace(/\.[^/.]+$/, `.${ext}`);
     return new File([blob], name, { type: preferredType });
   };
