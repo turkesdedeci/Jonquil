@@ -64,12 +64,12 @@ export async function POST(request: NextRequest) {
       firstName: sanitizeString(buyerInfo.firstName || '').slice(0, 100),
       lastName: sanitizeString(buyerInfo.lastName || '').slice(0, 100),
       email: sanitizeEmail(buyerInfo.email || '') || '',
-      phone: sanitizePhone(buyerInfo.phone || '') || '+905000000000',
+      phone: sanitizePhone(buyerInfo.phone || '') || '',
       identityNumber: sanitizeString(buyerInfo.identityNumber || '11111111111').slice(0, 11),
     };
 
-    // Validate sanitized buyer
-    if (!sanitizedBuyer.firstName || !sanitizedBuyer.lastName || !sanitizedBuyer.email) {
+    // Validate sanitized buyer (phone required — no fake fallback)
+    if (!sanitizedBuyer.firstName || !sanitizedBuyer.lastName || !sanitizedBuyer.email || !sanitizedBuyer.phone) {
       return NextResponse.json(
         { error: 'Geçersiz alıcı bilgileri' },
         { status: 400 }

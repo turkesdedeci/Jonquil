@@ -9,21 +9,44 @@ import {
   getClientIP,
   requireSameOrigin,
   sanitizeString,
+  escapeHtml,
   safeErrorResponse,
-  handleDatabaseError
+  handleDatabaseError,
+  checkGuestEmailRateLimit,
 } from '@/lib/security';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const serverSupabase = supabaseUrl && supabaseServiceKey
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const serviceRoleSupabase = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
+const fallbackAnonSupabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
+const serverSupabase = serviceRoleSupabase || fallbackAnonSupabase;
 
 // Generate cryptographically secure order number
 function generateOrderNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = crypto.randomBytes(3).toString('hex').toUpperCase();
   return `JQ${timestamp}${random}`;
+}
+
+function buildDbErrorText(error: any): string {
+  return `${error?.code || ''} ${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
+}
+
+function needsGuestLegacyFallback(error: any): boolean {
+  if (!error) return false;
+  const text = buildDbErrorText(error);
+
+  // Legacy schemas may still require these columns for guest orders.
+  return (
+    text.includes('user_id') ||
+    text.includes('shipping_address_id') ||
+    text.includes('null value in column')
+  );
 }
 
 // GET - KullanÄ±cÄ±nÄ±n sipariÅŸlerini getir
@@ -42,7 +65,7 @@ export async function GET(request: NextRequest) {
 
     if (!serverSupabase) {
       return NextResponse.json(
-        { error: 'Supabase service role key eksik (SUPABASE_SERVICE_ROLE_KEY)' },
+        { error: 'Supabase baÄŸlantÄ± bilgileri eksik' },
         { status: 500 }
       );
     }
@@ -86,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     if (!serverSupabase) {
       return NextResponse.json(
-        { error: 'Supabase service role key eksik (SUPABASE_SERVICE_ROLE_KEY)' },
+        { error: 'Supabase baÄŸlantÄ± bilgileri eksik' },
         { status: 500 }
       );
     }
@@ -120,6 +143,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate per-item quantity to prevent inventory manipulation
+    const MAX_ITEM_QUANTITY = 99;
+    for (const item of items) {
+      const qty = parseInt(item.quantity) || 1;
+      if (qty < 1 || qty > MAX_ITEM_QUANTITY) {
+        return NextResponse.json(
+          { error: `Gecersiz miktar: Her urunden en fazla ${MAX_ITEM_QUANTITY} adet siparis verilebilir` },
+          { status: 400 }
+        );
+      }
+    }
+
     // Validate payment method
     const validPaymentMethods = ['card', 'bank'];
     if (payment_method && !validPaymentMethods.includes(payment_method)) {
@@ -137,6 +172,9 @@ export async function POST(request: NextRequest) {
       if (!shipping_address?.address_line || !shipping_address?.city) {
         return NextResponse.json({ error: 'Misafir adres bilgileri gerekli' }, { status: 400 });
       }
+      // Rate limit guest orders per email to prevent spam & inventory attacks
+      const emailRateLimit = checkGuestEmailRateLimit(customer.email);
+      if (emailRateLimit) return emailRateLimit;
     }
 
     // Fetch address for logged-in users
@@ -245,13 +283,68 @@ export async function POST(request: NextRequest) {
     };
 
     // Create order
-    const { data: order, error: orderError } = await serverSupabase
+    let { data: order, error: orderError } = await serverSupabase
       .from('orders')
       .insert(orderInsertPayload)
       .select()
       .single();
 
-    if (orderError) {
+    // Backward-compatibility fallback for legacy schemas:
+    // some databases still require user_id/shipping_address_id for guest orders.
+    if (orderError && !userId && needsGuestLegacyFallback(orderError)) {
+      // Use a random UUID instead of predictable guest_<orderNumber> to prevent enumeration
+      const legacyGuestUserId = `guest_${crypto.randomUUID()}`;
+      const legacyFullName = `${orderInsertPayload.customer_first_name || ''} ${orderInsertPayload.customer_last_name || ''}`.trim() || 'Misafir Kullanici';
+
+      const { data: guestAddress, error: guestAddressError } = await serverSupabase
+        .from('addresses')
+        .insert({
+          user_id: legacyGuestUserId,
+          title: 'Misafir Adresi',
+          full_name: legacyFullName,
+          phone: orderInsertPayload.customer_phone || '',
+          address_line: orderInsertPayload.shipping_address || '',
+          district: orderInsertPayload.shipping_district || '',
+          city: orderInsertPayload.shipping_city || '',
+          postal_code: orderInsertPayload.shipping_zip_code || '',
+          is_default: false,
+        })
+        .select('id')
+        .single();
+
+      if (!guestAddressError && guestAddress?.id) {
+        // Use explicit fields instead of spread to avoid sending unexpected columns
+        const legacyInsert = await serverSupabase
+          .from('orders')
+          .insert({
+            user_id: legacyGuestUserId,
+            shipping_address_id: guestAddress.id,
+            order_number: orderInsertPayload.order_number,
+            status: orderInsertPayload.status,
+            subtotal: orderInsertPayload.subtotal,
+            shipping_cost: orderInsertPayload.shipping_cost,
+            total_amount: orderInsertPayload.total_amount,
+            order_note: orderInsertPayload.order_note,
+            customer_first_name: orderInsertPayload.customer_first_name,
+            customer_last_name: orderInsertPayload.customer_last_name,
+            customer_email: orderInsertPayload.customer_email,
+            customer_phone: orderInsertPayload.customer_phone,
+            shipping_address: orderInsertPayload.shipping_address,
+            shipping_city: orderInsertPayload.shipping_city,
+            shipping_district: orderInsertPayload.shipping_district,
+            shipping_zip_code: orderInsertPayload.shipping_zip_code,
+          })
+          .select()
+          .single();
+
+        order = legacyInsert.data;
+        orderError = legacyInsert.error;
+      } else {
+        console.error('[Orders] Guest fallback address create error:', JSON.stringify(guestAddressError, null, 2));
+      }
+    }
+
+    if (orderError || !order) {
       console.error('[Orders] Create order error:', JSON.stringify(orderError, null, 2));
       return handleDatabaseError(orderError);
     }
@@ -330,7 +423,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!serverSupabase) {
       return NextResponse.json(
-        { error: 'Supabase service role key eksik (SUPABASE_SERVICE_ROLE_KEY)' },
+        { error: 'Supabase baÄŸlantÄ± bilgileri eksik' },
         { status: 500 }
       );
     }

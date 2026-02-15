@@ -34,6 +34,8 @@ export default function ProductDetail({
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(true);
   const [isSpecsOpen, setIsSpecsOpen] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+  const handleImageError = (src: string) => setBrokenImages(prev => new Set(prev).add(src));
 
   // Get current variant
   const hasVariants = product.variants && product.variants.length > 1;
@@ -120,8 +122,8 @@ export default function ProductDetail({
               {images.map((img: string, idx: number) => (
                 <Image
                   key={`${selectedVariantIndex}-${idx}`}
-                  src={img}
-                  alt={product.title}
+                  src={brokenImages.has(img) ? '/placeholder.jpg' : img}
+                  alt={currentVariant?.color ? `${product.title} - ${currentVariant.color}` : product.title}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className={`object-cover transition-opacity duration-300 ${
@@ -129,6 +131,7 @@ export default function ProductDetail({
                   }`}
                   priority={idx === 0}
                   loading={idx === 0 ? "eager" : "lazy"}
+                  onError={() => handleImageError(img)}
                 />
               ))}
 

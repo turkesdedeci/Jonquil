@@ -322,7 +322,8 @@ export default function CheckoutPage() {
       });
 
       if (!res.ok) {
-        showError('Sipariş oluşturulurken hata oluştu', 'Sipariş Hatası');
+        const errorPayload = await res.json().catch(() => ({}));
+        showError(errorPayload?.error || 'Sipariş oluşturulurken hata oluştu', 'Sipariş Hatası');
         return;
       }
 

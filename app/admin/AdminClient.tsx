@@ -147,6 +147,10 @@ export default function AdminPage() {
     return order.user_email || order.customer_email || '';
   };
 
+  const isGuestOrder = (order: Order) => {
+    return !order.user_id || order.user_id.startsWith('guest_');
+  };
+
   // New product states
   const [showProductModal, setShowProductModal] = useState(false);
   const [savingProduct, setSavingProduct] = useState(false);
@@ -1120,7 +1124,7 @@ export default function AdminPage() {
         o.user_email || '',
         statusConfig[o.status].label,
         o.total_amount,
-        !o.user_id ? 'Evet' : 'Hayır'
+        isGuestOrder(o) ? 'Evet' : 'Hayır'
       ].join(','))
     ].join('\n');
 
@@ -1193,7 +1197,7 @@ export default function AdminPage() {
     .filter(order => filter === 'all' || order.status === filter)
     .filter(order =>
       orderCustomerFilter === 'all' ||
-      (orderCustomerFilter === 'guest' ? !order.user_id : !!order.user_id)
+      (orderCustomerFilter === 'guest' ? isGuestOrder(order) : !isGuestOrder(order))
     )
     .filter(order =>
       searchTerm === '' ||
@@ -1454,7 +1458,7 @@ export default function AdminPage() {
                                 </p>
                                 <div className="flex items-center gap-2">
                                   <p className="text-sm text-gray-500">{getCustomerEmail(order) || '—'}</p>
-                                  {!order.user_id && (
+                                  {isGuestOrder(order) && (
                                     <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
                                       Misafir
                                     </span>

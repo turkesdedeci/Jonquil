@@ -12,7 +12,8 @@ const ADMIN_EMAIL_SET = new Set(ADMIN_EMAILS);
 const allowDevAdminFallback =
   process.env.NODE_ENV === 'development' &&
   process.env.ALLOW_DEV_ADMIN === 'true';
-const ADMIN_CACHE_TTL_MS = 30_000;
+// Reduced from 30s to 5s so revoked admin access takes effect quickly
+const ADMIN_CACHE_TTL_MS = 5_000;
 const adminCheckCache = new Map<string, { isAdmin: boolean; expiresAt: number }>();
 
 function getCachedAdminResult(userId: string): boolean | null {

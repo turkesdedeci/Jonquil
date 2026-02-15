@@ -156,14 +156,20 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Dosya yolu gerekli' }, { status: 400 });
     }
 
-    // Security check: only allow deleting from products folder
-    if (!path.startsWith('products/')) {
-      return NextResponse.json({ error: 'Geçersiz dosya yolu' }, { status: 400 });
+    // Security check: normalize path and reject traversal sequences
+    const normalizedPath = path.replace(/\\/g, '/').replace(/\/+/g, '/');
+    if (
+      !normalizedPath.startsWith('products/') ||
+      normalizedPath.includes('..') ||
+      normalizedPath.includes('%2e') ||
+      normalizedPath.includes('%2E')
+    ) {
+      return NextResponse.json({ error: 'Gecersiz dosya yolu' }, { status: 400 });
     }
 
     const { error } = await supabase.storage
       .from('images')
-      .remove([path]);
+      .remove([normalizedPath]);
 
     if (error) {
       console.error('Delete error:', error);

@@ -39,14 +39,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Veritabanı bağlantısı yok' }, { status: 500 });
     }
 
-    // Tüm siparişleri çek (en yeniden eskiye)
-    const { data: orders, error } = await adminSupabase
+    // Paginated orders (default 50 per page, max 200)
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(200, Math.max(1, parseInt(searchParams.get('limit') || '50')));
+    const offset = (page - 1) * limit;
+
+    const { data: orders, error, count } = await adminSupabase
       .from('orders')
       .select(`
         *,
         items:order_items(*)
-      `)
-      .order('created_at', { ascending: false });
+      `, { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       return handleDatabaseError(error);
@@ -85,11 +91,20 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(enrichedOrders, {
-      headers: {
-        'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+    return NextResponse.json(
+      {
+        data: enrichedOrders,
+        pagination: {
+          page,
+          limit,
+          total: count ?? 0,
+          totalPages: count ? Math.ceil(count / limit) : 1,
+        },
       },
-    });
+      {
+        headers: { 'Cache-Control': 'private, no-cache, no-store, must-revalidate' },
+      }
+    );
   } catch (error) {
     return safeErrorResponse(error, 'Siparişler yüklenemedi');
   }
@@ -228,17 +243,21 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Audit log: order status update
-    await logAuditEvent({
-      action: 'order_status_update',
-      resource_type: 'order',
-      resource_id: orderId,
-      details: {
-        new_status: status,
-        tracking_number: sanitizedTrackingNumber || null,
-        tracking_url: tracking_url || null,
-      },
-    }, request);
+    // Audit log: order status update (best-effort — failure must not hide the update)
+    try {
+      await logAuditEvent({
+        action: 'order_status_update',
+        resource_type: 'order',
+        resource_id: orderId,
+        details: {
+          new_status: status,
+          tracking_number: sanitizedTrackingNumber || null,
+          tracking_url: tracking_url || null,
+        },
+      }, request);
+    } catch (auditError) {
+      console.error('[Admin Orders] Audit log failed (order was still updated):', auditError);
+    }
 
     // Send status update email (best-effort)
     if (data?.customer_email) {

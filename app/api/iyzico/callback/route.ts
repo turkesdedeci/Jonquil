@@ -90,20 +90,40 @@ export async function POST(request: NextRequest) {
       // Update order in database
       if (supabase && orderId && uuidRegex.test(orderId)) {
         try {
-          await supabase
+          // Idempotency check: skip update if already paid to prevent double-processing
+          const { data: existingOrder } = await supabase
             .from('orders')
-            .update({
-              status: 'processing',
-              payment_status: 'paid',
-              payment_id: paymentId,
-              payment_method: 'credit_card',
-              paid_amount: parseFloat(paidPrice),
-              paid_at: new Date().toISOString(),
-            })
-            .eq('id', orderId);
+            .select('payment_status, payment_id')
+            .eq('id', orderId)
+            .single();
 
-          // Send order confirmation emails (don't await to not block redirect)
-          sendOrderConfirmationEmails(orderId).catch(console.error);
+          const alreadyPaid =
+            existingOrder?.payment_status === 'paid' ||
+            (existingOrder?.payment_id && existingOrder.payment_id === paymentId);
+
+          if (!alreadyPaid) {
+            const { error: updateError } = await supabase
+              .from('orders')
+              .update({
+                status: 'processing',
+                payment_status: 'paid',
+                payment_id: paymentId,
+                payment_method: 'credit_card',
+                paid_amount: parseFloat(paidPrice),
+                paid_at: new Date().toISOString(),
+              })
+              .eq('id', orderId);
+
+            if (updateError) {
+              console.error('Database update error after successful payment:', updateError);
+              // Still redirect to success — payment went through, order can be reconciled manually
+            } else {
+              // Send order confirmation emails (don't await to not block redirect)
+              sendOrderConfirmationEmails(orderId).catch(console.error);
+            }
+          } else {
+            console.info('[iyzico callback] Order already paid, skipping update:', orderId);
+          }
         } catch (dbError) {
           console.error('Database update error:', dbError);
         }

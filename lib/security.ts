@@ -566,29 +566,88 @@ export function secureJsonResponse(
 }
 
 // ============================================
+// GUEST EMAIL RATE LIMITING
+// ============================================
+
+// Limit guest orders per email address to prevent spam/inventory attacks
+const GUEST_EMAIL_RATE_LIMIT = {
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxOrders: 3,
+} as const;
+
+const guestEmailOrderStore = new Map<string, { count: number; resetTime: number }>();
+
+export function checkGuestEmailRateLimit(email: string): NextResponse | null {
+  const key = email.toLowerCase().trim();
+  const now = Date.now();
+  const entry = guestEmailOrderStore.get(key);
+
+  if (!entry || entry.resetTime < now) {
+    guestEmailOrderStore.set(key, { count: 1, resetTime: now + GUEST_EMAIL_RATE_LIMIT.windowMs });
+    return null;
+  }
+
+  if (entry.count >= GUEST_EMAIL_RATE_LIMIT.maxOrders) {
+    const retryAfterSecs = Math.ceil((entry.resetTime - now) / 1000);
+    return NextResponse.json(
+      { error: 'Bu e-posta adresiyle cok fazla siparis verildi. Lutfen daha sonra tekrar deneyin.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(retryAfterSecs) },
+      }
+    );
+  }
+
+  entry.count++;
+  return null;
+}
+
+// ============================================
 // ORIGIN CHECKS (BASIC CSRF MITIGATION)
 // ============================================
 
 /**
- * Enforce same-origin requests when Origin is present.
- * Allows requests with no Origin (e.g., same-site navigations or some clients).
+ * Enforce same-origin requests for state-mutating API routes.
+ * Checks Origin header first; falls back to Referer when Origin is absent
+ * (e.g., some same-site form submissions or older HTTP clients).
+ * Requests with neither header are rejected to prevent CSRF via
+ * silent form submissions without a browser Origin.
  */
 export function requireSameOrigin(request: Request): NextResponse | null {
-  const origin = request.headers.get('origin');
-  if (!origin) return null;
-
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
-  if (!host) return null;
-
-  try {
-    const originUrl = new URL(origin);
-    const originHost = originUrl.host;
-    if (originHost !== host) {
-      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
-    }
-  } catch {
+  if (!host) {
     return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
   }
 
-  return null;
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
+
+  // Prefer Origin header
+  if (origin) {
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+      }
+      return null;
+    } catch {
+      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    }
+  }
+
+  // Fall back to Referer when Origin is absent
+  if (referer) {
+    try {
+      const refererHost = new URL(referer).host;
+      if (refererHost !== host) {
+        return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+      }
+      return null;
+    } catch {
+      return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
+    }
+  }
+
+  // Neither Origin nor Referer — reject to prevent silent CSRF
+  return NextResponse.json({ error: 'Invalid origin' }, { status: 403 });
 }
