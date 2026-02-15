@@ -320,9 +320,25 @@ export function safeErrorResponse(
   publicMessage: string = 'Bir hata oluştu',
   status: number = 500
 ): NextResponse {
+  const errorObj = (error && typeof error === 'object')
+    ? (error as Record<string, unknown>)
+    : null;
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : typeof errorObj?.message === 'string'
+        ? errorObj.message
+        : String(error);
+  const errorCode = typeof errorObj?.code === 'string' ? errorObj.code : undefined;
+  const errorDetails = typeof errorObj?.details === 'string' ? errorObj.details : undefined;
+  const errorHint = typeof errorObj?.hint === 'string' ? errorObj.hint : undefined;
+
   // Log the actual error for debugging (server-side only)
   console.error('[API Error]', {
-    message: error instanceof Error ? error.message : String(error),
+    code: errorCode,
+    message: errorMessage,
+    details: errorDetails,
+    hint: errorHint,
     stack: error instanceof Error ? error.stack : undefined,
     timestamp: new Date().toISOString(),
   });
@@ -338,32 +354,81 @@ export function safeErrorResponse(
  * Handle common database errors with user-friendly messages
  */
 export function handleDatabaseError(error: unknown): NextResponse {
-  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorObj = (error && typeof error === 'object')
+    ? (error as Record<string, unknown>)
+    : null;
+  const errorCode = typeof errorObj?.code === 'string' ? errorObj.code : '';
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : typeof errorObj?.message === 'string'
+        ? errorObj.message
+        : String(error);
+  const errorDetails = typeof errorObj?.details === 'string' ? errorObj.details : '';
+  const errorHint = typeof errorObj?.hint === 'string' ? errorObj.hint : '';
+  const errorText = `${errorCode} ${errorMessage} ${errorDetails} ${errorHint}`.toLowerCase();
 
   // Check for common database errors
-  if (errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint')) {
+  if (
+    errorCode === '23505' ||
+    errorText.includes('duplicate key') ||
+    errorText.includes('unique constraint')
+  ) {
     return NextResponse.json(
-      { error: 'Bu kayıt zaten mevcut' },
+      { error: 'Bu kayıt zaten mevcut', code: errorCode || undefined },
       { status: 409 }
     );
   }
 
-  if (errorMessage.includes('foreign key') || errorMessage.includes('violates')) {
+  if (
+    errorCode === '23503' ||
+    errorText.includes('foreign key') ||
+    errorText.includes('violates foreign key')
+  ) {
     return NextResponse.json(
-      { error: 'İlişkili kayıt bulunamadı' },
+      { error: 'İlişkili kayıt bulunamadı', code: errorCode || undefined },
       { status: 400 }
     );
   }
 
-  if (errorMessage.includes('does not exist') || errorMessage.includes('42P01')) {
+  if (errorCode === '23502' || errorText.includes('null value in column')) {
+    const columnMatch = /column\s+"?([a-z0-9_]+)"?/i.exec(`${errorMessage} ${errorDetails}`);
+    const columnName = columnMatch?.[1];
+
     return NextResponse.json(
-      { error: 'Veritabanı tablosu bulunamadı. Lütfen yöneticiyle iletişime geçin.' },
+      {
+        error: columnName ? `Zorunlu alan eksik: ${columnName}` : 'Zorunlu bir veritabanı alanı eksik',
+        code: errorCode || undefined,
+      },
+      { status: 400 }
+    );
+  }
+
+  if (errorCode === '42P01' || errorCode === '42703' || errorText.includes('does not exist')) {
+    return NextResponse.json(
+      {
+        error: 'Veritabanı tablosu/kolonu bulunamadı. Lütfen yöneticiyle iletişime geçin.',
+        code: errorCode || undefined,
+      },
+      { status: 500 }
+    );
+  }
+
+  if (errorCode === '42501' || errorText.includes('permission denied')) {
+    return NextResponse.json(
+      {
+        error: 'Veritabanı yetki hatası. Service role key veya RLS politikalarını kontrol edin.',
+        code: errorCode || undefined,
+      },
       { status: 500 }
     );
   }
 
   // Default error
-  return safeErrorResponse(error, 'Veritabanı hatası');
+  return NextResponse.json(
+    { error: 'Veritabanı hatası', code: errorCode || undefined },
+    { status: 500 }
+  );
 }
 
 // ============================================

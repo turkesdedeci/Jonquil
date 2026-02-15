@@ -226,28 +226,28 @@ export async function POST(request: NextRequest) {
 
     // Generate cryptographically secure order number
     const orderNumber = generateOrderNumber();
+    const orderInsertPayload = {
+      ...(userId ? { user_id: userId, shipping_address_id } : {}),
+      order_number: orderNumber,
+      status: payment_method === 'bank' ? 'pending' : 'processing',
+      subtotal: serverSubtotal,
+      shipping_cost: shippingCost,
+      total_amount: totalAmount,
+      order_note: sanitizedOrderNote,
+      customer_first_name: sanitizeString(customer?.first_name || address?.full_name?.split(' ')[0] || '').slice(0, 100),
+      customer_last_name: sanitizeString(customer?.last_name || address?.full_name?.split(' ').slice(1).join(' ') || '').slice(0, 100),
+      customer_email: sanitizeString(customer?.email || clerkUser?.emailAddresses?.[0]?.emailAddress || '').slice(0, 255),
+      customer_phone: sanitizeString(customer?.phone || address?.phone || '').slice(0, 30),
+      shipping_address: userId ? address?.address_line : sanitizeString(shipping_address?.address_line || '').slice(0, 500),
+      shipping_city: userId ? address?.city : sanitizeString(shipping_address?.city || '').slice(0, 100),
+      shipping_district: userId ? address?.district : sanitizeString(shipping_address?.district || '').slice(0, 100),
+      shipping_zip_code: userId ? address?.postal_code : sanitizeString(shipping_address?.postal_code || '').slice(0, 10),
+    };
 
     // Create order
     const { data: order, error: orderError } = await serverSupabase
       .from('orders')
-      .insert({
-        user_id: userId || null,
-        order_number: orderNumber,
-        status: payment_method === 'bank' ? 'pending' : 'processing',
-        subtotal: serverSubtotal,
-        shipping_cost: shippingCost,
-        total_amount: totalAmount,
-        shipping_address_id: userId ? shipping_address_id : null,
-        order_note: sanitizedOrderNote,
-        customer_first_name: sanitizeString(customer?.first_name || address?.full_name?.split(' ')[0] || '').slice(0, 100),
-        customer_last_name: sanitizeString(customer?.last_name || address?.full_name?.split(' ').slice(1).join(' ') || '').slice(0, 100),
-        customer_email: sanitizeString(customer?.email || clerkUser?.emailAddresses?.[0]?.emailAddress || '').slice(0, 255),
-        customer_phone: sanitizeString(customer?.phone || address?.phone || '').slice(0, 30),
-        shipping_address: userId ? address?.address_line : sanitizeString(shipping_address?.address_line || '').slice(0, 500),
-        shipping_city: userId ? address?.city : sanitizeString(shipping_address?.city || '').slice(0, 100),
-        shipping_district: userId ? address?.district : sanitizeString(shipping_address?.district || '').slice(0, 100),
-        shipping_zip_code: userId ? address?.postal_code : sanitizeString(shipping_address?.postal_code || '').slice(0, 10),
-      })
+      .insert(orderInsertPayload)
       .select()
       .single();
 
