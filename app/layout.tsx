@@ -6,6 +6,8 @@ import { StockProvider } from '@/contexts/StockContext';
 import { RecentlyViewedProvider } from '@/contexts/RecentlyViewedContext';
 import { ProductsProvider } from '@/hooks/useProducts';
 import { absoluteUrl, getSiteUrl, SITE_NAME } from '@/lib/site';
+import CookieConsent from '@/components/CookieConsent';
+import { Analytics } from '@vercel/analytics/react';
 import "./globals.css";
 
 const siteUrl = getSiteUrl();
@@ -90,6 +92,8 @@ export default function RootLayout({
                 <StockProvider>
                   <RecentlyViewedProvider>
                     {children}
+                    <CookieConsent />
+                    <Analytics />
                   </RecentlyViewedProvider>
                 </StockProvider>
               </FavoritesProvider>

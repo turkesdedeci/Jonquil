@@ -113,13 +113,14 @@ export async function POST(request: NextRequest) {
               .eq('id', existing.id);
           }
         } else {
-          // Create new subscription
+          // Create new subscription with unique unsubscribe token
           await supabase
             .from('newsletter_subscribers')
             .insert({
               email: normalizedEmail,
               status: 'active',
               source: 'website',
+              unsubscribe_token: crypto.randomUUID(),
             });
         }
       } catch (dbError) {

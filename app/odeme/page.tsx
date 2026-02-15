@@ -114,8 +114,8 @@ export default function CheckoutPage() {
         const data = await res.json();
         const list = data?.data || [];
         setProvinces(list.map((p: { id: number; name: string }) => ({ id: p.id, name: p.name })));
-      } catch (error) {
-        console.error('İller yüklenirken hata:', error);
+      } catch {
+        // provinces failed to load silently
       }
     };
 
@@ -134,8 +134,8 @@ export default function CheckoutPage() {
         const data = await res.json();
         const list = data?.data || [];
         setAddressDistricts(list.map((d: { id: number; name: string }) => ({ id: d.id, name: d.name })));
-      } catch (error) {
-        console.error('İlçeler yüklenirken hata:', error);
+      } catch {
+        // district load failed silently
       } finally {
         setAddressDistrictLoading(false);
       }
@@ -156,8 +156,8 @@ export default function CheckoutPage() {
         const data = await res.json();
         const list = data?.data || [];
         setGuestDistricts(list.map((d: { id: number; name: string }) => ({ id: d.id, name: d.name })));
-      } catch (error) {
-        console.error('İlçeler yüklenirken hata:', error);
+      } catch {
+        // district load failed silently
       } finally {
         setGuestDistrictLoading(false);
       }
@@ -181,8 +181,8 @@ export default function CheckoutPage() {
           setSelectedAddressId(data[0].id);
         }
       }
-    } catch (error) {
-      console.error('Adresler yüklenirken hata:', error);
+    } catch {
+      // address load failed silently
     } finally {
       setLoading(false);
     }
@@ -227,8 +227,7 @@ export default function CheckoutPage() {
         postal_code: '',
         is_default: false,
       });
-    } catch (error) {
-      console.error('Adres kaydedilirken hata:', error);
+    } catch {
       showError('Adres kaydedilemedi', 'Adres Hatası');
     } finally {
       setAddressSaving(false);
@@ -380,8 +379,7 @@ export default function CheckoutPage() {
         clearCartAfterOrder();
         router.push(`/siparis-basarili?order_id=${order.id}`);
       }
-    } catch (error) {
-      console.error('Sipariş hatası:', error);
+    } catch {
       showError('Bir hata oluştu. Lütfen tekrar deneyin.', 'Hata');
     } finally {
       setSubmitting(false);

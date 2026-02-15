@@ -31,8 +31,8 @@ function OrderSuccessContent() {
         const data = await res.json();
         setOrder(data);
       }
-    } catch (error) {
-      console.error('Order fetch error:', error);
+    } catch {
+      // silently fail — order details are optional on success page
     } finally {
       setLoading(false);
     }
