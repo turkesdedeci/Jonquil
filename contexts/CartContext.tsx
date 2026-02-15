@@ -1,6 +1,17 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+
+// Get or create an anonymous session ID for abandoned cart tracking
+function getCartSessionId(): string {
+  const key = 'jonquil-cart-session';
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
 
 export interface CartItem {
   id: string;
@@ -20,6 +31,7 @@ interface CartContextType {
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  clearCartAfterOrder: () => void; // marks cart as converted then clears
   totalItems: number;
   totalPrice: number;
 }
@@ -29,6 +41,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [mounted, setMounted] = useState(false);
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -43,12 +56,30 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Save to localStorage on change
+  // Debounced sync to server for abandoned cart tracking (fire-and-forget)
+  const syncToServer = useCallback((currentItems: CartItem[], currentTotal: number) => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = setTimeout(() => {
+      const sessionId = getCartSessionId();
+      fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, items: currentItems, totalAmount: currentTotal }),
+      }).catch(() => {}); // silent
+    }, 2000); // 2s debounce
+  }, []);
+
+  // Save to localStorage on change + sync to server
   useEffect(() => {
     if (mounted) {
       localStorage.setItem('jonquil-cart', JSON.stringify(items));
+      const total = items.reduce((sum, item) => {
+        const price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
+        return sum + (isNaN(price) ? 0 : price) * item.quantity;
+      }, 0);
+      syncToServer(items, total);
     }
-  }, [items, mounted]);
+  }, [items, mounted, syncToServer]);
 
   const addToCart = (item: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
     setItems((prev) => {
@@ -82,6 +113,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems([]);
   };
 
+  const clearCartAfterOrder = () => {
+    // Mark as converted on server before clearing
+    const sessionId = getCartSessionId();
+    fetch(`/api/cart?sessionId=${encodeURIComponent(sessionId)}`, { method: 'DELETE' }).catch(() => {});
+    setItems([]);
+  };
+
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   
   const totalPrice = items.reduce((sum, item) => {
@@ -97,6 +135,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeFromCart,
         updateQuantity,
         clearCart,
+        clearCartAfterOrder,
         totalItems,
         totalPrice,
       }}

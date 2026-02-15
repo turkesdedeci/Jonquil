@@ -17,14 +17,10 @@ import {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceRoleSupabase = supabaseUrl && supabaseServiceKey
+// Service role key required — anon key cannot insert orders due to RLS
+const serverSupabase = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
   : null;
-const fallbackAnonSupabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
-const serverSupabase = serviceRoleSupabase || fallbackAnonSupabase;
 
 // Generate cryptographically secure order number
 function generateOrderNumber(): string {

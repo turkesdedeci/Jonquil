@@ -119,6 +119,8 @@ export default function AdminPage() {
   const [filter, setFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [orderCustomerFilter, setOrderCustomerFilter] = useState<'all' | 'guest' | 'registered'>('all');
+  const [exportStartDate, setExportStartDate] = useState('');
+  const [exportEndDate, setExportEndDate] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [trackingModal, setTrackingModal] = useState<Order | null>(null);
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -1115,24 +1117,74 @@ export default function AdminPage() {
   };
 
   const exportOrders = () => {
-    const csv = [
-      ['Sipariş No', 'Tarih', 'Müşteri', 'Email', 'Durum', 'Toplam', 'Misafir'].join(','),
-      ...filteredOrders.map(o => [
-        o.order_number,
-        new Date(o.created_at).toLocaleDateString('tr-TR'),
-        `${o.customer_first_name || ''} ${o.customer_last_name || ''}`.trim(),
-        o.user_email || '',
-        statusConfig[o.status].label,
-        o.total_amount,
-        isGuestOrder(o) ? 'Evet' : 'Hayır'
-      ].join(','))
-    ].join('\n');
+    // Apply optional date range filter on top of current filtered list
+    const startTs = exportStartDate ? new Date(exportStartDate).getTime() : null;
+    const endTs = exportEndDate ? new Date(exportEndDate + 'T23:59:59').getTime() : null;
+
+    const exportList = filteredOrders.filter(o => {
+      const ts = new Date(o.created_at).getTime();
+      if (startTs && ts < startTs) return false;
+      if (endTs && ts > endTs) return false;
+      return true;
+    });
+
+    // Escape a CSV cell value (wrap in quotes if it contains comma/quote/newline)
+    const cell = (v: string | number | null | undefined) => {
+      const s = String(v ?? '');
+      return s.includes(',') || s.includes('"') || s.includes('\n')
+        ? `"${s.replace(/"/g, '""')}"`
+        : s;
+    };
+
+    const headers = [
+      'Siparis No', 'Tarih', 'Saat', 'Ad Soyad', 'Email', 'Telefon',
+      'Durum', 'Odeme Yontemi', 'Odeme Durumu',
+      'Ara Toplam', 'Kargo', 'Toplam',
+      'Teslimat Adresi', 'Sehir', 'Ilce',
+      'Kargo Takip No', 'Misafir',
+      'Urunler'
+    ];
+
+    const rows = exportList.map(o => {
+      const itemsSummary = (o.items || [])
+        .map(i => `${i.product_title} x${i.quantity}`)
+        .join(' | ');
+      const subtotal = o.total_amount - (o.shipping_cost ?? 0);
+      const createdAt = new Date(o.created_at);
+      return [
+        cell(o.order_number),
+        cell(createdAt.toLocaleDateString('tr-TR')),
+        cell(createdAt.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })),
+        cell(`${o.customer_first_name || ''} ${o.customer_last_name || ''}`.trim()),
+        cell(getCustomerEmail(o)),
+        cell(o.customer_phone),
+        cell(statusConfig[o.status]?.label ?? o.status),
+        cell(o.payment_method === 'bank' ? 'Havale/EFT' : o.payment_method === 'credit_card' || o.payment_method === 'card' ? 'Kredi Karti' : o.payment_method ?? ''),
+        cell(o.payment_status ?? ''),
+        cell(subtotal.toFixed(2)),
+        cell((o.shipping_cost ?? 0).toFixed(2)),
+        cell(o.total_amount.toFixed(2)),
+        cell(o.shipping_address),
+        cell(o.shipping_city),
+        cell(o.shipping_district),
+        cell(o.tracking_number),
+        cell(isGuestOrder(o) ? 'Evet' : 'Hayir'),
+        cell(itemsSummary),
+      ].join(',');
+    });
+
+    const bom = '\uFEFF'; // UTF-8 BOM for Excel compatibility
+    const csv = bom + [headers.join(','), ...rows].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `siparisler-${new Date().toISOString().split('T')[0]}.csv`;
+    const dateLabel = exportStartDate && exportEndDate
+      ? `${exportStartDate}_${exportEndDate}`
+      : new Date().toISOString().split('T')[0];
+    link.download = `siparisler-${dateLabel}.csv`;
     link.click();
+    URL.revokeObjectURL(link.href);
   };
 
   // Yükleniyor (kullanıcı ve admin durumu kontrol ediliyor)
@@ -1377,6 +1429,23 @@ export default function AdminPage() {
                   <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                   Yenile
                 </button>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="date"
+                    value={exportStartDate}
+                    onChange={e => setExportStartDate(e.target.value)}
+                    className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-sm text-gray-700"
+                    title="Başlangıç tarihi"
+                  />
+                  <span className="text-gray-400 text-xs">–</span>
+                  <input
+                    type="date"
+                    value={exportEndDate}
+                    onChange={e => setExportEndDate(e.target.value)}
+                    className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-sm text-gray-700"
+                    title="Bitiş tarihi"
+                  />
+                </div>
                 <button
                   onClick={exportOrders}
                   className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"

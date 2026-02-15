@@ -4,19 +4,24 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Package, Truck, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCart } from '@/contexts/CartContext';
 
 function OrderSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('order_id');
-  
+  const { clearCartAfterOrder } = useCart();
+
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Mark cart as converted (covers iyzico card payment path)
+    clearCartAfterOrder();
     if (orderId) {
       fetchOrder();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   const fetchOrder = async () => {

@@ -176,29 +176,6 @@ function checkRateLimitSync(
 }
 
 /**
- * Check rate limit (wrapper for backwards compatibility)
- * Note: This is sync but internally handles async Redis calls
- * For new code, prefer checkRateLimitAsync
- */
-export function checkRateLimit(
-  identifier: string,
-  type: RateLimitType = 'read'
-): NextResponse | null {
-  // If Redis is not configured, use sync in-memory
-  if (!rateLimiters) {
-    return checkRateLimitSync(identifier, type);
-  }
-
-  // For Redis, we need async - return null and let async version handle it
-  // This maintains backwards compatibility but won't rate limit until async is used
-  // Log warning in development
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('[Security] Using sync checkRateLimit with Redis configured. Consider using checkRateLimitAsync.');
-  }
-  return null;
-}
-
-/**
  * Get client IP from request headers
  */
 export function getClientIP(request: Request): string {

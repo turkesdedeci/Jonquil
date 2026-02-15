@@ -55,6 +55,13 @@ export interface OrderEmailData {
   total: string;
 }
 
+export interface AbandonedCartEmailData {
+  email: string;
+  items: Array<{ title: string; quantity: number; price?: string; image?: string }>;
+  totalAmount: number;
+  cartUrl: string;
+}
+
 export interface OrderStatusEmailData {
   orderId: string;
   orderNumber?: string;
@@ -491,6 +498,69 @@ export async function sendOrderEmails(data: OrderEmailData): Promise<{ success: 
   } catch (error) {
     console.error('Error sending order emails:', error);
     return { success: false, error: 'Failed to send email' };
+  }
+}
+
+export function getAbandonedCartHtml(data: AbandonedCartEmailData): string {
+  const itemRows = data.items.map(item => `
+    <tr>
+      <td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+        <span style="font-weight: 500; color: #1a1a1a;">${escapeHtml(item.title)}</span>
+        <span style="color: #666; font-size: 13px;"> × ${item.quantity}</span>
+      </td>
+      ${item.price ? `<td style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; text-align: right; color: #1a1a1a;">${escapeHtml(item.price)}</td>` : ''}
+    </tr>`).join('');
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:#f5f5f5;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="background:#fff;border-radius:12px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+      <h1 style="margin:0 0 8px;font-size:28px;font-weight:700;color:#0f3f44;">Jonquil</h1>
+      <p style="margin:0 0 32px;color:#666;font-size:14px;">El Yapımı Türk Porseleni</p>
+
+      <h2 style="margin:0 0 16px;font-size:20px;font-weight:600;color:#1a1a1a;">Sepetinizde ürünler bekliyor</h2>
+      <p style="margin:0 0 24px;color:#555;font-size:15px;line-height:1.6;">
+        Sepetinize eklediğiniz ürünleri unutmadık. Aşağıdaki ürünler sizi bekliyor:
+      </p>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
+        ${itemRows}
+      </table>
+
+      <p style="margin:0 0 24px;font-size:16px;font-weight:600;color:#1a1a1a;">
+        Toplam: ${data.totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺
+      </p>
+
+      <a href="${data.cartUrl}"
+        style="display:inline-block;background:#0f3f44;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:600;">
+        Sepetimi Tamamla
+      </a>
+
+      <p style="margin:32px 0 0;color:#999;font-size:12px;line-height:1.6;">
+        Bu e-postayı almak istemiyorsanız <a href="${data.cartUrl}/abonelikten-cik" style="color:#0f3f44;">buraya tıklayın</a>.
+        Jonquil Studio — El yapımı Türk porseleni.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export async function sendAbandonedCartEmail(data: AbandonedCartEmailData): Promise<{ success: boolean; error?: string }> {
+  if (!resend) return { success: false, error: 'Email service not configured' };
+  try {
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: data.email,
+      subject: 'Sepetinizde ürünler bekliyor 🛒',
+      html: getAbandonedCartHtml(data),
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending abandoned cart email:', error);
+    return { success: false, error: 'Failed to send abandoned cart email' };
   }
 }
 

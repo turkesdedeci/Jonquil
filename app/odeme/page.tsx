@@ -36,7 +36,7 @@ interface Address {
 export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useUser();
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, totalPrice, clearCart, clearCartAfterOrder } = useCart();
   const { showError, showWarning, AlertComponent } = useAlert();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -377,7 +377,7 @@ export default function CheckoutPage() {
         }
       } else {
         // Havale/EFT için doğrudan başarı sayfasına git
-        clearCart();
+        clearCartAfterOrder();
         router.push(`/siparis-basarili?order_id=${order.id}`);
       }
     } catch (error) {
