@@ -110,6 +110,8 @@ export function ProductCard({
 
   // Safely get images with fallbacks
   const images = product.images || ["/placeholder.jpg"];
+  const currentImage = images[currentImgIndex] || "/placeholder.jpg";
+  const disableOptimization = typeof currentImage === 'string' && currentImage.startsWith('/images/products/');
 
   // Image navigation
   const nextImage = (e: React.MouseEvent) => {
@@ -133,14 +135,16 @@ export function ProductCard({
       aria-label={`${product.title}${!inStock ? ' - Stokta yok' : ''}, ${product.price}`}
     >
       {/* Product Image */}
-      <div className={`relative aspect-square overflow-hidden bg-[#faf8f5] ${!inStock ? 'grayscale' : ''}`}>
+      <div className={`relative aspect-square overflow-hidden bg-white ${!inStock ? 'grayscale' : ''}`}>
         <Image
           key={currentImgIndex}
-          src={images[currentImgIndex] || "/placeholder.jpg"}
+          src={currentImage}
           alt={`${product.title} - Görsel ${currentImgIndex + 1}`}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className={`object-cover transition-opacity duration-300 ${
+          quality={100}
+          unoptimized={disableOptimization}
+          className={`object-contain bg-white transition-opacity duration-300 ${
             !inStock ? 'opacity-60' : 'opacity-100'
           }`}
           loading="lazy"

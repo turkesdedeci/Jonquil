@@ -65,6 +65,21 @@ function pickNonEmptyString(...values: unknown[]): string | null {
   return null;
 }
 
+function resolveImages(
+  baseImages: unknown,
+  overrideImages: unknown
+): string[] {
+  const fallback = Array.isArray(baseImages)
+    ? baseImages.filter((item): item is string => typeof item === 'string' && item.length > 0)
+    : [];
+  const override = Array.isArray(overrideImages)
+    ? overrideImages.filter((item): item is string => typeof item === 'string' && item.length > 0)
+    : [];
+
+  // Do not allow empty overrides to wipe existing product images.
+  return override.length > 0 ? override : fallback;
+}
+
 // Get all products for server-side use (includes database products)
 export async function getAllProductsServer(): Promise<ServerProduct[]> {
   // Get database products
@@ -127,7 +142,11 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
   // Add stock status + overrides to static products
   const staticWithStock: ServerProduct[] = staticProducts.map(product => {
     const override = overrides[product.id];
-    const merged = { ...product, ...override };
+    const merged = {
+      ...product,
+      ...override,
+      images: resolveImages(product.images, override?.images),
+    };
     const resolvedProductType =
       pickNonEmptyString(override?.product_type, override?.productType, product.productType) ?? null;
     const resolvedSetSingle =
@@ -147,7 +166,11 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
 
   const dbWithOverrides: ServerProduct[] = dbProducts.map(product => {
     const override = overrides[product.id];
-    const merged = { ...product, ...override } as any;
+    const merged = {
+      ...product,
+      ...override,
+      images: resolveImages(product.images, override?.images),
+    } as any;
     const stockOverride = stockStatus[product.id];
     const resolvedProductType =
       pickNonEmptyString(override?.product_type, override?.productType, product.productType) ?? null;

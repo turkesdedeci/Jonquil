@@ -644,6 +644,9 @@ export default function ProductPageClient({
                 {relatedProducts.slice(0, 4).map((relatedProduct) => {
                   const firstImage =
                     relatedProduct.images?.[0] || '/placeholder.jpg';
+                  const disableOptimization =
+                    typeof firstImage === 'string' &&
+                    firstImage.startsWith('/images/products/');
 
                   return (
                     <Link
@@ -655,14 +658,15 @@ export default function ProductPageClient({
                         whileHover={{ y: -4 }}
                         className="cursor-pointer overflow-hidden rounded-xl border border-[#e8e6e3] bg-white shadow-sm transition-all hover:shadow-xl sm:rounded-2xl"
                       >
-                        <div className="relative aspect-square overflow-hidden bg-[#faf8f5]">
+                        <div className="relative aspect-square overflow-hidden bg-white">
                           <Image
                             src={firstImage}
                             alt={relatedProduct.title}
                             fill
                             sizes="(max-width: 640px) 160px, (max-width: 1024px) 50vw, 25vw"
-                            quality={PRODUCT_THUMB_QUALITY}
-                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                            quality={100}
+                            unoptimized={disableOptimization}
+                            className="object-contain bg-white transition-transform duration-500 group-hover:scale-110"
                             loading="lazy"
                           />
                         </div>

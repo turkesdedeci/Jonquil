@@ -61,18 +61,34 @@ function ProductImage({
   loading: 'eager' | 'lazy';
 }) {
   const [loaded, setLoaded] = useState(false);
+  const [imageSrc, setImageSrc] = useState(src);
+  const disableOptimization = imageSrc.startsWith('/images/products/');
+
+  useEffect(() => {
+    setImageSrc(src);
+    setLoaded(false);
+  }, [src]);
 
   return (
     <>
       {!loaded && <div className="absolute inset-0 animate-pulse bg-[#ece8e4]" aria-hidden="true" />}
       <Image
-        src={src}
+        src={imageSrc}
         alt={alt}
         fill
         sizes={sizes}
+        quality={100}
+        unoptimized={disableOptimization}
         className={`${className} transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         loading={loading}
         onLoad={() => setLoaded(true)}
+        onError={() => {
+          if (imageSrc !== '/placeholder.jpg') {
+            setImageSrc('/placeholder.jpg');
+            return;
+          }
+          setLoaded(true);
+        }}
       />
     </>
   );
@@ -368,18 +384,16 @@ export default function CollectionPageClient({
                               !inStock ? 'opacity-80' : ''
                             }`}
                           >
-                            <div className="relative h-44 overflow-hidden bg-[#faf8f5] p-2 sm:h-52 sm:p-2.5">
-                              <div className="relative h-full w-full overflow-hidden rounded-lg sm:rounded-xl">
-                                <ProductImage
-                                  src={firstImage}
-                                  alt={product.title}
-                                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                  loading={index < 4 ? 'eager' : 'lazy'}
-                                  className={`object-cover transition-transform duration-500 group-hover:scale-105 ${
-                                    !inStock ? 'grayscale' : ''
-                                  }`}
-                                />
-                              </div>
+                            <div className="relative h-44 overflow-hidden bg-white sm:h-52">
+                              <ProductImage
+                                src={firstImage}
+                                alt={product.title}
+                                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                loading={index < 4 ? 'eager' : 'lazy'}
+                                className={`object-contain bg-white transition-transform duration-500 group-hover:scale-105 ${
+                                  !inStock ? 'grayscale' : ''
+                                }`}
+                              />
 
                               {badgeLabel && (
                                 <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
@@ -432,18 +446,16 @@ export default function CollectionPageClient({
                               !inStock ? 'opacity-80' : ''
                             }`}
                           >
-                            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[#faf8f5] p-1.5 sm:h-32 sm:w-32 sm:p-2">
-                              <div className="relative h-full w-full overflow-hidden rounded-[10px] sm:rounded-lg">
-                                <ProductImage
-                                  src={firstImage}
-                                  alt={product.title}
-                                  sizes="128px"
-                                  loading={index < 3 ? 'eager' : 'lazy'}
-                                  className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
-                                    !inStock ? 'grayscale' : ''
-                                  }`}
-                                />
-                              </div>
+                            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-white sm:h-32 sm:w-32">
+                              <ProductImage
+                                src={firstImage}
+                                alt={product.title}
+                                sizes="128px"
+                                loading={index < 3 ? 'eager' : 'lazy'}
+                                className={`object-contain bg-white transition-transform duration-300 group-hover:scale-105 ${
+                                  !inStock ? 'grayscale' : ''
+                                }`}
+                              />
                               {badgeLabel && (
                                 <div
                                   className={`absolute right-1.5 top-1.5 max-w-[72px] truncate rounded-full px-1.5 py-0.5 text-[8px] font-semibold shadow-sm ring-1 sm:right-2 sm:top-2 sm:max-w-[94px] sm:px-2.5 sm:py-1 sm:text-[10px] ${

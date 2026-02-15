@@ -75,51 +75,59 @@ export function RecentlyViewed({ currentProductId, maxItems = 6 }: RecentlyViewe
           role="list"
           aria-label="Son görüntülenen ürünler"
         >
-          {displayItems.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              role="listitem"
-            >
-              <Link
-                href={`/urun/${product.id}`}
-                className="group block w-[200px] flex-shrink-0 overflow-hidden rounded-xl border border-[#e8e6e3] bg-white transition-all hover:shadow-lg"
-              >
-                {/* Image */}
-                <div className="relative aspect-square overflow-hidden bg-[#faf8f5]">
-                  <Image
-                    src={product.image}
-                    alt={product.title}
-                    fill
-                    sizes="200px"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  {/* Collection Badge */}
-                  <div className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[#0f3f44] shadow-sm backdrop-blur-sm">
-                    {product.collection === 'aslan' ? 'Aslan' : 'Ottoman'}
-                  </div>
-                </div>
+          {displayItems.map((product, index) => {
+            const disableOptimization =
+              typeof product.image === 'string' &&
+              product.image.startsWith('/images/products/');
 
-                {/* Info */}
-                <div className="p-3">
-                  <h3 className="mb-1 line-clamp-1 text-sm font-medium text-[#1a1a1a] group-hover:text-[#0f3f44]">
-                    {product.title}
-                  </h3>
-                  {product.subtitle && (
-                    <p className="mb-2 line-clamp-1 text-xs text-[#666]">
-                      {product.subtitle}
+            return (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                role="listitem"
+              >
+                <Link
+                  href={`/urun/${product.id}`}
+                  className="group block w-[200px] flex-shrink-0 overflow-hidden rounded-xl border border-[#e8e6e3] bg-white transition-all hover:shadow-lg"
+                >
+                  {/* Image */}
+                  <div className="relative aspect-square overflow-hidden bg-white">
+                    <Image
+                      src={product.image}
+                      alt={product.title}
+                      fill
+                      sizes="200px"
+                      quality={100}
+                      unoptimized={disableOptimization}
+                      className="object-contain bg-white transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    {/* Collection Badge */}
+                    <div className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-[#0f3f44] shadow-sm backdrop-blur-sm">
+                      {product.collection === 'aslan' ? 'Aslan' : 'Ottoman'}
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-3">
+                    <h3 className="mb-1 line-clamp-1 text-sm font-medium text-[#1a1a1a] group-hover:text-[#0f3f44]">
+                      {product.title}
+                    </h3>
+                    {product.subtitle && (
+                      <p className="mb-2 line-clamp-1 text-xs text-[#666]">
+                        {product.subtitle}
+                      </p>
+                    )}
+                    <p className="text-sm font-semibold text-[#0f3f44]">
+                      {product.price}
                     </p>
-                  )}
-                  <p className="text-sm font-semibold text-[#0f3f44]">
-                    {product.price}
-                  </p>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
