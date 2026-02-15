@@ -3,7 +3,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Instagram, Mail, Phone, MapPin } from "lucide-react";
-import { BRAND } from "@/constants/brand";
+import { ASSETS, BRAND } from "@/constants/brand";
 
 export default function Footer() {
   return (
@@ -14,10 +14,11 @@ export default function Footer() {
           <div>
             <div className="mb-6 flex items-center">
               <Image
-                src="/images/products/GENEL FOTOLAR/LOGO/logo-1.png"
+                src={ASSETS.logo}
                 alt={`${BRAND.name} logo`}
-                width={300}
-                height={110}
+                width={500}
+                height={122}
+                unoptimized
                 className="ml-2 h-auto w-[220px] md:ml-4 md:w-[260px]"
               />
             </div>

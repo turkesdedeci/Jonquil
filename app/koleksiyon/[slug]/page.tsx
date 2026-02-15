@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAllProductsServer } from '@/lib/products-server';
+import { sortProductsForCatalog } from '@/lib/product-sort';
 import { absoluteUrl, getSiteUrl, SITE_NAME } from '@/lib/site';
 import CollectionPageClient from './CollectionPageClient';
 
@@ -122,7 +123,7 @@ export default async function CollectionPage({ params }: Props) {
 
   // Get products for this collection
   const allProducts = await getAllProductsServer();
-  const products = allProducts.filter((p) => p.collection === slug);
+  const products = sortProductsForCatalog(allProducts.filter((p) => p.collection === slug));
 
   const jsonLd = generateJsonLd(collectionSlug, products.length);
 

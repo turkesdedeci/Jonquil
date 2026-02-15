@@ -14,6 +14,7 @@ interface Product {
   images?: string[];
   title: string;
   subtitle: string;
+  description?: string | null;
   color: string;
   code: string;
   size: string;
@@ -41,6 +42,7 @@ function normalizeProduct(product: ServerProduct): Product {
     images: product.images || [],
     title: product.title,
     subtitle: product.subtitle || '',
+    description: product.description || null,
     color: product.color || '',
     code: product.code || '',
     size: product.size || '',
@@ -80,7 +82,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   const normalizedProduct = normalizeProduct(product);
   const title = `${normalizedProduct.title} - ${normalizedProduct.subtitle} | Jonquil`;
-  const description = `${normalizedProduct.title} ${normalizedProduct.subtitle}. ${normalizedProduct.material}, ${normalizedProduct.size}. El yapımı Türk porselen ürünleri. Jonquil koleksiyonundan ${normalizedProduct.family} serisi.`;
+  const description =
+    normalizedProduct.description?.trim() ||
+    `${normalizedProduct.title} ${normalizedProduct.subtitle}. ${normalizedProduct.material}, ${normalizedProduct.size}. El yapımı Türk porselen ürünleri. Jonquil koleksiyonundan ${normalizedProduct.family} serisi.`;
   const imageUrl = normalizedProduct.images?.[0] || '/images/og-default.jpg';
 
   return {
@@ -133,7 +137,7 @@ function generateJsonLd(product: Product) {
     '@type': 'Product',
     name: product.title,
     image: product.images?.[0],
-    description: `${product.title} ${product.subtitle}. ${product.material}, ${product.size}.`, // Simplified description
+    description: product.description?.trim() || `${product.title} ${product.subtitle}. ${product.material}, ${product.size}.`,
     sku: product.code,
     brand: {
       '@type': 'Brand',

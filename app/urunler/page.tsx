@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { getAllProductsServer } from '@/lib/products-server';
+import { sortProductsForCatalog } from '@/lib/product-sort';
 import { absoluteUrl, getSiteUrl, SITE_NAME } from '@/lib/site';
 import AllProductsClient from './AllProductsClient';
 
@@ -65,7 +66,7 @@ function generateJsonLd(productCount: number) {
 }
 
 export default async function AllProductsPage() {
-  const products = await getAllProductsServer();
+  const products = sortProductsForCatalog(await getAllProductsServer());
   const jsonLd = generateJsonLd(products.length);
 
   return (

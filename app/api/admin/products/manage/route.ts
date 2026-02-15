@@ -34,6 +34,9 @@ function validateProduct(data: any): { valid: boolean; error?: string } {
   if (data.subtitle && data.subtitle.length > 255) {
     return { valid: false, error: 'Alt başlık çok uzun' };
   }
+  if (data.description && data.description.length > 2000) {
+    return { valid: false, error: 'Açıklama çok uzun (maksimum 2000 karakter)' };
+  }
   if (data.images && data.images.length > 20) {
     return { valid: false, error: 'Maksimum 20 resim eklenebilir' };
   }
@@ -46,7 +49,7 @@ const isUuid = (value: string) => uuidRegex.test(value);
 function sanitizeOverrideData(updateData: any): Record<string, unknown> {
   const cleanData: Record<string, unknown> = {};
   const stringFields = [
-    'title', 'subtitle', 'price', 'collection', 'family', 'product_type',
+    'title', 'subtitle', 'description', 'price', 'collection', 'family', 'product_type',
     'material', 'color', 'size', 'capacity', 'code', 'usage', 'set_single'
   ];
   const allowedFields = new Set([...stringFields, 'images', 'tags']);
@@ -54,7 +57,7 @@ function sanitizeOverrideData(updateData: any): Record<string, unknown> {
   Object.entries(updateData).forEach(([key, value]) => {
     if (value !== undefined && allowedFields.has(key)) {
       if (stringFields.includes(key) && typeof value === 'string') {
-        cleanData[key] = sanitizeString(value).slice(0, 255);
+        cleanData[key] = sanitizeString(value).slice(0, key === 'description' ? 2000 : 255);
       } else if (key === 'tags' && Array.isArray(value)) {
         cleanData[key] = value.map((t: string) => sanitizeString(t).slice(0, 50)).slice(0, 20);
       } else if (key === 'images' && Array.isArray(value)) {
@@ -144,6 +147,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Sanitize all string inputs
+    const sanitizedDescription =
+      typeof body.description === 'string'
+        ? sanitizeString(body.description).slice(0, 2000)
+        : null;
+
     const sanitizedData = {
       title: sanitizeString(body.title).slice(0, 255),
       subtitle: body.subtitle ? sanitizeString(body.subtitle).slice(0, 255) : null,
@@ -181,6 +189,51 @@ export async function POST(request: NextRequest) {
       return handleDatabaseError(error);
     }
 
+    if (sanitizedDescription) {
+      const { error: overrideError } = await supabase
+        .from('product_overrides')
+        .upsert(
+          {
+            product_id: product.id,
+            description: sanitizedDescription,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'product_id' }
+        );
+
+      if (overrideError) {
+        if (overrideError.message?.includes('does not exist') || overrideError.code === '42P01') {
+          return NextResponse.json({
+            error: "Açıklama kaydı için product_overrides tablosu bulunamadı. Lütfen aşağıdaki SQL'i Supabase SQL Editor'de çalıştırın:",
+            sql: `CREATE TABLE IF NOT EXISTS product_overrides (
+  product_id TEXT PRIMARY KEY,
+  title VARCHAR(255),
+  subtitle VARCHAR(255),
+  description TEXT,
+  price VARCHAR(50),
+  collection VARCHAR(100),
+  family VARCHAR(100),
+  product_type VARCHAR(100),
+  material VARCHAR(100),
+  color VARCHAR(100),
+  size VARCHAR(100),
+  capacity VARCHAR(100),
+  code VARCHAR(100),
+  usage VARCHAR(100),
+  set_single VARCHAR(50),
+  images TEXT[] DEFAULT '{}',
+  tags TEXT[] DEFAULT '{}',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE product_overrides ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role all" ON product_overrides
+  FOR ALL USING (auth.role() = 'service_role');`
+          }, { status: 400 });
+        }
+        return handleDatabaseError(overrideError);
+      }
+    }
+
     // Audit log: product created
     await logAuditEvent({
       action: 'product_create',
@@ -197,7 +250,13 @@ export async function POST(request: NextRequest) {
     revalidatePath('/urunler');
     revalidatePath(`/urun/${product.id}`);
 
-    return NextResponse.json({ success: true, product }, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      product: {
+        ...product,
+        description: sanitizedDescription,
+      },
+    }, { status: 201 });
   } catch (error) {
     return safeErrorResponse(error, 'Ürün oluşturulamadı');
   }
@@ -252,6 +311,7 @@ export async function PATCH(request: NextRequest) {
   product_id TEXT PRIMARY KEY,
   title VARCHAR(255),
   subtitle VARCHAR(255),
+  description TEXT,
   price VARCHAR(50),
   collection VARCHAR(100),
   family VARCHAR(100),
@@ -302,6 +362,10 @@ CREATE POLICY "Allow service role all" ON product_overrides
     }
 
     // Sanitize and clean up data
+    const descriptionForOverride =
+      typeof updateData.description === 'string'
+        ? sanitizeString(updateData.description).slice(0, 2000)
+        : undefined;
     const cleanData: Record<string, unknown> = {};
     const stringFields = ['title', 'subtitle', 'price', 'collection', 'family', 'product_type',
                           'material', 'color', 'size', 'capacity', 'code', 'usage', 'set_single'];
@@ -321,11 +385,28 @@ CREATE POLICY "Allow service role all" ON product_overrides
       }
     });
 
-    const { data: product, error } = await supabase
-      .from('products')
-      .update(cleanData)
-      .eq('id', id)
-      .select();
+    let product: any[] | null = null;
+    let error: any = null;
+
+    if (Object.keys(cleanData).length > 0) {
+      const updateResult = await supabase
+        .from('products')
+        .update(cleanData)
+        .eq('id', id)
+        .select();
+
+      product = updateResult.data;
+      error = updateResult.error;
+    } else {
+      const existingResult = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .limit(1);
+
+      product = existingResult.data;
+      error = existingResult.error;
+    }
 
     if (error) {
       if (error.message?.includes('does not exist') || error.code === '42P01') {
@@ -371,6 +452,7 @@ CREATE POLICY "Allow service role all" ON product_overrides
   product_id TEXT PRIMARY KEY,
   title VARCHAR(255),
   subtitle VARCHAR(255),
+  description TEXT,
   price VARCHAR(50),
   collection VARCHAR(100),
   family VARCHAR(100),
@@ -407,13 +489,59 @@ CREATE POLICY "Allow service role all" ON product_overrides
       return NextResponse.json({ success: true, override });
     }
 
+    if (descriptionForOverride !== undefined) {
+      const { error: overrideError } = await supabase
+        .from('product_overrides')
+        .upsert({
+          product_id: id,
+          description: descriptionForOverride || null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'product_id' });
+
+      if (overrideError) {
+        if (overrideError.message?.includes('does not exist') || overrideError.code === '42P01') {
+          return NextResponse.json({
+            error: "Açıklama kaydı için product_overrides tablosu bulunamadı. Lütfen aşağıdaki SQL'i Supabase SQL Editor'de çalıştırın:",
+            sql: `CREATE TABLE IF NOT EXISTS product_overrides (
+  product_id TEXT PRIMARY KEY,
+  title VARCHAR(255),
+  subtitle VARCHAR(255),
+  description TEXT,
+  price VARCHAR(50),
+  collection VARCHAR(100),
+  family VARCHAR(100),
+  product_type VARCHAR(100),
+  material VARCHAR(100),
+  color VARCHAR(100),
+  size VARCHAR(100),
+  capacity VARCHAR(100),
+  code VARCHAR(100),
+  usage VARCHAR(100),
+  set_single VARCHAR(50),
+  images TEXT[] DEFAULT '{}',
+  tags TEXT[] DEFAULT '{}',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE product_overrides ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role all" ON product_overrides
+  FOR ALL USING (auth.role() = 'service_role');`
+          }, { status: 400 });
+        }
+        return handleDatabaseError(overrideError);
+      }
+    }
+
     // Audit log: product updated
+    const updatedFields = Object.keys(cleanData);
+    if (descriptionForOverride !== undefined) {
+      updatedFields.push('description');
+    }
     await logAuditEvent({
       action: 'product_update',
       resource_type: 'product',
       resource_id: id,
       details: {
-        updated_fields: Object.keys(cleanData),
+        updated_fields: updatedFields,
       },
     }, request);
     

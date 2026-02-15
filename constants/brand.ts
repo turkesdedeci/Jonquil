@@ -4,9 +4,11 @@ export const BRAND = {
   description: "Premium el yapımı porselen ve tasarım objeleri",
 };
 
+const LOGO_VERSION = "20260215-1";
+
 export const ASSETS = {
   // Logo
-  logo: "/images/products/GENEL FOTOLAR/LOGO/logo-1.png",
+  logo: `/images/products/GENEL FOTOLAR/LOGO/Studio.png?v=${LOGO_VERSION}`,
   
   // Hero images
   hero: "/images/products/GENEL FOTOLAR/Header-1.jpg",

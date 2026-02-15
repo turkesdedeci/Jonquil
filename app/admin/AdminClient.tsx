@@ -88,6 +88,7 @@ const FOCUSABLE_SELECTOR =
 const EMPTY_PRODUCT = {
   title: '',
   subtitle: '',
+  description: '',
   price: '',
   collection: 'aslan',
   family: '',
@@ -177,6 +178,7 @@ export default function AdminPage() {
   const [newProduct, setNewProduct] = useState({
     title: '',
     subtitle: '',
+    description: '',
     price: '',
     collection: 'aslan',
     family: '',
@@ -912,6 +914,7 @@ export default function AdminPage() {
     setNewProduct({
       title: override.title || product.title || '',
       subtitle: override.subtitle || product.subtitle || '',
+      description: override.description || product.description || '',
       price: override.price || product.price || '',
       collection: override.collection || product.collection || 'aslan',
       family: override.family || product.family || '',
@@ -1206,6 +1209,7 @@ export default function AdminPage() {
       productSearch === '' ||
       p.title.toLowerCase().includes(productSearch.toLowerCase()) ||
       p.subtitle?.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.description?.toLowerCase().includes(productSearch.toLowerCase()) ||
       p.code?.toLowerCase().includes(productSearch.toLowerCase())
     );
 
@@ -2130,6 +2134,21 @@ export default function AdminPage() {
                     placeholder="Kırmızı/Altın · Red/Gold"
                     className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
                   />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Ürün Açıklaması
+                  </label>
+                  <textarea
+                    value={newProduct.description}
+                    onChange={(e) => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
+                    rows={4}
+                    maxLength={2000}
+                    placeholder="Ürünün öne çıkan özellikleri, kullanım alanı ve tasarım detayları..."
+                    className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-[#0f3f44] focus:outline-none"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">{newProduct.description.length}/2000</p>
                 </div>
 
                 <div>

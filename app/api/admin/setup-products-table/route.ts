@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS products (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   subtitle VARCHAR(255),
+  description TEXT,
   price VARCHAR(50) NOT NULL,
   collection VARCHAR(100) NOT NULL,
   family VARCHAR(100),

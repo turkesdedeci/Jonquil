@@ -60,6 +60,7 @@ function MobileNav({
                 alt={BRAND.name}
                 width={120}
                 height={40}
+                unoptimized
                 className="h-10 w-auto object-contain"
               />
               <button
@@ -339,6 +340,7 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
               alt={BRAND.name}
               width={132}
               height={44}
+              unoptimized
               className="h-10 w-auto object-contain sm:h-12"
             />
           </Link>

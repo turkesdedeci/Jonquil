@@ -368,7 +368,7 @@ function Homepage({
           >
             <div className="mb-4 font-light tracking-widest text-[#d4af7a]">KOLEKSİYONLAR</div>
             <h2 className="mb-4 font-serif text-4xl font-light text-[#1a1a1a] md:text-5xl">
-              Özenle Tasarlanmış
+              İncelikle İşlenmiş
             </h2>
             <p className="mx-auto max-w-2xl text-[#666]">
               Her bir parça, ustalıkla işlenmiş porselen sanatıdır. Modern yaşamın estetiğini
@@ -402,18 +402,6 @@ function Homepage({
       {/* Features Section */}
       <section className="bg-gradient-to-b from-[#faf8f5] to-white py-20">
         <div className="mx-auto max-w-7xl px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-16 text-center"
-          >
-            <div className="mb-4 font-light tracking-widest text-[#d4af7a]">NEDEN JONQUIL?</div>
-            <h2 className="mb-4 font-serif text-4xl font-light text-[#1a1a1a] md:text-5xl">
-              Lüks ve Kalite
-            </h2>
-          </motion.div>
-
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               icon={<BadgeCheck className="h-8 w-8" />}

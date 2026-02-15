@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { allProducts as staticProducts } from '@/data/products';
 import { checkRateLimitAsync, getClientIP, safeErrorResponse } from '@/lib/security';
+import { buildDefaultProductDescription } from '@/lib/product-description';
+import { sortProductsForCatalog } from '@/lib/product-sort';
 
 // Enable ISR with 5-minute revalidation (reduces DB load significantly)
 export const revalidate = 300;
@@ -16,6 +18,13 @@ const supabase = supabaseUrl && supabaseAnonKey
 
 // Transform database product to match static product format
 function transformDbProduct(dbProduct: any) {
+  const fallbackDescription = buildDefaultProductDescription({
+    title: dbProduct.title,
+    material: dbProduct.material,
+    productType: dbProduct.product_type,
+    usage: dbProduct.usage,
+  });
+
   return {
     id: dbProduct.id,
     collection: dbProduct.collection,
@@ -23,6 +32,7 @@ function transformDbProduct(dbProduct: any) {
     images: dbProduct.images || [],
     title: dbProduct.title,
     subtitle: dbProduct.subtitle || null,
+    description: dbProduct.description || fallbackDescription,
     color: dbProduct.color || null,
     code: dbProduct.code || null,
     size: dbProduct.size || null,
@@ -130,12 +140,21 @@ export async function GET(request: NextRequest) {
         pickNonEmptyString(override?.set_single, override?.setSingle, product.setSingle) ?? 'Tek Parça';
       const resolvedMaterial =
         pickNonEmptyString(override?.material, product.material) ?? 'Porselen';
+      const resolvedDescription =
+        pickNonEmptyString(override?.description, (product as any).description) ??
+        buildDefaultProductDescription({
+          title: merged.title,
+          material: resolvedMaterial,
+          productType: resolvedProductType,
+          usage: merged.usage,
+        });
 
       return {
         ...merged,
         productType: resolvedProductType,
         setSingle: resolvedSetSingle,
         material: resolvedMaterial,
+        description: resolvedDescription,
         inStock: stockStatus[product.id] !== false, // Default to in stock
         isFromDatabase: false,
       };
@@ -155,20 +174,30 @@ export async function GET(request: NextRequest) {
         pickNonEmptyString(override?.set_single, override?.setSingle, product.setSingle) ?? 'Tek Parça';
       const resolvedMaterial =
         pickNonEmptyString(override?.material, product.material) ?? 'Porselen';
+      const resolvedDescription =
+        pickNonEmptyString(override?.description, product.description) ??
+        buildDefaultProductDescription({
+          title: merged.title,
+          material: resolvedMaterial,
+          productType: resolvedProductType,
+          usage: merged.usage,
+        });
 
       return {
         ...merged,
         productType: resolvedProductType,
         setSingle: resolvedSetSingle,
         material: resolvedMaterial,
+        description: resolvedDescription,
         inStock: stockOverride !== undefined ? stockOverride : merged.inStock !== false,
         isFromDatabase: true,
       };
     });
 
     // Combine: database products first, then static products
-    const allCombinedProducts = [...dbWithOverrides, ...staticWithStock]
-      .filter(p => p.inStock !== false);
+    const allCombinedProducts = sortProductsForCatalog(
+      [...dbWithOverrides, ...staticWithStock].filter((p) => p.inStock !== false)
+    );
 
     return NextResponse.json({
       products: allCombinedProducts,

@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { allProducts as staticProducts } from '@/data/products';
+import { buildDefaultProductDescription } from '@/lib/product-description';
+import { sortProductsForCatalog } from '@/lib/product-sort';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -18,6 +20,7 @@ export interface ServerProduct {
   images: string[];
   title: string;
   subtitle: string | null;
+  description: string | null;
   color: string | null;
   code: string | null;
   size: string | null;
@@ -34,6 +37,13 @@ export interface ServerProduct {
 
 // Transform database product to match static product format
 function transformDbProduct(dbProduct: any): ServerProduct {
+  const fallbackDescription = buildDefaultProductDescription({
+    title: dbProduct.title,
+    material: dbProduct.material,
+    productType: dbProduct.product_type,
+    usage: dbProduct.usage,
+  });
+
   return {
     id: dbProduct.id,
     collection: dbProduct.collection,
@@ -41,6 +51,7 @@ function transformDbProduct(dbProduct: any): ServerProduct {
     images: dbProduct.images || [],
     title: dbProduct.title,
     subtitle: dbProduct.subtitle || null,
+    description: dbProduct.description || fallbackDescription,
     color: dbProduct.color || null,
     code: dbProduct.code || null,
     size: dbProduct.size || null,
@@ -153,12 +164,21 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
       pickNonEmptyString(override?.set_single, override?.setSingle, product.setSingle) ?? 'Tek Parça';
     const resolvedMaterial =
       pickNonEmptyString(override?.material, product.material) ?? 'Porselen';
+    const resolvedDescription =
+      pickNonEmptyString(override?.description, (product as any).description) ??
+      buildDefaultProductDescription({
+        title: merged.title,
+        material: resolvedMaterial,
+        productType: resolvedProductType,
+        usage: merged.usage,
+      });
 
     return {
       ...merged,
       productType: resolvedProductType,
       setSingle: resolvedSetSingle,
       material: resolvedMaterial,
+      description: resolvedDescription,
       inStock: stockStatus[product.id] !== false,
       isFromDatabase: false,
     } as ServerProduct;
@@ -178,19 +198,28 @@ export async function getAllProductsServer(): Promise<ServerProduct[]> {
       pickNonEmptyString(override?.set_single, override?.setSingle, product.setSingle) ?? 'Tek Parça';
     const resolvedMaterial =
       pickNonEmptyString(override?.material, product.material) ?? 'Porselen';
+    const resolvedDescription =
+      pickNonEmptyString(override?.description, product.description) ??
+      buildDefaultProductDescription({
+        title: merged.title,
+        material: resolvedMaterial,
+        productType: resolvedProductType,
+        usage: merged.usage,
+      });
 
     return {
       ...merged,
       productType: resolvedProductType,
       setSingle: resolvedSetSingle,
       material: resolvedMaterial,
+      description: resolvedDescription,
       inStock: stockOverride !== undefined ? stockOverride : merged.inStock !== false,
       isFromDatabase: true,
     } as ServerProduct;
   });
 
-  // Combine: database products first, then static products
-  return [...dbWithOverrides, ...staticWithStock];
+  // Combine and apply deterministic default catalog order
+  return sortProductsForCatalog([...dbWithOverrides, ...staticWithStock]);
 }
 
 // Find a product by ID (server-side)

@@ -33,6 +33,7 @@ interface Product {
   images?: string[];
   title: string;
   subtitle: string;
+  description?: string | null;
   color: string;
   code: string;
   size: string;
@@ -119,6 +120,9 @@ export default function ProductPageClient({
       ? normalizedSetType
       : '');
   const displayPrice = currentVariant?.price || product.price;
+  const fallbackDescription = `Jonquil Studio imzal\u0131 bu par\u00e7a, el i\u015f\u00e7ili\u011fi ve \u00f6zenli \u00fcretimle haz\u0131rlanan koleksiyonun \u00f6zg\u00fcn bir \u00fcyesidir.`;
+  const productDescription =
+    (currentVariant?.description || product.description || '').trim() || fallbackDescription;
 
   // Change variant (color)
   const handleVariantChange = (index: number) => {
@@ -546,12 +550,7 @@ export default function ProductPageClient({
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden pb-4"
                       >
-                        <p className="text-sm leading-relaxed text-[#666]">
-                          Jonquil Studio&apos;nun özenle tasarladığı bu eşsiz parça,
-                          modern yaşamın estetiğini klasik zanaatla buluşturuyor.
-                          El işçiliği ve birinci sınıf porselen ile üretilen
-                          ürünlerimiz, sofranıza zarafet katıyor.
-                        </p>
+                        <p className="text-sm leading-relaxed text-[#666]">{productDescription}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
