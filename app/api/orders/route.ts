@@ -1,6 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { getAllProductsServer } from '@/lib/products-server';
@@ -18,7 +17,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const serverSupabase = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey)
-  : supabase;
+  : null;
 
 // Generate cryptographically secure order number
 function generateOrderNumber(): string {
@@ -42,7 +41,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (!serverSupabase) {
-      return NextResponse.json({ error: 'VeritabanÄ± baÄŸlantÄ±sÄ± yok' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Supabase service role key eksik (SUPABASE_SERVICE_ROLE_KEY)' },
+        { status: 500 }
+      );
     }
 
     // SipariÅŸleri ve Ã¼rÃ¼nleri tek sorguda getir (N+1 query fix)
@@ -83,7 +85,10 @@ export async function POST(request: NextRequest) {
     const clerkUser = userId ? await currentUser() : null;
 
     if (!serverSupabase) {
-      return NextResponse.json({ error: 'VeritabanÄ± baÄŸlantÄ±sÄ± yok' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Supabase service role key eksik (SUPABASE_SERVICE_ROLE_KEY)' },
+        { status: 500 }
+      );
     }
 
     const body = await request.json();
@@ -248,7 +253,7 @@ export async function POST(request: NextRequest) {
 
     if (orderError) {
       console.error('[Orders] Create order error:', JSON.stringify(orderError, null, 2));
-      throw orderError;
+      return handleDatabaseError(orderError);
     }
 
     // Create order items
@@ -263,7 +268,7 @@ export async function POST(request: NextRequest) {
 
     if (itemsError) {
       console.error('[Orders] Create order items error:', JSON.stringify(itemsError, null, 2));
-      throw itemsError;
+      return handleDatabaseError(itemsError);
     }
 
     // Fetch complete order with items
@@ -323,8 +328,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'GiriÅŸ yapmanÄ±z gerekiyor' }, { status: 401 });
     }
 
-    if (!supabase) {
-      return NextResponse.json({ error: 'VeritabanÄ± baÄŸlantÄ±sÄ± yok' }, { status: 500 });
+    if (!serverSupabase) {
+      return NextResponse.json(
+        { error: 'Supabase service role key eksik (SUPABASE_SERVICE_ROLE_KEY)' },
+        { status: 500 }
+      );
     }
 
     const body = await request.json();
@@ -346,7 +354,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Check if order is in a cancellable state
-    const { data: existingOrder } = await supabase
+    const { data: existingOrder } = await serverSupabase
       .from('orders')
       .select('status')
       .eq('id', order_id)
@@ -366,7 +374,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Update order status
-    const { data, error } = await supabase
+    const { data, error } = await serverSupabase
       .from('orders')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', order_id)
