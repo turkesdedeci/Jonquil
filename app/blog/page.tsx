@@ -1,94 +1,91 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
-import { absoluteUrl, SITE_NAME } from "@/lib/site";
+import type { Metadata } from 'next';
+import { absoluteUrl, SITE_NAME } from '@/lib/site';
+import { getAllPosts, getAllCategories } from '@/lib/blog/posts';
+import { BlogCard } from '@/components/blog/BlogCard';
+import { generateBlogListSchema } from '@/lib/blog/schema';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: "Blog | Jonquil Studio",
+  title: 'Blog | Jonquil Studio',
   description:
-    "Porselen bakimi, sofra stili ve hediye secimi konularinda Jonquil Studio blog yazilari.",
+    'Porselen bakımı, sofra stili ve hediye seçimi konularında Jonquil Studio blog yazıları.',
   alternates: {
-    canonical: absoluteUrl("/blog"),
+    canonical: absoluteUrl('/blog'),
   },
   openGraph: {
-    title: "Blog | Jonquil Studio",
+    title: 'Blog | Jonquil Studio',
     description:
-      "Porselen bakimi, sofra stili ve hediye secimi konularinda Jonquil Studio blog yazilari.",
-    type: "website",
-    url: absoluteUrl("/blog"),
+      'Porselen bakımı, sofra stili ve hediye seçimi konularında Jonquil Studio blog yazıları.',
+    type: 'website',
+    url: absoluteUrl('/blog'),
     siteName: SITE_NAME,
     images: [
       {
-        url: absoluteUrl("/images/og-default.jpg"),
-        alt: "Jonquil Studio Blog",
+        url: absoluteUrl('/images/og-default.jpg'),
+        alt: 'Jonquil Studio Blog',
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Blog | Jonquil Studio",
+    card: 'summary_large_image',
+    title: 'Blog | Jonquil Studio',
     description:
-      "Porselen bakimi, sofra stili ve hediye secimi konularinda Jonquil Studio blog yazilari.",
-    images: [absoluteUrl("/images/og-default.jpg")],
+      'Porselen bakımı, sofra stili ve hediye seçimi konularında Jonquil Studio blog yazıları.',
+    images: [absoluteUrl('/images/og-default.jpg')],
   },
 };
 
-const posts = [
-  {
-    slug: "porselen-bakimi",
-    title: "Porselen Bakımı: Uzun Ömürlü Kullanım",
-    excerpt: "Porselen ürünlerinizi ilk günkü gibi korumak için pratik bakım ipuçları.",
-    image: "/images/products/GENEL FOTOLAR/Header-2.jpg",
-  },
-  {
-    slug: "sofra-stili",
-    title: "Sofra Stili: Zarif Sunumlar",
-    excerpt: "Şık sofralar için renk uyumu ve düzenleme önerileri.",
-    image: "/images/products/GENEL FOTOLAR/Header-3.jpg",
-  },
-  {
-    slug: "hediye-secimi",
-    title: "Hediye Seçimi: Özel Anlar",
-    excerpt: "Sevdiklerinize unutulmaz bir hediye seçmek için kısa bir rehber.",
-    image: "/images/products/GENEL FOTOLAR/Header-1.jpg",
-  },
-];
-
 export default function BlogPage() {
-  return (
-    <div className="mx-auto max-w-6xl px-6 py-16">
-      <div className="mb-10">
-        <h1 className="text-3xl font-semibold text-[#1a1a1a]">Blog</h1>
-        <p className="mt-3 text-sm text-[#666]">
-          Jonquil dünyasından ipuçları, bakım önerileri ve stil notları.
-        </p>
-      </div>
+  const posts = getAllPosts();
+  const categories = getAllCategories();
+  const jsonLd = generateBlogListSchema(posts);
 
-      <div className="grid gap-8 md:grid-cols-3">
-        {posts.map((post) => (
-          <article key={post.slug} className="overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white">
-            <div className="relative aspect-[4/3]">
-              <Image
-                src={post.image}
-                alt={post.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover"
-                priority={false}
-              />
-            </div>
-            <div className="p-5">
-              <h2 className="mb-2 text-lg font-semibold text-[#1a1a1a]">
-                {post.title}
-              </h2>
-              <p className="mb-4 text-sm text-[#666]">{post.excerpt}</p>
-              <Link href={`/blog/${post.slug}`} className="text-sm font-medium text-[#0f3f44] hover:underline">
-                Devamını oku →
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mb-10">
+          <h1 className="text-3xl font-semibold text-[#1a1a1a]">Blog</h1>
+          <p className="mt-3 text-sm text-[#666]">
+            Jonquil dünyasından ipuçları, bakım önerileri ve stil notları.
+          </p>
+        </div>
+
+        {categories.length > 0 && (
+          <div className="mb-8 flex flex-wrap gap-2">
+            <Link
+              href="/blog"
+              className="rounded-full bg-[#0f3f44] px-4 py-1.5 text-sm font-medium text-white"
+            >
+              Tümü
+            </Link>
+            {categories.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/blog/kategori/${cat.slug}`}
+                className="rounded-full border border-[#e8e6e3] px-4 py-1.5 text-sm font-medium text-[#666] transition-colors hover:border-[#0f3f44] hover:text-[#0f3f44]"
+              >
+                {cat.name}
               </Link>
-            </div>
-          </article>
-        ))}
+            ))}
+          </div>
+        )}
+
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post) => (
+            <BlogCard key={post.slug} post={post} />
+          ))}
+        </div>
+
+        {posts.length === 0 && (
+          <p className="py-20 text-center text-[#999]">
+            Henüz blog yazısı bulunmuyor.
+          </p>
+        )}
       </div>
-    </div>
+    </>
   );
 }
