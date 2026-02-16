@@ -84,7 +84,7 @@ export function CollectionCard({
 // Product card
 export function ProductCard({ product, onClick }: { product: any; onClick: () => void }) {
   const [currentImg, setCurrentImg] = React.useState(0);
-  const images = product.images || [product.image || ASSETS.hero1];
+  const images = product.images || [product.image || ASSETS.hero];
 
   return (
     <motion.div
