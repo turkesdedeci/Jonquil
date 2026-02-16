@@ -11,6 +11,7 @@ import { TableOfContents } from '@/components/blog/TableOfContents';
 import { RelatedProducts } from '@/components/blog/RelatedProducts';
 import { ShareButtons } from '@/components/blog/ShareButtons';
 import { BlogCard } from '@/components/blog/BlogCard';
+import NewsletterCTA from '@/components/NewsletterCTA';
 
 export function generateStaticParams() {
   return getAllPosts().map((post) => ({ slug: post.slug }));
@@ -203,6 +204,11 @@ export default async function BlogPostPage({
           </section>
         )}
       </article>
+
+      <NewsletterCTA
+        heading="Blog Yazılarımızı Kaçırmayın"
+        description="Yeni rehberler, koleksiyon hikayeleri ve sofra ilhamlarından haberdar olun."
+      />
     </>
   );
 }

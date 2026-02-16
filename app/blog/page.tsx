@@ -4,6 +4,7 @@ import { getAllPosts, getAllCategories } from '@/lib/blog/posts';
 import { BlogCard } from '@/components/blog/BlogCard';
 import { generateBlogListSchema } from '@/lib/blog/schema';
 import Link from 'next/link';
+import NewsletterCTA from '@/components/NewsletterCTA';
 
 export const metadata: Metadata = {
   title: 'Blog | Jonquil Studio',
@@ -86,6 +87,11 @@ export default function BlogPage() {
           </p>
         )}
       </div>
+
+      <NewsletterCTA
+        heading="Blog Yazılarımızı Kaçırmayın"
+        description="Yeni rehberler, koleksiyon hikayeleri ve sofra ilhamlarından haberdar olun."
+      />
     </>
   );
 }

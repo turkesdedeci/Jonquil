@@ -349,7 +349,7 @@ export default function ProductPageClient({
                     >
                       <Image
                         src={img}
-                        alt=""
+                        alt={`${product.title} - Görsel ${index + 1}`}
                         fill
                         sizes="80px"
                         quality={PRODUCT_THUMB_QUALITY}

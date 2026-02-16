@@ -13,6 +13,8 @@ const categories = {
     description:
       'Premium porselen tabaklar. Servis tabakları, pasta tabakları ve daha fazlası. Jonquil koleksiyonlarından zarif sofra ürünleri.',
     keywords: ['tabak', 'servis tabağı', 'pasta tabağı', 'porselen tabak'],
+    intro:
+      'Sofranın temelini tabaklar oluşturur. Jonquil Studio tabak koleksiyonu; servis tabağı, pasta tabağı ve paylaşım tabağı seçenekleriyle her sunum ihtiyacına cevap verir. Aslan koleksiyonunun klasik altın detayları veya Ottoman koleksiyonunun canlı renkleriyle sofranıza zamansız bir karakter katabilirsiniz. Tüm tabaklar birinci sınıf porselen malzemeyle üretilir ve bulaşık makinesine uygundur.',
   },
   fincanlar: {
     name: 'Fincanlar & Kupalar',
@@ -20,6 +22,8 @@ const categories = {
     description:
       'Özenle üretilmiş porselen fincanlar ve kupalar. Türk kahvesi fincanları, çay fincanları ve kupa setleri. Özel tasarım kahve keyfi.',
     keywords: ['fincan', 'kupa', 'kahve fincanı', 'çay fincanı', 'porselen fincan'],
+    intro:
+      'Kahve ve çay ritüellerinize özel anlam katacak fincan ve kupalar. Türk kahvesi fincan setlerinden günlük kullanıma uygun kupalara kadar geniş bir seçki sunan koleksiyonumuz, sofra stilinizi tamamlar. Her parça, ergonomik form ve göze hitap eden tasarımı bir arada sunar. İkili setler hediye olarak da mükemmel bir tercih oluşturur.',
   },
   kullukler: {
     name: 'Küllükler',
@@ -27,6 +31,8 @@ const categories = {
     description:
       'Cam ve porselen küllükler. Puro ve sigara küllükleri. Dekoratif ve fonksiyonel tasarımlar.',
     keywords: ['küllük', 'puro küllüğü', 'cam küllük', 'dekoratif küllük'],
+    intro:
+      'Jonquil küllükleri, fonksiyonel bir aksesuar olmanın ötesinde birer dekorasyon objesidir. Porselen ve cam seçeneklerle sunulan koleksiyonumuz, yaşam alanlarınıza şık bir dokunuş katar. Puro küllüklerinden kompakt tasarımlara kadar her ihtiyaca uygun parçalar mevcuttur. Bir sofra aksesuarı olarak veya hediye olarak fark yaratan bir seçimdir.',
   },
   mumluklar: {
     name: 'Mumluklar',
@@ -34,6 +40,8 @@ const categories = {
     description:
       'Dekoratif mumluklar. Atmosfer yaratan tasarım mumluklar. Cam ve porselen seçenekler.',
     keywords: ['mumluk', 'cam mumluk', 'dekoratif mumluk', 'şamdan'],
+    intro:
+      'Atmosfer yaratmanın en zarif yolu, doğru mumluktur. Jonquil Studio mumlukları hem mum yandığında hem söndüğünde dekoratif değer taşır. Porselen gövde üzerine altın ve renk detaylarıyla tasarlanan mumluklar, sofra düzeni veya ev dekorasyonunda güçlü bir vurgu noktası oluşturur. Mum bittikten sonra fincan olarak da kullanılabilir.',
   },
   aksesuarlar: {
     name: 'Aksesuarlar',
@@ -41,6 +49,8 @@ const categories = {
     description:
       'Tasarım aksesuarlar. Dekoratif objeler ve fonksiyonel aksesuarlar. Sofra ve ev dekorasyonu için özel parçalar.',
     keywords: ['aksesuar', 'dekoratif obje', 'ev aksesuarı'],
+    intro:
+      'Sofra ve yaşam alanı aksesuarları, küçük detaylarla büyük farklar yaratır. Bardak altlıklarından dekoratif cam objelere kadar uzanan Jonquil aksesuar koleksiyonu, koleksiyonunuzu tamamlayan parçalar sunar. Her aksesuar, ana koleksiyon parçalarıyla uyumlu renk ve desen dilinde tasarlanmıştır.',
   },
   tekstil: {
     name: 'Tekstil',
@@ -48,6 +58,8 @@ const categories = {
     description:
       'Özel tasarım tekstil ürünleri. Masa örtüleri, peçeteler ve ev tekstili. Özenle üretilmiş dokuma ve baskı tasarımlar.',
     keywords: ['tekstil', 'masa örtüsü', 'peçete', 'ev tekstili'],
+    intro:
+      'Jonquil tekstil koleksiyonu, porselen parçalarınızla uyumlu bir sofra dokusu oluşturmanızı sağlar. Dekoratif yastıklar ve özel baskı tasarımlarla yaşam alanlarınıza sıcaklık ve karakter katar. Her tekstil parçası, koleksiyonların renk paletine uygun olarak tasarlanmıştır.',
   },
   tepsiler: {
     name: 'Tepsiler & Kutular',
@@ -55,6 +67,8 @@ const categories = {
     description:
       'Tasarım tepsiler ve kutular. Servis tepsileri, dekoratif kutular. Sunum ve saklama için şık çözümler.',
     keywords: ['tepsi', 'kutu', 'servis tepsisi', 'dekoratif kutu'],
+    intro:
+      'Servis ve sunum kalitesini yükselten tepsiler ile dekoratif saklama kutuları. Oval tepsilerden altıgen formlara, akrilik kutulardan dikdörtgen servis parçalarına kadar geniş bir yelpaze sunar. Her parça, sofra düzeninize düzen ve zarafet katarken günlük kullanımda da pratik çözümler sağlar.',
   },
 } as const;
 
@@ -173,6 +187,7 @@ export default async function CategoryPage({ params }: Props) {
         slug={categorySlug}
         name={category.name}
         description={category.description}
+        intro={category.intro}
         products={products}
       />
     </>

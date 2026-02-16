@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check, XCircle } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Heart, ShoppingCart, ChevronLeft, ChevronRight, Check, XCircle, Shield, Truck, Award, RotateCcw, BookOpen } from "lucide-react";
 import { getColorSwatchStyle } from "@/utils/groupProducts";
 import { useCart } from "@/contexts/CartContext";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -36,6 +37,49 @@ export default function ProductDetail({
   const [addedToCart, setAddedToCart] = useState(false);
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
   const handleImageError = (src: string) => setBrokenImages(prev => new Set(prev).add(src));
+
+  // Blog guides matched to product
+  const blogGuides = useMemo(() => {
+    const allGuides = [
+      {
+        title: 'Porselen Bakım Rehberi',
+        slug: 'porselen-bakimi',
+        desc: 'Ürünlerinizi uzun yıllar ilk günkü gibi korumanın yolları.',
+        match: () => true,
+      },
+      {
+        title: 'Aslan mı Ottoman mı?',
+        slug: 'aslan-mi-ottoman-mi',
+        desc: 'İki koleksiyonu karşılaştırın, sofranıza uygun olanı keşfedin.',
+        match: () => product.collection === 'aslan' || product.collection === 'ottoman',
+      },
+      {
+        title: 'Sofra Düzenleme Rehberi',
+        slug: 'sofra-duzenleme-rehberi',
+        desc: 'Premium sofra kurulumu için pratik ipuçları.',
+        match: () => ['Tabak', 'Fincan & Kupa', 'Tepsi & Kutu'].includes(product.productType),
+      },
+      {
+        title: 'Çeyiz Porseleni Rehberi',
+        slug: 'ceyiz-porseleni-rehberi',
+        desc: 'Nesiller boyu değer taşıyan çeyiz seçimi için rehber.',
+        match: () => true,
+      },
+      {
+        title: 'Mevsimlik Sofra Stili',
+        slug: 'mevsimlik-sofra-stili',
+        desc: 'Dört mevsim sofranıza uyum sağlayan stil önerileri.',
+        match: () => ['Tabak', 'Fincan & Kupa', 'Mumluk', 'Tekstil'].includes(product.productType),
+      },
+      {
+        title: 'Hediye Seçim Rehberi',
+        slug: 'hediye-secim-rehberi',
+        desc: 'Her bütçeye ve anıya uygun porselen hediye önerileri.',
+        match: () => true,
+      },
+    ];
+    return allGuides.filter(g => g.match()).slice(0, 3);
+  }, [product.collection, product.productType]);
 
   // Get current variant
   const hasVariants = product.variants && product.variants.length > 1;
@@ -174,7 +218,7 @@ export default function ProductDetail({
                         : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <Image src={img} alt="" fill sizes="80px" className="object-cover" loading="lazy" />
+                    <Image src={img} alt={`${product.title} - Görsel ${index + 1}`} fill sizes="80px" className="object-cover" loading="lazy" />
                   </button>
                 ))}
               </div>
@@ -425,6 +469,26 @@ export default function ProductDetail({
                 {currentVariant ? currentVariant.code : product.code}
               </div>
             </div>
+
+            {/* Trust Signals */}
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2.5 rounded-xl bg-[#faf8f5] p-3">
+                <Award className="h-4 w-4 shrink-0 text-[#d4af7a]" />
+                <span className="text-xs text-[#666]">Birinci Sınıf Porselen</span>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl bg-[#faf8f5] p-3">
+                <Shield className="h-4 w-4 shrink-0 text-[#d4af7a]" />
+                <span className="text-xs text-[#666]">Güvenli Ödeme</span>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl bg-[#faf8f5] p-3">
+                <Truck className="h-4 w-4 shrink-0 text-[#d4af7a]" />
+                <span className="text-xs text-[#666]">Özenli Paketleme</span>
+              </div>
+              <div className="flex items-center gap-2.5 rounded-xl bg-[#faf8f5] p-3">
+                <RotateCcw className="h-4 w-4 shrink-0 text-[#d4af7a]" />
+                <span className="text-xs text-[#666]">Kolay İade</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -510,6 +574,37 @@ export default function ProductDetail({
             </div>
           )}
         </section>
+
+        {/* Blog Guides Section */}
+        {blogGuides.length > 0 && (
+          <section className="mt-16 border-t border-[#e8e6e3] pt-16">
+            <div className="mb-8">
+              <h2 className="mb-3 text-center font-serif text-3xl font-light text-[#1a1a1a]">
+                Rehberler
+              </h2>
+              <p className="text-center text-sm text-[#666]">
+                Ürününüzden en iyi şekilde yararlanmanız için
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {blogGuides.map((guide) => (
+                <Link
+                  key={guide.slug}
+                  href={`/blog/${guide.slug}`}
+                  className="group rounded-2xl border border-[#e8e6e3] bg-white p-6 transition-all hover:border-[#d4af7a] hover:shadow-md"
+                >
+                  <BookOpen className="mb-3 h-5 w-5 text-[#d4af7a]" />
+                  <h3 className="mb-2 text-sm font-semibold text-[#1a1a1a] group-hover:text-[#0f3f44]">
+                    {guide.title}
+                  </h3>
+                  <p className="text-xs leading-relaxed text-[#999]">
+                    {guide.desc}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );

@@ -543,7 +543,7 @@ function Homepage({
               {galleryVisible[0] && (
                 <Image
                   src={galleryVisible[0]}
-                  alt="Gallery image 1"
+                  alt="Jonquil Studio porselen koleksiyon görseli"
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transition-transform duration-500 hover:scale-105"
@@ -557,7 +557,7 @@ function Homepage({
               {galleryVisible[1] && (
                 <Image
                   src={galleryVisible[1]}
-                  alt="Gallery image 2"
+                  alt="Jonquil Studio sofra düzeni detayı"
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className="object-cover transition-transform duration-500 hover:scale-105"
@@ -571,7 +571,7 @@ function Homepage({
               {galleryVisible[2] && (
                 <Image
                   src={galleryVisible[2]}
-                  alt="Gallery image 3"
+                  alt="Jonquil Studio tasarım porselen yakın çekim"
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className="object-cover transition-transform duration-500 hover:scale-105"
@@ -585,7 +585,7 @@ function Homepage({
               {galleryVisible[3] && (
                 <Image
                   src={galleryVisible[3]}
-                  alt="Gallery image 4"
+                  alt="Jonquil Studio premium porselen sunum"
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className="object-cover transition-transform duration-500 hover:scale-105"
@@ -599,7 +599,7 @@ function Homepage({
               {galleryVisible[4] && (
                 <Image
                   src={galleryVisible[4]}
-                  alt="Gallery image 5"
+                  alt="Jonquil Studio dekoratif porselen obje"
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
                   className="object-cover transition-transform duration-500 hover:scale-105"

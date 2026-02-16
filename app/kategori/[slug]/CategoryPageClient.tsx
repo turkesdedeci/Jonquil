@@ -8,6 +8,7 @@ import { Filter, Grid, List, SlidersHorizontal, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FilterSection from '@/components/FilterSection';
+import NewsletterCTA from '@/components/NewsletterCTA';
 import { useStock } from '@/contexts/StockContext';
 
 interface Product {
@@ -31,6 +32,7 @@ interface CategoryPageClientProps {
   slug: string;
   name: string;
   description: string;
+  intro?: string;
   products: Product[];
 }
 
@@ -97,6 +99,7 @@ function ProductImage({
 export default function CategoryPageClient({
   name,
   description,
+  intro,
   products,
 }: CategoryPageClientProps) {
   const { isInStock } = useStock();
@@ -287,6 +290,17 @@ export default function CategoryPageClient({
             </div>
           </div>
         </section>
+
+        {/* Category Intro */}
+        {intro && (
+          <section className="border-b border-[#e8e6e3] bg-white py-8">
+            <div className="mx-auto max-w-3xl px-4 sm:px-6">
+              <p className="text-center text-sm leading-relaxed text-[#666] sm:text-base">
+                {intro}
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* Top Bar */}
         <section className="border-b border-[#e8e6e3] bg-[#faf8f5]">
@@ -566,6 +580,7 @@ export default function CategoryPageClient({
         )}
       </AnimatePresence>
 
+      <NewsletterCTA />
       <Footer />
     </div>
   );
