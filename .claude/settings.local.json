@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp add:*)",
+      "Bash(CLAUDECODE= claude mcp add:*)",
+      "Bash(CLAUDECODE= claude mcp list:*)",
+      "Bash(codex auth:*)",
+      "Bash(codex login:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(npx vercel --prod)",
+      "Bash(npx vercel link:*)",
+      "Bash(npx vercel:*)"
+    ]
+  }
+}
