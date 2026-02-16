@@ -13,8 +13,8 @@ export const ASSETS = {
   // Hero images
   hero: "/images/products/GENEL FOTOLAR/Header-1.jpg",
   hero1: "/images/products/GENEL FOTOLAR/Header-1.jpg",
-  hero2: "/images/products/GENEL FOTOLAR/Header-1.jpg",
-  hero3: "/images/products/GENEL FOTOLAR/Header-1.jpg",
+  hero2: "/images/footerslayt/image00001.jpeg",
+  hero3: "/images/footerslayt/image00004.jpeg",
   
   // Collection cover images
   aslanCover: "/images/products/GENEL FOTOLAR/Aslan Temsil.jpg",
