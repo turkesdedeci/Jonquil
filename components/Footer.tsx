@@ -2,14 +2,14 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Instagram, Mail, Phone, MapPin } from "lucide-react";
+import { Instagram, Mail, Phone } from "lucide-react";
 import { ASSETS, BRAND } from "@/constants/brand";
 
 export default function Footer() {
   return (
     <footer className="border-t border-[#e8e6e3] bg-[#faf8f5]" role="contentinfo">
       <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div>
             <div className="mb-6 flex items-center">
@@ -22,27 +22,9 @@ export default function Footer() {
                 className="ml-2 h-auto w-[220px] md:ml-4 md:w-[260px]"
               />
             </div>
-            <p className="mb-6 text-sm leading-relaxed text-[#666]">
+            <p className="text-sm leading-relaxed text-[#666]">
               El yapımı porselen ve tasarım objeleri ile sofranıza sanat katın.
             </p>
-            <div className="flex gap-3" role="list" aria-label="Sosyal medya">
-              <a
-                href="https://www.instagram.com/jonquilstudio"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0f3f44] shadow-sm transition-colors hover:bg-[#0f3f44] hover:text-white"
-                aria-label="Instagram'da takip et"
-              >
-                <Instagram className="h-5 w-5" aria-hidden="true" />
-              </a>
-              <a
-                href="mailto:info@jonquilstudio.co"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0f3f44] shadow-sm transition-colors hover:bg-[#0f3f44] hover:text-white"
-                aria-label="E-posta gönder"
-              >
-                <Mail className="h-5 w-5" aria-hidden="true" />
-              </a>
-            </div>
           </div>
 
           {/* Shop */}
@@ -54,6 +36,36 @@ export default function Footer() {
               <li><Link href="/koleksiyon/ottoman" className="hover:text-[#0f3f44]">Ottoman Koleksiyonu</Link></li>
             </ul>
           </nav>
+
+          {/* Contact */}
+          <div>
+            <h3 className="mb-4 text-sm font-semibold tracking-wide text-[#1a1a1a]">Bize Ulaşın</h3>
+            <ul className="space-y-3 text-sm text-[#666]">
+              <li>
+                <a
+                  href="https://www.instagram.com/jonquilstudio"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 hover:text-[#0f3f44]"
+                >
+                  <Instagram className="h-4 w-4" aria-hidden="true" />
+                  @jonquilstudio
+                </a>
+              </li>
+              <li>
+                <a href="mailto:info@jonquilstudio.co" className="flex items-center gap-2 hover:text-[#0f3f44]">
+                  <Mail className="h-4 w-4" aria-hidden="true" />
+                  info@jonquilstudio.co
+                </a>
+              </li>
+              <li>
+                <a href="tel:+905335101093" className="flex items-center gap-2 hover:text-[#0f3f44]">
+                  <Phone className="h-4 w-4" aria-hidden="true" />
+                  0 (533) 510 10 93
+                </a>
+              </li>
+            </ul>
+          </div>
 
           {/* Company */}
           <nav aria-label="Kurumsal">
@@ -80,18 +92,6 @@ export default function Footer() {
               <li><Link href="/teslimat-iade" className="hover:text-[#0f3f44]">Teslimat ve İade</Link></li>
               <li><Link href="/iletisim" className="hover:text-[#0f3f44]">Sıkça Sorulan Sorular</Link></li>
               <li><Link href="/iletisim?type=bug" className="hover:text-[#0f3f44]">Sorun Bildir</Link></li>
-              <li>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" aria-hidden="true" />
-                  <a href="tel:+905335101093" aria-label="Telefon: 0 533 510 10 93">0 (533) 510 10 93</a>
-                </div>
-              </li>
-              <li>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" aria-hidden="true" />
-                  <a href="mailto:info@jonquilstudio.co" className="hover:text-[#0f3f44]">info@jonquilstudio.co</a>
-                </div>
-              </li>
             </ul>
           </div>
         </div>
