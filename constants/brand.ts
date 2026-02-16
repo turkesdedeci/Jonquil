@@ -1,7 +1,7 @@
 export const BRAND = {
   name: "JONQUIL",
   tagline: "Designer Tableware",
-  description: "Premium el yapımı porselen ve tasarım objeleri",
+  description: "Premium tasarım porselen ve objeleri",
 };
 
 const LOGO_VERSION = "20260215-1";
@@ -31,7 +31,7 @@ export const COLLECTIONS = {
   aslan: {
     title: "Aslan Koleksiyonu",
     subtitle: "CLASSIC DESIGN",
-    description: "Zamansız çizgiler ve klasik tasarımlarla sofranıza zarafet katın. Aslan koleksiyonu, modern minimalizmi geleneksel el işçiliğiyle buluşturuyor.",
+    description: "Zamansız çizgiler ve klasik tasarımlarla sofranıza zarafet katın. Aslan koleksiyonu, modern minimalizmi geleneksel zanaatkârlıkla buluşturuyor.",
     badge: "CLASSIC DESIGN",
     cover: ASSETS.aslanCover,
   },

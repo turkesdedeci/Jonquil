@@ -293,7 +293,7 @@ export default function AllProductsClient({ products }: AllProductsClientProps) 
                 Tüm Ürünler
               </h1>
               <p className="mx-auto max-w-2xl text-sm leading-relaxed text-white/80 sm:text-lg">
-                El yapımı porselen koleksiyonlarımızı keşfedin.
+                Premium porselen koleksiyonlarımızı keşfedin.
               </p>
             </div>
           </div>

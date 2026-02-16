@@ -10,9 +10,9 @@ const collections = {
   aslan: {
     name: 'Aslan Koleksiyonu',
     description:
-      'Klasik Osmanlı aslan motiflerinden ilham alan zarif porselen koleksiyonumuz. El yapımı, altın detaylı, sofranıza kraliyet havası katan eşsiz parçalar.',
+      'Klasik Osmanlı aslan motiflerinden ilham alan zarif porselen koleksiyonumuz. Altın detaylı, sofranıza kraliyet havası katan eşsiz parçalar.',
     heroImage: '/images/collections/aslan-hero.jpg',
-    keywords: ['aslan', 'klasik', 'osmanlı', 'altın', 'porselen', 'el yapımı'],
+    keywords: ['aslan', 'klasik', 'osmanlı', 'altın', 'porselen', 'tasarım'],
   },
   ottoman: {
     name: 'Ottoman Koleksiyonu',
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const collection = collections[slug as CollectionSlug];
-  const title = `${collection.name} | Jonquil - El Yapımı Türk Porseleni`;
+  const title = `${collection.name} | Jonquil Studio Premium Porselen`;
   const description = collection.description;
   const imageUrl = collection.heroImage || '/images/og-default.jpg';
 

@@ -31,8 +31,8 @@ export default function IletisimPage() {
               </div>
               <div>
                 <h3 className="font-medium text-neutral-900">E-posta</h3>
-                <a href="mailto:fulyaozzturk@gmail.com" className="text-[#0f3f44] hover:underline">
-                  fulyaozzturk@gmail.com
+                <a href="mailto:info@jonquilstudio.co" className="text-[#0f3f44] hover:underline">
+                  info@jonquilstudio.co
                 </a>
               </div>
             </div>

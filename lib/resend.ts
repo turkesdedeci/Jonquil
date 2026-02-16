@@ -144,7 +144,7 @@ export function getContactAutoReplyHtml(data: ContactFormData): string {
       <!-- Header -->
       <div style="text-align: center; margin-bottom: 32px;">
         <h1 style="color: #0f3f44; font-size: 28px; margin: 0; font-weight: 300; letter-spacing: 4px;">JONQUIL</h1>
-        <p style="color: #666; font-size: 14px; margin: 8px 0 0;">El Yapımı Porselen</p>
+        <p style="color: #666; font-size: 14px; margin: 8px 0 0;">Premium Tasarım Porselen</p>
       </div>
 
       <!-- Content -->
@@ -206,7 +206,7 @@ export function getOrderConfirmationHtml(data: OrderEmailData): string {
       <!-- Header -->
       <div style="text-align: center; margin-bottom: 32px;">
         <h1 style="color: #0f3f44; font-size: 28px; margin: 0; font-weight: 300; letter-spacing: 4px;">JONQUIL</h1>
-        <p style="color: #666; font-size: 14px; margin: 8px 0 0;">El Yapımı Porselen</p>
+        <p style="color: #666; font-size: 14px; margin: 8px 0 0;">Premium Tasarım Porselen</p>
       </div>
 
       <!-- Success Icon -->
@@ -518,7 +518,7 @@ export function getAbandonedCartHtml(data: AbandonedCartEmailData): string {
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
     <div style="background:#fff;border-radius:12px;padding:40px;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
       <h1 style="margin:0 0 8px;font-size:28px;font-weight:700;color:#0f3f44;">Jonquil</h1>
-      <p style="margin:0 0 32px;color:#666;font-size:14px;">El Yapımı Türk Porseleni</p>
+      <p style="margin:0 0 32px;color:#666;font-size:14px;">Premium Tasarım Porselen</p>
 
       <h2 style="margin:0 0 16px;font-size:20px;font-weight:600;color:#1a1a1a;">Sepetinizde ürünler bekliyor</h2>
       <p style="margin:0 0 24px;color:#555;font-size:15px;line-height:1.6;">
@@ -540,7 +540,7 @@ export function getAbandonedCartHtml(data: AbandonedCartEmailData): string {
 
       <p style="margin:32px 0 0;color:#999;font-size:12px;line-height:1.6;">
         Bu e-postayı almak istemiyorsanız <a href="${data.cartUrl}/abonelikten-cik" style="color:#0f3f44;">buraya tıklayın</a>.
-        Jonquil Studio — El yapımı Türk porseleni.
+        Jonquil Studio — Premium tasarım porselen.
       </p>
     </div>
   </div>

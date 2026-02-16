@@ -4,7 +4,7 @@ import { Building2, Award, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Hakkımızda - JONQUIL STUDIO",
-  description: "JONQUIL STUDIO - Premium el yapımı porselen ve tasarım objeleri. Hikayemiz ve değerlerimiz.",
+  description: "JONQUIL STUDIO - Premium tasarım porselen ve objeleri. Hikayemiz ve değerlerimiz.",
 };
 
 export default function HakkimizdaPage() {
@@ -52,7 +52,7 @@ export default function HakkimizdaPage() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0f3f44]/10">
               <Sparkles className="h-6 w-6 text-[#0f3f44]" />
             </div>
-            <h3 className="mb-2 font-semibold text-neutral-900">El İşçiliği</h3>
+            <h3 className="mb-2 font-semibold text-neutral-900">Ustalık ve Detay</h3>
             <p className="text-sm">
               Her ürün usta ellerde şekillenir; altın detaylar tek tek işlenir.
             </p>

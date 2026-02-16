@@ -322,7 +322,7 @@ function Homepage({
             </h1>
 
             <p className="mb-10 max-w-xl text-lg font-light leading-relaxed text-white/90">
-              El yapımı porselen tabak setleri ve tasarım objeleri ile özel anlarınızı daha değerli kılın.
+              Özenle üretilmiş porselen tabak setleri ve tasarım objeleri ile özel anlarınızı daha değerli kılın.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -381,7 +381,7 @@ function Homepage({
                 image={ASSETS.aslanCover}
                 badge="CLASSIC DESIGN"
                 title="Aslan Koleksiyonu"
-                desc="El yapımı porselen aslan figürlü klasik tasarım"
+                desc="Altın detaylı aslan figürlü klasik tasarım porselen"
                 onClick={() => {}}
               />
             </Link>
@@ -404,8 +404,8 @@ function Homepage({
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <FeatureCard
               icon={<BadgeCheck className="h-8 w-8" />}
-              title="El Yapımı Üretim"
-              desc="Her ürün, deneyimli zanaatkarlar tarafından özenle üretilir ve kalite kontrolünden geçer."
+              title="Özenli Üretim"
+              desc="Her ürün, deneyimli zanaatkârlar tarafından titizlikle üretilir ve kalite kontrolünden geçer."
             />
             <FeatureCard
               icon={<ShieldCheck className="h-8 w-8" />}
@@ -689,7 +689,7 @@ function CollectionsPage({ onGo, products }: { onGo: (r: Route) => void; product
             image={ASSETS.aslanCover}
             badge="CLASSIC DESIGN"
             title="Aslan Koleksiyonu"
-            desc="El yapımı porselen aslan figürlü klasik tasarım"
+            desc="Altın detaylı aslan figürlü klasik tasarım porselen"
             onClick={() => onGo({ name: "collection", slug: "aslan" })}
           />
           <CollectionCard
@@ -1579,7 +1579,7 @@ function AboutPage({ onGo }: { onGo: (r: Route) => void }) {
                 karakterleriyle birleştirdik.
               </p>
               <p className="text-[17px] leading-relaxed text-[#666]">
-                28 renk kullanarak, el işçiliği ve birinci sınıf porselen üzerine sır üstü dekal baskıyla 
+                28 renk kullanarak, birinci sınıf porselen üzerine sır üstü dekal baskıyla
                 ürünlerimizi hazırladık. Her gördüğünüzde neşelendirecek parçalar olmasını arzu ettiğimiz 
                 Ottoman Koleksiyonumuzu size sunmanın heyecanı içindeyiz.
               </p>
@@ -1597,7 +1597,7 @@ function AboutPage({ onGo }: { onGo: (r: Route) => void }) {
               </div>
               <div className="text-center">
                 <div className="mb-3 text-4xl font-light text-[#d4af7a]">100%</div>
-                <div className="text-sm text-[#666]">El Yapımı</div>
+                <div className="text-sm text-[#666]">Özenle Üretilmiş</div>
               </div>
             </div>
           </motion.div>

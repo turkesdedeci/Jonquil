@@ -355,7 +355,7 @@ export default function ProductDetail({
                     >
                       <p className="text-sm leading-relaxed text-[#666]">
                         Jonquil Studio'nun özenle tasarladığı bu eşsiz parça, modern yaşamın estetiğini 
-                        klasik zanaatla buluşturuyor. El işçiliği ve birinci sınıf porselen ile üretilen 
+                        klasik zanaatla buluşturuyor. Birinci sınıf porselen ve özenli detay işçiliğiyle üretilen
                         ürünlerimiz, sofranıza zarafet katıyor.
                       </p>
                     </motion.div>

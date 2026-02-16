@@ -84,7 +84,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const title = `${normalizedProduct.title} - ${normalizedProduct.subtitle} | Jonquil`;
   const description =
     normalizedProduct.description?.trim() ||
-    `${normalizedProduct.title} ${normalizedProduct.subtitle}. ${normalizedProduct.material}, ${normalizedProduct.size}. El yapımı Türk porselen ürünleri. Jonquil koleksiyonundan ${normalizedProduct.family} serisi.`;
+    `${normalizedProduct.title} ${normalizedProduct.subtitle}. ${normalizedProduct.material}, ${normalizedProduct.size}. Jonquil Studio premium porselen. ${normalizedProduct.family} koleksiyonu.`;
   const imageUrl = normalizedProduct.images?.[0] || '/images/og-default.jpg';
 
   return {
@@ -96,7 +96,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       normalizedProduct.collection,
       normalizedProduct.material,
       'porselen',
-      'el yapımı',
+      'tasarım porselen',
       'Türk porseleni',
       'lüks sofra',
       ...normalizedProduct.tags,
@@ -157,11 +157,6 @@ function generateJsonLd(product: Product) {
         '@type': 'Organization',
         name: SITE_NAME,
       },
-    },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      reviewCount: '127',
     },
   };
 }

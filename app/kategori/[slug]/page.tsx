@@ -11,49 +11,49 @@ const categories = {
     name: 'Tabaklar',
     productType: 'Tabak',
     description:
-      'El yapımı porselen tabaklar. Servis tabakları, pasta tabakları ve daha fazlası. Jonquil koleksiyonlarından zarif sofra ürünleri.',
+      'Premium porselen tabaklar. Servis tabakları, pasta tabakları ve daha fazlası. Jonquil koleksiyonlarından zarif sofra ürünleri.',
     keywords: ['tabak', 'servis tabağı', 'pasta tabağı', 'porselen tabak'],
   },
   fincanlar: {
     name: 'Fincanlar & Kupalar',
     productType: 'Fincan & Kupa',
     description:
-      'El yapımı porselen fincanlar ve kupalar. Türk kahvesi fincanları, çay fincanları ve kupa setleri. Özel tasarım kahve keyfi.',
+      'Özenle üretilmiş porselen fincanlar ve kupalar. Türk kahvesi fincanları, çay fincanları ve kupa setleri. Özel tasarım kahve keyfi.',
     keywords: ['fincan', 'kupa', 'kahve fincanı', 'çay fincanı', 'porselen fincan'],
   },
   kullukler: {
     name: 'Küllükler',
     productType: 'Küllük',
     description:
-      'El yapımı cam ve porselen küllükler. Puro ve sigara küllükleri. Dekoratif ve fonksiyonel tasarımlar.',
+      'Cam ve porselen küllükler. Puro ve sigara küllükleri. Dekoratif ve fonksiyonel tasarımlar.',
     keywords: ['küllük', 'puro küllüğü', 'cam küllük', 'dekoratif küllük'],
   },
   mumluklar: {
     name: 'Mumluklar',
     productType: 'Mumluk',
     description:
-      'El yapımı mumluklar. Atmosfer yaratan dekoratif mumluklar. Cam ve porselen tasarımlar.',
+      'Dekoratif mumluklar. Atmosfer yaratan tasarım mumluklar. Cam ve porselen seçenekler.',
     keywords: ['mumluk', 'cam mumluk', 'dekoratif mumluk', 'şamdan'],
   },
   aksesuarlar: {
     name: 'Aksesuarlar',
     productType: 'Aksesuar',
     description:
-      'El yapımı aksesuarlar. Dekoratif objeler ve fonksiyonel aksesuarlar. Sofra ve ev dekorasyonu için özel parçalar.',
+      'Tasarım aksesuarlar. Dekoratif objeler ve fonksiyonel aksesuarlar. Sofra ve ev dekorasyonu için özel parçalar.',
     keywords: ['aksesuar', 'dekoratif obje', 'ev aksesuarı'],
   },
   tekstil: {
     name: 'Tekstil',
     productType: 'Tekstil',
     description:
-      'El yapımı tekstil ürünleri. Masa örtüleri, peçeteler ve ev tekstili. Özel dokuma ve baskı tasarımlar.',
+      'Özel tasarım tekstil ürünleri. Masa örtüleri, peçeteler ve ev tekstili. Özenle üretilmiş dokuma ve baskı tasarımlar.',
     keywords: ['tekstil', 'masa örtüsü', 'peçete', 'ev tekstili'],
   },
   tepsiler: {
     name: 'Tepsiler & Kutular',
     productType: 'Tepsi & Kutu',
     description:
-      'El yapımı tepsiler ve kutular. Servis tepsileri, dekoratif kutular. Sunum ve saklama için şık çözümler.',
+      'Tasarım tepsiler ve kutular. Servis tepsileri, dekoratif kutular. Sunum ve saklama için şık çözümler.',
     keywords: ['tepsi', 'kutu', 'servis tepsisi', 'dekoratif kutu'],
   },
 } as const;
@@ -84,14 +84,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const category = categories[slug as CategorySlug];
-  const title = `${category.name} | Jonquil - El Yapımı Türk Porseleni`;
+  const title = `${category.name} | Jonquil Studio Premium Porselen`;
   const description = category.description;
   const imageUrl = '/images/og-default.jpg';
 
   return {
     title,
     description,
-    keywords: [...category.keywords, 'Jonquil', 'Türk porseleni', 'el yapımı', 'lüks'],
+    keywords: [...category.keywords, 'Jonquil', 'Türk porseleni', 'tasarım porselen', 'lüks'],
     openGraph: {
       title,
       description,

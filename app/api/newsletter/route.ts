@@ -33,14 +33,14 @@ function getWelcomeEmailHtml(email: string): string {
       <!-- Header -->
       <div style="text-align: center; margin-bottom: 32px;">
         <h1 style="color: #0f3f44; font-size: 28px; margin: 0; font-weight: 300; letter-spacing: 4px;">JONQUIL</h1>
-        <p style="color: #666; font-size: 14px; margin: 8px 0 0;">El Yapımı Porselen</p>
+        <p style="color: #666; font-size: 14px; margin: 8px 0 0;">Premium Tasarım Porselen</p>
       </div>
 
       <!-- Content -->
       <div style="text-align: center; margin-bottom: 32px;">
         <h2 style="color: #1a1a1a; font-size: 20px; margin: 0 0 16px;">Bültenimize Hoş Geldiniz!</h2>
         <p style="color: #666; font-size: 15px; line-height: 1.6; margin: 0;">
-          Artık yeni koleksiyonlarımızdan, özel indirimlerden ve el yapımı porselen dünyasından haberdar olacaksınız.
+          Artık yeni koleksiyonlarımızdan, özel indirimlerden ve tasarım porselen dünyasından haberdar olacaksınız.
         </p>
       </div>
 

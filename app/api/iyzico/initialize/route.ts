@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         id: productId,
         name: serverProduct.title.substring(0, 50), // Max 50 chars
         category1: serverProduct.productType || 'Porselen',
-        category2: serverProduct.material || 'El Yapımı',
+        category2: serverProduct.material || 'Porselen',
         itemType: 'PHYSICAL',
         price: itemTotal.toFixed(2),
       });

@@ -15,13 +15,13 @@ const siteUrl = getSiteUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'Jonquil Studio - El Yapımı Türk Porseleni',
+    default: 'Jonquil Studio | Premium Tasarım Porselen',
     template: '%s | Jonquil',
   },
-  description: 'Premium el yapımı porselen tabak setleri ve tasarım objeleri ile sofranıza zarafet katın. Aslan ve Ottoman koleksiyonları.',
+  description: 'Özenle üretilmiş porselen tabak setleri ve tasarım objeleri ile sofranıza zarafet katın. Aslan ve Ottoman koleksiyonları.',
   keywords: [
     'porselen',
-    'el yapımı',
+    'tasarım porselen',
     'Türk porseleni',
     'lüks sofra',
     'tabak',
@@ -46,19 +46,19 @@ export const metadata: Metadata = {
     locale: 'tr_TR',
     url: siteUrl,
     siteName: SITE_NAME,
-    title: 'Jonquil Studio - El Yapımı Türk Porseleni',
-    description: 'Premium el yapımı porselen tabak setleri ve tasarım objeleri.',
+    title: 'Jonquil Studio | Premium Tasarım Porselen',
+    description: 'Özenle üretilmiş porselen tabak setleri ve tasarım objeleri.',
     images: [
       {
         url: absoluteUrl('/images/og-default.jpg'),
-        alt: 'Jonquil Studio - El Yapımı Türk Porseleni',
+        alt: 'Jonquil Studio | Premium Tasarım Porselen',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Jonquil Studio - El Yapımı Türk Porseleni',
-    description: 'Premium el yapımı porselen tabak setleri ve tasarım objeleri.',
+    title: 'Jonquil Studio | Premium Tasarım Porselen',
+    description: 'Özenle üretilmiş porselen tabak setleri ve tasarım objeleri.',
     images: [absoluteUrl('/images/og-default.jpg')],
   },
   robots: {

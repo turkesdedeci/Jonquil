@@ -10,12 +10,12 @@ export const revalidate = 300;
 const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
-  title: 'Tüm Ürünler | Jonquil - El Yapımı Türk Porseleni',
+  title: 'Tüm Ürünler | Jonquil Studio Premium Porselen',
   description:
-    'Jonquil koleksiyonlarından tüm el yapımı porselen ürünleri keşfedin. Tabaklar, fincanlar, aksesuarlar ve daha fazlası.',
+    'Jonquil koleksiyonlarından tüm premium porselen ürünleri keşfedin. Tabaklar, fincanlar, aksesuarlar ve daha fazlası.',
   keywords: [
     'porselen ürünler',
-    'el yapımı porselen',
+    'tasarım porselen',
     'Türk porseleni',
     'tabak',
     'fincan',
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Tüm Ürünler | Jonquil',
-    description: 'El yapımı porselen ürünlerimizi keşfedin.',
+    description: 'Premium porselen koleksiyonlarımızı keşfedin.',
     type: 'website',
     locale: 'tr_TR',
     url: absoluteUrl('/urunler'),
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Tüm Ürünler | Jonquil',
-    description: 'El yapımı porselen ürünlerimizi keşfedin.',
+    description: 'Premium porselen koleksiyonlarımızı keşfedin.',
     images: [absoluteUrl('/images/og-default.jpg')],
   },
   alternates: {
@@ -50,7 +50,7 @@ function generateJsonLd(productCount: number) {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Tüm Ürünler',
-    description: 'Jonquil koleksiyonlarından tüm el yapımı porselen ürünleri.',
+    description: 'Jonquil koleksiyonlarından tüm premium porselen ürünleri.',
     url: absoluteUrl('/urunler'),
     numberOfItems: productCount,
     isPartOf: {

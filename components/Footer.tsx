@@ -23,7 +23,7 @@ export default function Footer() {
               />
             </div>
             <p className="text-sm leading-relaxed text-[#666]">
-              El yapımı porselen ve tasarım objeleri ile sofranıza sanat katın.
+              Premium porselen ve tasarım objeleri ile sofranıza sanat katın.
             </p>
           </div>
 
