@@ -112,7 +112,7 @@ export default function Page() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [bestSellers, setBestSellers] = useState<any[]>([]);
   const slides = useMemo(
-    () => [ASSETS.hero1, ASSETS.hero2, ASSETS.hero3],
+    () => FOOTER_SLIDES.map(toFooterSlidePath),
     []
   );
   const gallerySlides = useMemo(
