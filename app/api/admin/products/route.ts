@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { isAdmin } from '@/lib/adminCheck';
-import { checkRateLimitAsync, getClientIP } from '@/lib/security';
+import { checkRateLimitAsync, getClientIP, requireSameOrigin } from '@/lib/security';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -91,6 +91,8 @@ export async function PATCH(request: NextRequest) {
   const clientIP = getClientIP(request);
   const rateLimitResponse = await checkRateLimitAsync(clientIP, 'write');
   if (rateLimitResponse) return rateLimitResponse;
+  const originCheck = requireSameOrigin(request);
+  if (originCheck) return originCheck;
 
   // Admin check
   if (!await isAdmin()) {
@@ -172,3 +174,5 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
+
+

@@ -15,15 +15,16 @@ export async function RelatedProducts({ productIds }: { productIds: string[] }) 
   return (
     <div className="rounded-2xl border border-[#e8e6e3] bg-[#faf8f5] p-6">
       <h3 className="mb-4 text-lg font-semibold text-[#1a1a1a]">İlgili Ürünler</h3>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
         {products.map((product) => {
           if (!product) return null;
           const mainImage = product.images?.[0] || '/images/placeholder.jpg';
+
           return (
             <Link
               key={product.id}
               href={`/urun/${product.id}`}
-              className="group flex gap-3 rounded-xl bg-white p-3 transition-shadow hover:shadow-md"
+              className="group flex items-center gap-3 rounded-xl bg-white p-3 transition-shadow hover:shadow-md"
             >
               <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg">
                 <Image
@@ -38,12 +39,10 @@ export async function RelatedProducts({ productIds }: { productIds: string[] }) 
                 <p className="text-xs font-medium uppercase tracking-wider text-[#d4af7a]">
                   {product.family}
                 </p>
-                <p className="truncate text-sm font-medium text-[#1a1a1a] group-hover:text-[#0f3f44]">
+                <p className="line-clamp-2 text-sm font-medium leading-snug text-[#1a1a1a] group-hover:text-[#0f3f44]">
                   {product.title}
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#0f3f44]">
-                  {product.price}
-                </p>
+                <p className="mt-1 text-sm font-semibold text-[#0f3f44]">{product.price}</p>
               </div>
             </Link>
           );

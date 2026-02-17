@@ -539,7 +539,7 @@ export function getAbandonedCartHtml(data: AbandonedCartEmailData): string {
       </a>
 
       <p style="margin:32px 0 0;color:#999;font-size:12px;line-height:1.6;">
-        Bu e-postayı almak istemiyorsanız <a href="${data.cartUrl}/abonelikten-cik" style="color:#0f3f44;">buraya tıklayın</a>.
+        Bu e-postayı almak istemiyorsanız <a href="${data.cartUrl}/unsubscribe" style="color:#0f3f44;">buraya tıklayın</a>.
         Jonquil Studio — Premium tasarım porselen.
       </p>
     </div>
@@ -584,3 +584,4 @@ export async function sendOrderStatusEmail(data: OrderStatusEmailData): Promise<
     return { success: false, error: 'Failed to send status email' };
   }
 }
+

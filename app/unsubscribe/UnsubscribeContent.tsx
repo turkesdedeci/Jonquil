@@ -31,6 +31,25 @@ export default function UnsubscribeContent() {
     );
   }
 
+  if (!error) {
+    return (
+      <>
+        <h1 className="mb-3 font-serif text-3xl font-light text-[#1a1a1a]">
+          Abonelik Tercihleri
+        </h1>
+        <p className="mb-8 max-w-sm text-[#666]">
+          E-posta aboneliğinizi yönetmek için size gönderilen kişisel bağlantıyı kullanın.
+        </p>
+        <Link
+          href="/"
+          className="rounded-full bg-[#0f3f44] px-8 py-3 text-sm font-medium tracking-wider text-white transition-colors hover:bg-[#1a5c63]"
+        >
+          Ana Sayfaya Dön
+        </Link>
+      </>
+    );
+  }
+
   return (
     <>
       <div className="mb-6 inline-flex rounded-full bg-red-100 p-4">

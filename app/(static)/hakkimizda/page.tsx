@@ -1,6 +1,7 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { Metadata } from "next";
-import { Building2, Award, Sparkles } from "lucide-react";
+import { Building2, Award, Sparkles, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Hakkımızda - JONQUIL STUDIO",
@@ -14,7 +15,6 @@ export default function HakkimizdaPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">Hakkımızda</h1>
 
       <div className="mt-12 space-y-12 text-[15px] leading-7 text-neutral-600">
-        {/* Hikayemiz */}
         <section>
           <p className="text-lg leading-8">
             <strong className="text-neutral-900">Jonquil Studio</strong>, gündelik ritüellerin etrafında şekillenen
@@ -24,11 +24,10 @@ export default function HakkimizdaPage() {
           </p>
         </section>
 
-        {/* Görsel */}
-        <div className="relative aspect-[16/9] overflow-hidden rounded-3xl shadow-lg bg-neutral-100">
+        <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-neutral-100 shadow-lg">
           <Image
             src="/images/footerslayt/Jonquil foto galeri-ottoman seri (3).jpg"
-            alt="Jonquil Studio At?lye"
+            alt="Jonquil Studio Atölye"
             fill
             sizes="(max-width: 768px) 100vw, 896px"
             className="object-cover"
@@ -36,7 +35,6 @@ export default function HakkimizdaPage() {
           />
         </div>
 
-        {/* Değerlerimiz */}
         <section className="grid gap-6 md:grid-cols-3">
           <div className="rounded-2xl border border-[#e8e6e3] bg-white p-6">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0f3f44]/10">
@@ -69,7 +67,6 @@ export default function HakkimizdaPage() {
           </div>
         </section>
 
-        {/* Tasarım Felsefesi */}
         <section>
           <h2 className="mb-4 text-xl font-semibold text-neutral-900">Tasarım Felsefemiz</h2>
           <p>
@@ -78,19 +75,49 @@ export default function HakkimizdaPage() {
           </p>
           <p className="mt-4">
             Üretim sürecinde kalite, tutarlılık ve detay önceliklidir. Porselenin karakteri korunur;
-            altın detaylar, renkler ve yüzeyler göze batmadan var olur. Jonquil'de lüks, gösterişli
+            altın detaylar, renkler ve yüzeyler göze batmadan var olur. Jonquil&apos;de lüks, gösterişli
             olmaktan değil, tutarlılıktan doğar.
           </p>
         </section>
 
-        {/* Şirket Bilgileri */}
+        <section className="rounded-3xl border border-[#e8e6e3] bg-white p-6 md:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-neutral-900">Müşteriye Özel Çalışmalar</h2>
+              <p className="mt-2 max-w-2xl text-sm text-neutral-600">
+                Özel sipariş, markaya özel hediye koleksiyonu veya davet sofrası projelerimizin örneklerini
+                ayrı sayfada inceleyebilirsiniz.
+              </p>
+            </div>
+            <span className="hidden rounded-full border border-[#d8d2c6] bg-[#faf8f5] px-3 py-1 text-xs font-medium text-[#0f3f44] md:inline-flex">
+              Özel Üretim
+            </span>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              href="/ozel-calismalar"
+              className="inline-flex items-center gap-2 rounded-full bg-[#0f3f44] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#0a2f34]"
+            >
+              Özel Çalışmaları Gör
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/iletisim"
+              className="inline-flex items-center gap-2 rounded-full border border-[#d8d2c6] bg-[#faf8f5] px-5 py-2.5 text-sm font-semibold text-[#0f3f44] transition-colors hover:bg-[#f2eee7]"
+            >
+              Proje Talebi Oluştur
+            </Link>
+          </div>
+        </section>
+
         <section className="rounded-2xl border border-[#e8e6e3] bg-[#faf8f5] p-8">
           <h2 className="mb-6 text-xl font-semibold text-neutral-900">Şirket Bilgileri</h2>
 
           <dl className="grid gap-4 md:grid-cols-2">
             <div>
               <dt className="text-sm font-medium text-neutral-500">Ticaret Unvanı</dt>
-              <dd className="mt-1 text-neutral-900">JONQUİL TASARIM TİCARET LİMİTED ŞİRKETİ</dd>
+              <dd className="mt-1 text-neutral-900">JONQUIL TASARIM TİCARET LİMİTED ŞİRKETİ</dd>
             </div>
 
             <div>
@@ -105,14 +132,12 @@ export default function HakkimizdaPage() {
 
             <div>
               <dt className="text-sm font-medium text-neutral-500">KEP Adresi</dt>
-              <dd className="mt-1 text-neutral-900">—</dd>
+              <dd className="mt-1 text-neutral-900">-</dd>
             </div>
 
             <div className="md:col-span-2">
               <dt className="text-sm font-medium text-neutral-500">Merkez Adresi</dt>
-              <dd className="mt-1 text-neutral-900">
-                Kazım Özalp Mah. Kumkapı Sok. 31/4 Çankaya / Ankara
-              </dd>
+              <dd className="mt-1 text-neutral-900">Kazım Özalp Mah. Kumkapı Sok. 31/4 Çankaya / Ankara</dd>
             </div>
 
             <div>

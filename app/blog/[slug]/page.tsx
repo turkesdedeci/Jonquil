@@ -98,7 +98,7 @@ export default async function BlogPostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
-      <article className="mx-auto max-w-6xl px-6 py-10">
+      <article className="mx-auto max-w-6xl px-6 py-10 md:py-12">
         {/* Breadcrumb */}
         <nav className="mb-8 flex items-center gap-2 text-sm text-[#999]" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-[#0f3f44]">Ana Sayfa</Link>
@@ -156,10 +156,12 @@ export default async function BlogPostPage({
         </div>
 
         {/* Content + Sidebar */}
-        <div className="grid gap-10 lg:grid-cols-[1fr_280px]">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
           {/* Main content */}
-          <div>
-            <BlogContent source={post.content} />
+          <div className="min-w-0">
+            <div className="rounded-2xl border border-[#ece7de] bg-white px-6 py-7 md:px-8 md:py-9">
+              <BlogContent source={post.content} />
+            </div>
 
             {/* Tags */}
             {post.tags.length > 0 && (
@@ -184,7 +186,7 @@ export default async function BlogPostPage({
           </div>
 
           {/* Sidebar */}
-          <aside className="space-y-6">
+          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
             <TableOfContents content={post.content} />
             <RelatedProducts productIds={post.relatedProducts} />
           </aside>
