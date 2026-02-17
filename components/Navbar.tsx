@@ -1,5 +1,4 @@
 "use client";
-// components/Navbar.tsx - TAM VE DÜZELTİLMİŞ VERSİYON
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,7 +16,6 @@ import { UserDropdown } from './UserDropdown';
 const SearchModal = dynamic(() => import('./SearchModal'), { ssr: false });
 const CartDrawer = dynamic(() => import('./CartDrawer').then((mod) => mod.CartDrawer), { ssr: false });
 
-// Yardımcı Fonksiyon
 // Product categories for mobile nav
 const mobileCategories = [
   { id: "tabaklar", label: "Tabaklar" },
@@ -29,7 +27,6 @@ const mobileCategories = [
   { id: "aksesuarlar", label: "Aksesuarlar" },
 ];
 
-// 1. MobileNav Bileşeni (Submenu'ler eklendi)
 function MobileNav({
   open,
   onClose,
@@ -182,9 +179,14 @@ function MobileNav({
                       </div>
                     )}
                 </div>
-
                 <Link href="/hakkimizda" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
-                  Hakkımızda <ChevronRight className="h-4 w-4 text-[#999]" />
+                  Kurumsal <ChevronRight className="h-4 w-4 text-[#999]" />
+                </Link>
+                <Link href="/ozel-calismalar" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+                  Özel Çalışmalar <ChevronRight className="h-4 w-4 text-[#999]" />
+                </Link>
+                <Link href="/blog" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+                  Hikayeler <ChevronRight className="h-4 w-4 text-[#999]" />
                 </Link>
                 <Link href="/iletisim" onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
                   İletişim <ChevronRight className="h-4 w-4 text-[#999]" />
@@ -198,15 +200,18 @@ function MobileNav({
   );
 }
 
-// 2. CollectionDropdown Bileşeni (Renkler düzeltildi)
 function CollectionDropdown({
   open,
   anchorRef,
   onClose,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   open: boolean;
   anchorRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -223,7 +228,12 @@ function CollectionDropdown({
   return (
     <>
       {open && (
-        <div ref={dropdownRef} className="absolute left-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+        <div
+          ref={dropdownRef}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          className="absolute left-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
+        >
           <div className="p-3">
             <Link href="/koleksiyon/aslan" onClick={onClose} className="flex w-full items-center gap-4 rounded-xl p-3 text-left hover:bg-[#faf8f5]">
               <div className="relative h-16 w-16 overflow-hidden rounded-lg">
@@ -250,15 +260,18 @@ function CollectionDropdown({
   );
 }
 
-// 3. ProductsDropdown Bileşeni (Tam liste ve renkler)
 function ProductsDropdown({
   open,
   anchorRef,
   onClose,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   open: boolean;
   anchorRef: React.RefObject<HTMLButtonElement | null>;
   onClose: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -285,7 +298,12 @@ function ProductsDropdown({
   return (
     <>
       {open && (
-        <div ref={dropdownRef} className="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+        <div
+          ref={dropdownRef}
+          onMouseEnter={onMouseEnter}
+          onMouseLeave={onMouseLeave}
+          className="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
+        >
           <div className="p-3">
             {categories.map((cat) => (
               <Link key={cat.id} href={`/kategori/${cat.id}`} onClick={onClose} className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium text-[#2a2a2a] transition-colors hover:bg-[#faf8f5]">
@@ -305,17 +323,140 @@ function ProductsDropdown({
   );
 }
 
-// --- ANA NAVBAR BİLEŞENİ ---
+
+function AboutDropdown({
+  open,
+  anchorRef,
+  onClose,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  open: boolean;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node) &&
+        anchorRef?.current &&
+        !anchorRef.current.contains(e.target as Node)
+      ) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open, onClose, anchorRef]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      ref={dropdownRef}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className="absolute left-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-[#e8e6e3] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
+      role="menu"
+      aria-label="Hakkımızda menüsü"
+    >
+      <div className="p-3">
+        <Link
+          href="/hakkimizda"
+          onClick={onClose}
+          className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium text-[#2a2a2a] transition-colors hover:bg-[#faf8f5]"
+          role="menuitem"
+        >
+          Kurumsal
+          <ChevronRight className="h-4 w-4 text-[#999]" />
+        </Link>
+        <Link
+          href="/ozel-calismalar"
+          onClick={onClose}
+          className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium text-[#2a2a2a] transition-colors hover:bg-[#faf8f5]"
+          role="menuitem"
+        >
+          Özel Çalışmalar
+          <ChevronRight className="h-4 w-4 text-[#999]" />
+        </Link>
+        <Link
+          href="/blog"
+          onClick={onClose}
+          className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium text-[#2a2a2a] transition-colors hover:bg-[#faf8f5]"
+          role="menuitem"
+        >
+          Hikayeler
+          <ChevronRight className="h-4 w-4 text-[#999]" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {}) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const desktopMenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const collectionsBtnRef = useRef<HTMLButtonElement>(null);
   const productsBtnRef = useRef<HTMLButtonElement>(null);
+  const aboutBtnRef = useRef<HTMLButtonElement>(null);
   const { totalItems } = useCart();
+
+  const clearDesktopMenuCloseTimer = () => {
+    if (desktopMenuCloseTimerRef.current) {
+      clearTimeout(desktopMenuCloseTimerRef.current);
+      desktopMenuCloseTimerRef.current = null;
+    }
+  };
+
+  const closeAllDesktopMenus = () => {
+    setCollectionsOpen(false);
+    setProductsOpen(false);
+    setAboutOpen(false);
+  };
+
+  const scheduleDesktopMenuClose = () => {
+    clearDesktopMenuCloseTimer();
+    desktopMenuCloseTimerRef.current = setTimeout(() => {
+      closeAllDesktopMenus();
+    }, 220);
+  };
+
+  const openCollectionsMenu = () => {
+    clearDesktopMenuCloseTimer();
+    setCollectionsOpen(true);
+    setProductsOpen(false);
+    setAboutOpen(false);
+  };
+
+  const openProductsMenu = () => {
+    clearDesktopMenuCloseTimer();
+    setProductsOpen(true);
+    setCollectionsOpen(false);
+    setAboutOpen(false);
+  };
+
+  const openAboutMenu = () => {
+    clearDesktopMenuCloseTimer();
+    setAboutOpen(true);
+    setCollectionsOpen(false);
+    setProductsOpen(false);
+  };
+
+  useEffect(() => {
+    return () => clearDesktopMenuCloseTimer();
+  }, []);
 
   const handleCartClick = () => {
     if (onCartClick) {
@@ -344,34 +485,97 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
               className="h-10 w-auto object-contain sm:h-12"
             />
           </Link>
+          <nav className="relative ml-auto hidden items-center gap-1 md:flex" aria-label="Ana menu">
+            <div
+              className="relative"
+              onMouseEnter={openCollectionsMenu}
+              onMouseLeave={scheduleDesktopMenuClose}
+            >
+              <button
+                ref={collectionsBtnRef}
+                onClick={() => {
+                  if (collectionsOpen) {
+                    closeAllDesktopMenus();
+                  } else {
+                    openCollectionsMenu();
+                  }
+                }}
+                className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]"
+                aria-expanded={collectionsOpen}
+                aria-haspopup="true"
+              >
+                Koleksiyonlar
+              </button>
+              <CollectionDropdown
+                open={collectionsOpen}
+                anchorRef={collectionsBtnRef}
+                onClose={() => setCollectionsOpen(false)}
+                onMouseEnter={clearDesktopMenuCloseTimer}
+                onMouseLeave={scheduleDesktopMenuClose}
+              />
+            </div>
 
-          <nav className="relative ml-auto hidden items-center gap-1 md:flex" aria-label="Ana menü">
-             <div className="relative">
-               <button
-                 ref={collectionsBtnRef}
-                 onClick={() => setCollectionsOpen(!collectionsOpen)}
-                 className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]"
-                 aria-expanded={collectionsOpen}
-                 aria-haspopup="true"
-               >
-                 Koleksiyonlar
-               </button>
-               <CollectionDropdown open={collectionsOpen} anchorRef={collectionsBtnRef} onClose={() => setCollectionsOpen(false)} />
-             </div>
-             <div className="relative">
-               <button
-                 ref={productsBtnRef}
-                 onClick={() => setProductsOpen(!productsOpen)}
-                 className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]"
-                 aria-expanded={productsOpen}
-                 aria-haspopup="true"
-               >
-                 Ürünler
-               </button>
-               <ProductsDropdown open={productsOpen} anchorRef={productsBtnRef} onClose={() => setProductsOpen(false)} />
-             </div>
-             <Link href="/hakkimizda" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">Hakkımızda</Link>
-             <Link href="/iletisim" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">İletişim</Link>
+            <div
+              className="relative"
+              onMouseEnter={openProductsMenu}
+              onMouseLeave={scheduleDesktopMenuClose}
+            >
+              <button
+                ref={productsBtnRef}
+                onClick={() => {
+                  if (productsOpen) {
+                    closeAllDesktopMenus();
+                  } else {
+                    openProductsMenu();
+                  }
+                }}
+                className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]"
+                aria-expanded={productsOpen}
+                aria-haspopup="true"
+              >
+                Ürünler
+              </button>
+              <ProductsDropdown
+                open={productsOpen}
+                anchorRef={productsBtnRef}
+                onClose={() => setProductsOpen(false)}
+                onMouseEnter={clearDesktopMenuCloseTimer}
+                onMouseLeave={scheduleDesktopMenuClose}
+              />
+            </div>
+
+            <div
+              className="relative"
+              onMouseEnter={openAboutMenu}
+              onMouseLeave={scheduleDesktopMenuClose}
+            >
+              <button
+                ref={aboutBtnRef}
+                onClick={() => {
+                  if (aboutOpen) {
+                    closeAllDesktopMenus();
+                  } else {
+                    openAboutMenu();
+                  }
+                }}
+                className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]"
+                aria-expanded={aboutOpen}
+                aria-haspopup="true"
+              >
+                Hakkımızda
+              </button>
+              <AboutDropdown
+                open={aboutOpen}
+                anchorRef={aboutBtnRef}
+                onClose={() => setAboutOpen(false)}
+                onMouseEnter={clearDesktopMenuCloseTimer}
+                onMouseLeave={scheduleDesktopMenuClose}
+              />
+            </div>
+
+            <Link href="/iletisim" className="px-4 py-2.5 text-sm font-medium text-[#2a2a2a] hover:bg-[#faf8f5]">
+              İletişim
+            </Link>
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
@@ -452,4 +656,12 @@ export default function Navbar({ onCartClick }: { onCartClick?: () => void } = {
     </>
   );
 }
+
+
+
+
+
+
+
+
 

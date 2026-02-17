@@ -73,8 +73,20 @@ export default function ProductDetail({
       },
       {
         title: 'Hediye Seçim Rehberi',
-        slug: 'hediye-secim-rehberi',
+        slug: 'hediye-secimi-rehberi',
         desc: 'Her bütçeye ve anıya uygun porselen hediye önerileri.',
+        match: () => true,
+      },
+      {
+        title: 'Servis Tabağı Seçim Rehberi',
+        slug: 'servis-tabagi-secimi',
+        desc: 'Doğru ölçü, desen ve koleksiyon uyumuyla servis tabağı seçimi.',
+        match: () => ['Tabak', 'Fincan & Kupa', 'Tepsi & Kutu'].includes(product.productType),
+      },
+      {
+        title: 'Düğün Hediyesi Fikirleri',
+        slug: 'dugun-hediyesi-fikirleri',
+        desc: 'Yeni evlilere anlamlı ve kalıcı porselen hediye önerileri.',
         match: () => true,
       },
     ];
